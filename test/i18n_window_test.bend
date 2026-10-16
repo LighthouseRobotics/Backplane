@@ -24,7 +24,7 @@ def face.of(f: X.Face) -> X.Face:
 
 def ty(+l: I.Loc) -> L.Ty:
   +f = face.of(X.Text.bitmap())
-  L.Ty{Map.new(&2, X.TG), f, f, f, f, f, l}
+  L.Ty{Map.new(&2, X.TG), R.TNil{}, f, f, f, f, f, l}
 
 def ja() -> U.Ui:
   U.Lang.apply(U.Ui.scratch_set(U.Ui.init(100n), "@lang.preview", "1"), "ja", "ja-JP")
