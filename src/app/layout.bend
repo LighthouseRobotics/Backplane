@@ -138,59 +138,52 @@ def Theme.ground(+flip: U32) -> U32:
 # Typography
 # ----------
 
-# the glyph cache and the faces: interface, bold, meta, chat body, code,
-# and the device language the frame's text is built in (set once a frame)
+# The glyph cache and table used by tile rendering, the five text faces,
+# and the language used to construct the current frame.
 type Ty is Data:
-  Ty{cache: Map<&2, X.TG>, ui: X.Face, bold: X.Face, meta: X.Face, body: X.Face, code: X.Face, loc: I.Loc}
+  Ty{cache: Map<&2, X.TG>, tab: R.Tab, ui: X.Face, bold: X.Face, meta: X.Face, body: X.Face, code: X.Face, loc: I.Loc}
 
-# a type with only the bitmap font (never used: Aux keeps the real one)
 def Ty.none() -> Ty:
-  Ty{Map.new(&2, X.TG), X.Text.bitmap(), X.Text.bitmap(), X.Text.bitmap(), X.Text.bitmap(), X.Text.bitmap(), I.En{}}
+  Ty{Map.new(&2, X.TG), R.TNil{}, X.Text.bitmap(), X.Text.bitmap(), X.Text.bitmap(), X.Text.bitmap(), X.Text.bitmap(), I.En{}}
 
-# the type with glyphs added to its cache (the faces' ASCII tables stay)
-def Ty.with_cache(t: Ty, c: Map<&2, X.TG>) -> Ty:
+def Ty.with_cache(t: Ty, +c: Map<&2, X.TG>) -> Ty:
   match t:
-    case Ty{_, ui, bold, meta, body, code, loc}:
-      Ty{c, ui, bold, meta, body, code, loc}
+    case Ty{_, _, ui, bold, meta, body, code, loc}:
+      Ty{c, X.Text.table(c), ui, bold, meta, body, code, loc}
 
-# the type with the frame's language
 def Ty.with_loc(t: Ty, +l: I.Loc) -> Ty:
   match t:
-    case Ty{c, ui, bold, meta, body, code, _}:
-      Ty{c, ui, bold, meta, body, code, l}
+    case Ty{c, tab, ui, bold, meta, body, code, _}:
+      Ty{c, tab, ui, bold, meta, body, code, l}
 
 def Ty.loc(t: Ty) -> I.Loc:
   match t:
-    case Ty{_, _, _, _, _, _, l}:
-      l
+    case Ty{_, _, _, _, _, _, _, l}: l
 
-# a frame's missing glyphs fetched (X.Text.wants); the next layout draws them
 def Ty.fill(t: Ty, ws: List<&2, X.Want>) -> IO(Ty):
   match t:
-    case Ty{c, ui, bold, meta, body, code, loc}:
-      IO.bind(Map<&2, X.TG>, Ty, X.Text.fill(ws, c), c2 => IO.pure(Ty, Ty{c2, ui, bold, meta, body, code, loc}))
+    case Ty{c, _, ui, bold, meta, body, code, loc}:
+      IO.bind(Map<&2, X.TG>, Ty, X.Text.fill(ws, c), +c2 => IO.pure(Ty, Ty{c2, X.Text.table(c2), ui, bold, meta, body, code, loc}))
 
 def Ty.cache(t: Ty) -> Map<&2, X.TG>:
   match t:
-    case Ty{c, _, _, _, _, _, _}:
-      c
+    case Ty{c, _, _, _, _, _, _, _}: c
+
+def Ty.tab(t: Ty) -> R.Tab:
+  match t:
+    case Ty{_, b, _, _, _, _, _, _}: b
 
 # 0 interface 14px, 1 bold, 2 meta 12px, 3 chat body 14px, 4 code 13px
 def Ty.face(t: Ty, k: Nat) -> X.Face:
   match t k:
-    case Ty{_, f, _, _, _, _, _} 0n:
-      f
-    case Ty{_, _, f, _, _, _, _} 1n:
-      f
-    case Ty{_, _, _, f, _, _, _} 2n:
-      f
-    case Ty{_, _, _, _, f, _, _} 3n:
-      f
-    case Ty{_, _, _, _, _, f, _} _:
-      f
+    case Ty{_, _, f, _, _, _, _, _} 0n: f
+    case Ty{_, _, _, f, _, _, _, _} 1n: f
+    case Ty{_, _, _, _, f, _, _, _} 2n: f
+    case Ty{_, _, _, _, _, f, _, _} 3n: f
+    case Ty{_, _, _, _, _, _, f, _} _: f
 
 def Ty.text(+ty: Ty, +k: Nat, s: String, +c: D.Clip, +x: U32, +y: U32, +lh: U32, +color: U32) -> List<&2, R.Op>:
-  X.Text.line(Ty.cache(ty), Ty.face(ty, k), s, c, x, y, lh, color)
+  X.Text.keyline(Ty.cache(ty), Ty.face(ty, k), s, c, x, y, lh, color)
 
 def Ty.width(+ty: Ty, +k: Nat, s: String) -> U32:
   X.Text.width(Ty.cache(ty), Ty.face(ty, k), s)
@@ -226,7 +219,8 @@ def Ty.load() -> IO(Ty):
     +meta : X.Face <- X.Text.face(Ty.fonts.ui(), 12)
     +code : X.Face <- X.Text.face(Ty.fonts.code(), 13)
     +c : Map<&2, X.TG> <- Ty.fonts.warm([ui, bold, meta, code], Map.new(&2, X.TG))
-    return Ty{IC.Ico.warm(c, 16), X.Face.tabled(ui, c), X.Face.tabled(bold, c), X.Face.tabled(meta, c), X.Face.tabled(ui, c), X.Face.tabled(code, c), I.En{}}
+    +ci : Map<&2, X.TG> = IC.Ico.warm(c, 16)
+    return Ty{ci, X.Text.table(ci), X.Face.tabled(ui, c), X.Face.tabled(bold, c), X.Face.tabled(meta, c), X.Face.tabled(ui, c), X.Face.tabled(code, c), I.En{}}
 
 # Shapes
 # ------
