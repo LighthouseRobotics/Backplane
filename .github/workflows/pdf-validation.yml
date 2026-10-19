@@ -2,11 +2,10 @@ name: PDF cache validation
 
 on:
   push:
-    if: github.repository == 'LighthouseRobotics/Backplane'
     branches: [ci/pdf-validation]
 
 env:
-  SOURCE_REV: ea8633b91a4355dab6975f7adf1cd25885479327
+  SOURCE_REV: 8c2d3468f722c1d91c2658e14ed8c272ed5da3b6
 
 concurrency:
   group: pdf-validation-${{ github.ref }}
