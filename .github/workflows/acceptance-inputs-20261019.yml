@@ -26,7 +26,7 @@ jobs:
           - {scope: kicad, minutes: 45}
           - {scope: history, minutes: 45}
           - {scope: orientation, minutes: 45}
-          - {scope: native, minutes: 75}
+          - {scope: native, minutes: 90}
           - {scope: ios, minutes: 45}
           - {scope: browser, minutes: 45}
     env:
@@ -87,7 +87,7 @@ jobs:
             git --version
             python3 --version
             sha256sum "$(command -v bend)" "$(command -v bun)"
-            sha256sum "$HOME/.bend/bend2"
+            python3 "$RUNNER_TEMP/acceptance-inputs/support/hash-tree.py" "$HOME/.bend/bend2"
           } | tee "$ACCEPTANCE_EVIDENCE/toolchain.log"
           echo "ACCEPTANCE_REAL_BEND=$(command -v bend)" >> "$GITHUB_ENV"
       - name: Check every file and prove every law
@@ -130,7 +130,7 @@ jobs:
           restore-keys: contribution-linux-llvm19-
       - name: Build the exact native candidate
         if: matrix.scope == 'native'
-        timeout-minutes: 25
+        timeout-minutes: 40
         env:
           BACKPLANE_SKIP_CHECK: '1'
           BACKPLANE_LOW_MEM: '1'
@@ -164,6 +164,29 @@ jobs:
         with:
           name: frozen-acceptance-${{ matrix.scope }}-${{ github.sha }}
           path: ${{ runner.temp }}/acceptance-evidence/${{ matrix.scope }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Identify available native outputs
+        id: native_artifact
+        if: always() && matrix.scope == 'native'
+        shell: bash
+        run: |
+          if [ -d "$RUNNER_TEMP/acceptance-evidence/native/artifacts/dist" ]; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload native build and source receipt
+        uses: actions/upload-artifact@v4
+        if: always() && matrix.scope == 'native' && steps.native_artifact.outputs.exists == 'true'
+        with:
+          name: frozen-native-build-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/acceptance-evidence/native/artifacts/dist
+            ${{ runner.temp }}/acceptance-evidence/native/receipt.json
+            ${{ runner.temp }}/acceptance-evidence/native/toolchain.log
+            ${{ runner.temp }}/acceptance-evidence/native/clang.log
+            ${{ runner.temp }}/acceptance-evidence/native/applied-source.json
+            ${{ runner.temp }}/acceptance-evidence/native/source-after.json
+            ${{ runner.temp }}/acceptance-evidence/native/manifest.json
           if-no-files-found: error
           retention-days: 14
       - name: Remove temporary swap

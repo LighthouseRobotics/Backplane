@@ -51,4 +51,8 @@ with tempfile.TemporaryDirectory(prefix='bp-acceptance-selftest-') as temp:
     result=run('bash',str(here/'bend-capture.sh'),'PROOF.bend',env=dict(env,ACCEPTANCE_EVIDENCE=str(evidence),ACCEPTANCE_REAL_BEND=str(fake)))
     assert result.returncode==1 and (evidence/'proof.exit').read_text()=='1\n'
     assert (evidence/'proof.log').read_bytes()==result.stdout,'wrapper changed proof bytes'
+    engine=top/'bend2';engine.mkdir();(engine/'engine.js').write_text('fake toolchain engine\n')
+    hashes=run('python3',str(here/'hash-tree.py'),str(engine))
+    assert hashes.returncode==0 and sha((engine/'engine.js').read_bytes()).encode() in hashes.stdout
+    assert run('python3',str(here/'hash-tree.py'),str(top/'missing-engine')).returncode!=0
 print('PASS: healthy exact-tree receipts; missing/killed proof, failed checks, source drift, missing build and corrupt payload rejected; native artifacts hashed; wrapper preserves status/bytes')
