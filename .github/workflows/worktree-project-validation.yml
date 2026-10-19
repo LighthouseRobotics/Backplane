@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SOURCE_REV: 2d54165824fc5f27244802af9cf28f9ecfec62b9
+  SOURCE_REV: 5d559c0f421d49bc51ac73e20dcdf12ca3bbbb4c
   BASELINE_REV: 91f3cd8123b2de3c42021273f30b08580b9b744e
   BEND_NO_TELEMETRY: "1"
   BACKPLANE_GOOGLE_BAKE: "0"
@@ -88,7 +88,8 @@ jobs:
       - name: Compile the project-prefix tests with the platform compiler
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_REV"
-          ulimit -s 65532
+          validation_stack_limit=$(ulimit -Hs)
+          ulimit -s "$validation_stack_limit"
           mkdir -p build
           cat > build/worktree_prefix_ci.bend <<'BEND'
           import Base
@@ -113,7 +114,8 @@ jobs:
           bend build/worktree_prefix_ci.bend -o build/git_test
       - name: Run the 22 project-prefix assertions
         run: |
-          ulimit -s 65532
+          validation_stack_limit=$(ulimit -Hs)
+          ulimit -s "$validation_stack_limit"
           build/git_test 2>&1 | tee build/git-macos.log
           test "$(grep -c '^ok ' build/git-macos.log)" -eq 22
           grep -qx 'all ok' build/git-macos.log
