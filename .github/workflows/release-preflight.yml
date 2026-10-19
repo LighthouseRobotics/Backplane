@@ -8,7 +8,7 @@ concurrency:
   group: release-preflight-${{ github.ref }}
   cancel-in-progress: true
 env:
-  SOURCE_REV: 6e44d7ab6c4cf9fc8371b13471ac908804d40ea2
+  SOURCE_REV: a6ede220fcfb6607378fb7318dac2f9b4e4d977a
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 jobs:
   regression:
