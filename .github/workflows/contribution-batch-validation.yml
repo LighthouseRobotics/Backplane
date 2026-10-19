@@ -42,10 +42,17 @@ jobs:
             884e603eb4ab4d3f001ef990dc31741c5ab101c2 \
             2b9b46b94021e6c96e176663898d27d34d40e765 \
             63392d9ff333fb7def177e6e958373e90865deae \
-            5f7839a573371262c164d4843b54d94316fb4529; do
+            5f7839a573371262c164d4843b54d94316fb4529 \
+            13319fbdcf1de063b6047cee5b8c99fea473e4b0 \
+            8c2d3468f722c1d91c2658e14ed8c272ed5da3b6 \
+            a87025a20bceb526f795c62c6043820dc9c68cba \
+            830c421bbdd983bc86d777d27fa9ceba33d774da \
+            6a5f36ca32b91f6239fe542d4e6786c6015efd87 \
+            d2623b81daf94fddb3ede87605f401895789a0fe; do
             git fetch --no-tags --depth=1 origin "$source"
             git merge-base --is-ancestor "$source" HEAD
           done
+          test "$(python3 scripts/state-key.py)" = 13623b80aa328841
           mkdir -p build/batch-results
           for spec in outbox:42 nui_recv:14 files_state:38 files_native:14 files:13 pathrecords:9 file_paths_client:10 file_bytes:6 release:30; do
             name=${spec%:*}; count=${spec#*:}
