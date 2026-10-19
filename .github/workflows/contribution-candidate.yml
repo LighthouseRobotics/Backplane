@@ -1,0 +1,50 @@
+name: Isolated contribution candidate
+on:
+  push:
+    branches: [validation/native-baseline, validation/contributions-20261019]
+permissions:
+  contents: read
+concurrency:
+  group: candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BACKPLANE_SKIP_CHECK: '1'
+      BACKPLANE_LOW_MEM: '1'
+      BACKPLANE_JOBS: '2'
+      BACKPLANE_GOOGLE_BAKE: '0'
+      BUN_JSC_forceRAMSize: '4294967296'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - run: scripts/build.sh
+      - name: Record source, toolchain and artifact hashes
+        run: |
+          git rev-parse HEAD > build/candidate-source.txt
+          git status --porcelain >> build/candidate-source.txt
+          clang --version > build/candidate-toolchain.txt
+          bend --version >> build/candidate-toolchain.txt
+          bun --version >> build/candidate-toolchain.txt
+          sha256sum dist/backplane dist/backplane-serve dist/web/* > build/candidate-artifacts.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-linux-${{ github.ref_name == 'validation/native-baseline' && 'baseline' || 'combined' }}
+          path: |
+            dist
+            build/candidate-*.txt
+            build/candidate-artifacts.sha256
+            build/cc/backplane/stages.txt
+            build/cc/backplane-serve/stages.txt
+          if-no-files-found: error
+          retention-days: 7
