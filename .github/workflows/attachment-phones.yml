@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SOURCE_REV: 83eba8c4b48e24b0e0e40b004f0e4a5641b728b0
+  SOURCE_REV: 6a5f36ca32b91f6239fe542d4e6786c6015efd87
 
 jobs:
   bridge:
@@ -34,7 +34,7 @@ jobs:
       - name: Build the shared bridge
         run: |
           test "$(git rev-parse HEAD)" = "$SOURCE_REV"
-          ulimit -s 1048576
+          ulimit -s 1048576 || true
           scripts/build-mobile.sh --js
           test -s mobile/build/assets/bridge.js
       - uses: actions/upload-artifact@v4
