@@ -1,0 +1,57 @@
+name: Queued request hub preflight
+on:
+  push:
+    branches: [ci/outbox-hub-validation]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  integration:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SOURCE_REV: 1dc3fe63cb21f9dcce6a16b33b75140b015f185c
+      SERVER_REV: c38f92e44696fd7d2acce4976f4b237ab45d7272
+      SERVER_REFERENCE: 30884966ef59c383581bcd1b7653f8f739cf009e
+      SERVER_RUN: "39204428027"
+      GH_TOKEN: ${{ github.token }}
+      BUN_JSC_forceRAMSize: "4294967296"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify the existing server artifact and unchanged turn handling
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SERVER_RUN" --jq .head_sha)" = "$SERVER_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SERVER_RUN" --jq .conclusion)" = success
+          git fetch --no-tags --depth=1 origin "$SERVER_REV" "$SERVER_REFERENCE"
+          git diff --exit-code "$SERVER_REFERENCE" "$SERVER_REV" -- \
+            src/core/hub.bend src/core/model.bend src/core/codec.bend \
+            src/core/json.bend src/server/proc.bend src/server/host.bend \
+            src/server/effects/host.c
+      - uses: actions/download-artifact@v4
+        with:
+          repository: ${{ github.repository }}
+          run-id: "39204428027"
+          github-token: ${{ github.token }}
+          name: backplane-linux-x64
+          path: build/existing-server
+      - name: Exercise the new client with the existing server
+        run: |
+          set -o pipefail
+          chmod +x build/existing-server/backplane
+          bend test/fixtures/outbox/index.html -o build/outbox-client
+          bun test/tools/outbox_e2e.ts build/existing-server/backplane build/outbox-client | tee build/outbox-hub.log
+          grep -Fq '46 assertions, 0 failures' build/outbox-hub.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: outbox-hub-preflight-results
+          path: build/outbox-hub.log
+          if-no-files-found: warn
+          retention-days: 1
