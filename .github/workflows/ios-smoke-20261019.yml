@@ -1,0 +1,134 @@
+name: Isolated iOS simulator acceptance (temporary)
+
+on:
+  push:
+    branches: [validation/ios-smoke-20261019]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ios-smoke-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      SOURCE_COMMIT: 7f87418d27aa61a4c435d262e51bac064fe9029e
+      BRIDGE_RUN: '39248780003'
+      BRIDGE_SHA256: de4c97581b37ac799a3501d5686cf4e3228ead50c70555ee45d4a85ea0d4f8e1
+      ACCEPTANCE_OUT: build/ios-smoke-acceptance
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify unchanged compiled sources
+        run: |
+          set -euo pipefail
+          mkdir -p "$ACCEPTANCE_OUT"
+          git diff --exit-code "$SOURCE_COMMIT" HEAD -- src mobile LAWS.bend PROOF.bend '*.bend' '*.swift'
+          git diff --exit-code -- src mobile LAWS.bend PROOF.bend '*.bend' '*.swift'
+          git ls-files -z -- src mobile LAWS.bend PROOF.bend | xargs -0 shasum -a 256 > "$ACCEPTANCE_OUT/compiled-sources.sha256"
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          out=pathlib.Path(os.environ['ACCEPTANCE_OUT'])
+          identity={'support_commit':os.environ['GITHUB_SHA'],'compiled_source_commit':os.environ['SOURCE_COMMIT'],
+                    'compiled_sources_equal_baseline':True,'bridge_run':os.environ['BRIDGE_RUN'],
+                    'expected_bridge_sha256':os.environ['BRIDGE_SHA256']}
+          (out/'source-identity.json').write_text(json.dumps(identity,indent=2)+'\n')
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: LighthouseRobotics/Backplane
+          run-id: '39248780003'
+          name: contribution-bridge
+          path: mobile/build/assets
+      - name: Verify exact passed production bridge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/LighthouseRobotics/Backplane/actions/runs/$BRIDGE_RUN" > "$ACCEPTANCE_OUT/bridge-run.json"
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          out=pathlib.Path(os.environ['ACCEPTANCE_OUT'])
+          run=json.loads((out/'bridge-run.json').read_text())
+          assert run['head_sha']==os.environ['SOURCE_COMMIT']
+          bridge=pathlib.Path('mobile/build/assets/bridge.js').read_bytes()
+          assert len(bridge)==4228872 and hashlib.sha256(bridge).hexdigest()==os.environ['BRIDGE_SHA256']
+          (out/'bridge-input.json').write_text(json.dumps({'run':run['html_url'],'source_commit':run['head_sha'],
+            'bytes':len(bridge),'sha256':hashlib.sha256(bridge).hexdigest()},indent=2)+'\n')
+          PY
+      - name: Build unsigned simulator app with exact bridge
+        id: ios_build
+        run: |
+          set -euo pipefail
+          cp mobile/build/assets/bridge.js mobile/ios/Backplane/bridge.js
+          xcodebuild -version > "$ACCEPTANCE_OUT/xcode-version.txt"
+          xcrun --sdk iphonesimulator --show-sdk-version > "$ACCEPTANCE_OUT/sdk-version.txt"
+          code=0
+          xcodebuild -project mobile/ios/Backplane.xcodeproj -scheme Backplane \
+            -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios-derived" -jobs 2 \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build \
+            > "$ACCEPTANCE_OUT/xcodebuild.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$ACCEPTANCE_OUT/build.exit"
+          tail -n 80 "$ACCEPTANCE_OUT/xcodebuild.log"
+          [ "$code" = 0 ] || exit "$code"
+          app="$RUNNER_TEMP/ios-derived/Build/Products/Debug-iphonesimulator/Backplane.app"
+          cmp mobile/build/assets/bridge.js "$app/bridge.js"
+          shasum -a 256 "$app/bridge.js" > "$ACCEPTANCE_OUT/bundled-bridge.sha256"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$ACCEPTANCE_OUT/Backplane-simulator.zip"
+      - name: Launch only the newly owned simulator
+        run: |
+          python3 test/tools/ios_simulator_smoke.py \
+            --app "$RUNNER_TEMP/ios-derived/Build/Products/Debug-iphonesimulator/Backplane.app" \
+            --out "$ACCEPTANCE_OUT/smoke"
+      - name: Record source, build, smoke and artifact receipt
+        if: always()
+        env:
+          BUILD_OUTCOME: ${{ steps.ios_build.outcome }}
+        run: |
+          mkdir -p "$ACCEPTANCE_OUT"
+          source_code=0
+          git diff --exit-code "$SOURCE_COMMIT" HEAD -- src mobile LAWS.bend PROOF.bend '*.bend' '*.swift' || source_code=1
+          git diff --exit-code -- src mobile LAWS.bend PROOF.bend '*.bend' '*.swift' || source_code=1
+          shasum -a 256 -c "$ACCEPTANCE_OUT/compiled-sources.sha256" > "$ACCEPTANCE_OUT/source-after.log" 2>&1 || source_code=1
+          printf '%s\n' "$source_code" > "$ACCEPTANCE_OUT/source-after.exit"
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, sys
+          out=pathlib.Path(os.environ['ACCEPTANCE_OUT'])
+          def read_json(name):
+              try:return json.loads((out/name).read_text())
+              except (OSError,ValueError):return {}
+          def status(name):
+              try:return int((out/name).read_text().strip())
+              except (OSError,ValueError):return None
+          identity=read_json('source-identity.json');bridge=read_json('bridge-input.json');smoke=read_json('smoke/result.json')
+          accepted=bool(identity.get('compiled_sources_equal_baseline') and status('source-after.exit')==0
+            and bridge.get('sha256')==os.environ['BRIDGE_SHA256'] and smoke.get('bridgeSha256')==os.environ['BRIDGE_SHA256']
+            and status('build.exit')==0 and os.environ['BUILD_OUTCOME']=='success' and smoke.get('result')=='pass'
+            and (out/'Backplane-simulator.zip').is_file())
+          artifacts=[{'path':str(p.relative_to(out)),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+                     for p in sorted(out.rglob('*')) if p.is_file() and p.name!='receipt.json']
+          receipt={'result':'pass' if accepted else 'fail','source':identity,'bridge':bridge,
+                   'build_exit':status('build.exit'),'build_outcome':os.environ['BUILD_OUTCOME'],
+                   'source_after_exit':status('source-after.exit'),'smoke':smoke,'artifacts':artifacts,
+                   'scope':'unsigned app build and isolated simulator launch; no device/frame-budget acceptance'}
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(receipt['result']+': '+str(out/'receipt.json'))
+          sys.exit(0 if accepted else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-smoke-acceptance-${{ github.sha }}
+          path: build/ios-smoke-acceptance
+          if-no-files-found: error
+          retention-days: 14
