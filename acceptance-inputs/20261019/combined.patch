@@ -176,10 +176,10 @@ index 3ba8e76799eabe3321eeaa94329680eed2f50c25..f88b7f95d789fc1d5118d96e5dcfb7f7
            retention-days: 7
 diff --git a/.github/workflows/contribution-validation.yml b/.github/workflows/contribution-validation.yml
 new file mode 100644
-index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c60a90c61f
+index 0000000000000000000000000000000000000000..f6eccc51b332aefe9e504c1691abf2a92c3486c3
 --- /dev/null
 +++ b/.github/workflows/contribution-validation.yml
-@@ -0,0 +1,303 @@
+@@ -0,0 +1,313 @@
 +name: Contribution acceptance
 +
 +on:
@@ -209,10 +209,10 @@ index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c6
 +
 +jobs:
 +  native:
-+    name: Native effects and browser acceptance
++    name: Linux renderer, native effects and browser acceptance
 +    needs: phone
 +    runs-on: ubuntu-24.04
-+    timeout-minutes: 60
++    timeout-minutes: 90
 +    env:
 +      BACKPLANE_SKIP_CHECK: '1'
 +      BACKPLANE_LOW_MEM: '1'
@@ -225,16 +225,19 @@ index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c6
 +      - uses: actions/checkout@v4
 +        with:
 +          persist-credentials: false
++      - name: Fetch exact native negative-control baseline
++        run: git fetch --no-tags --depth=1 origin 30884966ef59c383581bcd1b7653f8f739cf009e
 +      - uses: ./.github/actions/setup-bend
 +      - uses: oven-sh/setup-bun@v2
 +      - name: Native dependencies
 +        run: |
 +          sudo apt-get update
-+          sudo apt-get install -y clang-19 libx11-dev xvfb
++          sudo apt-get install -y clang-19 libx11-dev xvfb fonts-noto-cjk fonts-dejavu-core fontconfig libfreetype6
 +          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
 +      - name: Validate acceptance tooling
 +        run: |
 +          python3 test/tools/validation_evidence_test.py
++          python3 test/tools/validation_renderer_test.py
 +          python3 test/tools/build_lock_test.py
 +          python3 test/tools/build_clock_test.py
 +          python3 test/tools/ios_simulator_smoke_test.py
@@ -254,6 +257,10 @@ index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c6
 +            sudo swapon "$dir/swap-build"
 +          fi
 +          free -h
++      # Requires the final native-glyph harness (62fa318 or its integrated
++      # successor). Missing harness files or assertions fail this required lane.
++      - name: Required Linux native renderer and X11 readback
++        run: scripts/validate-contribution.sh renderer
 +      - name: Build exact candidate
 +        run: scripts/validate-contribution.sh build
 +      - run: scripts/build-wire.sh
@@ -281,6 +288,7 @@ index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c6
 +    env:
 +      BACKPLANE_SKIP_CHECK: '1'
 +      BACKPLANE_LOW_MEM: '1'
++      BACKPLANE_JOBS: '2'
 +      BACKPLANE_GOOGLE_BAKE: '0'
 +      BUN_JSC_forceRAMSize: '4294967296'
 +    steps:
@@ -324,6 +332,8 @@ index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c6
 +      - uses: actions/checkout@v4
 +        with:
 +          persist-credentials: false
++      - name: Fetch exact native negative-control baseline
++        run: git fetch --no-tags --depth=1 origin 30884966ef59c383581bcd1b7653f8f739cf009e
 +      - uses: ./.github/actions/setup-bend
 +      - uses: oven-sh/setup-bun@v2
 +      - uses: actions/download-artifact@v4
@@ -484,7 +494,7 @@ index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c6
 +          path: ${{ runner.temp }}/Backplane-simulator.zip
 +          if-no-files-found: error
 diff --git a/LAWS.bend b/LAWS.bend
-index d7539d32921b69ba91b7c1f98212214a8ff7cb50..e973f5c7eeb4312fda47f4d1bb65808fe42e10de 100644
+index d7539d32921b69ba91b7c1f98212214a8ff7cb50..1fcc737381d331155cfc2dc0a0c90e58059b8f48 100644
 --- a/LAWS.bend
 +++ b/LAWS.bend
 @@ -2,6 +2,7 @@ import Base
@@ -685,7 +695,7 @@ index d7539d32921b69ba91b7c1f98212214a8ff7cb50..e973f5c7eeb4312fda47f4d1bb65808f
    for k: Nat
    for +e: Nat
    for +cs: List<&2, R.Op>
-@@ -8337,7 +8374,7 @@ law tiles_recat_exact:
+@@ -8337,11 +8374,21 @@ law tiles_recat_exact:
    for +rx: U32
    for +ry: U32
    for +n: U32
@@ -694,7 +704,21 @@ index d7539d32921b69ba91b7c1f98212214a8ff7cb50..e973f5c7eeb4312fda47f4d1bb65808f
  # ---- end win-lean-frame cat frames ----
  # ---- gfx-runs: tile plans that build only changed nodes' ops ----
  # comparing a child's ops as they reach it, straight from its parent's, is
-@@ -10676,3 +10713,136 @@ law pcb2_hidden_text_draws_nothing:
+ # exactly comparing the list Region.keep would build
++law keep_step_exact:
++  for +o: R.Op
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.step(o, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)} : T.KeepStep}
++
+ law keep_eq:
+   for ops: List<&2, R.Op>
+   for +px: U32
+@@ -10676,3 +10723,136 @@ law pcb2_hidden_text_draws_nothing:
    for +sig: U32
    for +ctx: String
    {PCB2.Text.visible.k(True{}, at, angle, x, text, up, key, sig, ctx) == Nil{} : List<&2, B.Item>}
@@ -832,7 +856,7 @@ index d7539d32921b69ba91b7c1f98212214a8ff7cb50..e973f5c7eeb4312fda47f4d1bb65808f
 +  {T.Table.agrees(ops, old, new) == True{} : Bool}
 +# ---- end glyph delta fast guard ----
 diff --git a/PROOF.bend b/PROOF.bend
-index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..3d909e8b67d3c8a6aedf554e8e05fe48b2fa21ad 100644
+index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..55033f8b88f0ac0e6778e3636d9df14fde71f4ce 100644
 --- a/PROOF.bend
 +++ b/PROOF.bend
 @@ -2,6 +2,7 @@ import Base
@@ -2443,7 +2467,84 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..3d909e8b67d3c8a6aedf554e8e05fe48
  # ---- end win-lean-frame cat frames ----
  
  # ---- gfx-runs: tile plans that build only changed nodes' ops (laws keep_eq,
-@@ -10163,9 +10888,9 @@ law tile_plan2:
+@@ -10080,6 +10805,66 @@ def keep_step(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, rest, ys):
+     case False{}:
+       {==}
+ 
++law keep_step_k_exact:
++  for k: Bool
++  for +x0: U32
++  for +y0: U32
++  for +x1: U32
++  for +y1: U32
++  for +c: U32
++  for +a: U32
++  for +s: R.Shape
++  for +ys: List<&2, R.Op>
++  {T.Keep.step.k(k, x0, y0, x1, y1, c, a, s, ys) == T.KStep{T.Keep.ys.k(k, ys), T.Keep.ok.k(k, x0, y0, x1, y1, c, a, s, ys)} : T.KeepStep}
++
++def keep_step_k_exact(k, x0, y0, x1, y1, c, a, s, ys):
++  match k:
++    case True{}: {==}
++    case False{}: {==}
++
++law keep_step_h_exact:
++  for hit: Bool
++  for +x0: U32
++  for +y0: U32
++  for +x1: U32
++  for +y1: U32
++  for +c: U32
++  for +a: U32
++  for +s: R.Shape
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.step.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys.h(hit, s, px, py, rx, ry, n, ys), T.Keep.ok.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)} : T.KeepStep}
++
++def keep_step_h_exact(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys):
++  match hit:
++    case True{}:
++      keep_step_k_exact(Bool.not(R.Region.empty(R.Region.move(s, px, py, rx, ry, n))), x0, y0, x1, y1, c, a, R.Region.move(s, px, py, rx, ry, n), ys)
++    case False{}: {==}
++
++def Laws.keep_step_exact(o, px, py, rx, ry, n, ys):
++  match o:
++    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
++      keep_step_h_exact(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
++
++law keep_eq_cons:
++  for +o: R.Op
++  for +t: List<&2, R.Op>
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.eq(o <> t, px, py, rx, ry, n, ys, True{}) == T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)) : Bool}
++
++def keep_eq_cons(o, t, px, py, rx, ry, n, ys):
++  Equal.cong(T.KeepStep, Bool, +p => T.Keep.eq(t, px, py, rx, ry, n, T.Keep.step.ys(p), T.Keep.step.same(p)),
++    T.Keep.step(o, px, py, rx, ry, n, ys), T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)}, Laws.keep_step_exact(o, px, py, rx, ry, n, ys))
++
+ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
+   match ops ok:
+     case Nil{} False{}:
+@@ -10089,6 +10874,9 @@ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
+     case Nil{} True{}:
+       {==}
+     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s} <> +t True{}:
++      %Equal.sym(Bool, T.Keep.eq(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n, ys, True{}),
++        T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
++        keep_eq_cons(R.Op{x0, y0, x1, y1, c, a, s}, t, px, py, rx, ry, n, ys)) : {_ == T.Eq.ops.go(R.Region.keep(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n), ys, True{}) : Bool}
+       Equal.trans(Bool, T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+         T.Eq.ops.go(R.Region.keep(t, px, py, rx, ry, n), T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+         T.Eq.ops.go(R.Region.keep.op(R.Region.hits(x0, y0, x1, y1, rx, ry, n), R.Op{x0, y0, x1, y1, c, a, s}, px, py, rx, ry, n, R.Region.keep(t, px, py, rx, ry, n)), ys, True{}),
+@@ -10163,9 +10951,9 @@ law tile_plan2:
  
  def tile_plan2(e, c, base, t, p, rx, ry, n):
    match t:
@@ -2456,7 +2557,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..3d909e8b67d3c8a6aedf554e8e05fe48
  
  law plan2_child:
    for +j: Nat
-@@ -10281,6 +11006,7 @@ def Laws.plan_cut_same(k, e, ops, base, prev, p, rx, ry, n):
+@@ -10281,6 +11069,7 @@ def Laws.plan_cut_same(k, e, ops, base, prev, p, rx, ry, n):
    plan2_go(k, e, T.CAll{ops}, base, prev, p, rx, ry, n, T.Cut.same(T.CAll{ops}, base, prev))
  
  law plan_run_cut:
@@ -2464,7 +2565,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..3d909e8b67d3c8a6aedf554e8e05fe48
    for k: Nat
    for +e: Nat
    for +ops: List<&2, R.Op>
-@@ -10291,12 +11017,13 @@ law plan_run_cut:
+@@ -10291,12 +11080,13 @@ law plan_run_cut:
    for +ry: U32
    for +n: U32
    for +d: Nat
@@ -2481,7 +2582,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..3d909e8b67d3c8a6aedf554e8e05fe48
    for s: Bool
    for +w: U32
    for +h: U32
-@@ -10304,26 +11031,26 @@ law frame_par_k:
+@@ -10304,26 +11094,26 @@ law frame_par_k:
    for +base: Image
    for +prev: T.Tiles
    for +dy: U32
@@ -2518,7 +2619,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..3d909e8b67d3c8a6aedf554e8e05fe48
  # ---- end gfx-runs ----
  # ---- sent-draft ----
  def Laws.draft_clear_tells_host(u):
-@@ -12357,3 +13084,75 @@ def Laws.auth_cookie_prefix_denied():
+@@ -12357,3 +13147,75 @@ def Laws.auth_cookie_prefix_denied():
  # ---- PCB viewer text ----
  def Laws.pcb2_hidden_text_draws_nothing(at, angle, x, text, up, key, sig, ctx):
    {==}
@@ -2609,10 +2710,10 @@ index bafa936ba8faef6132b0e39ab54ac01849d3b553..635fc854ae292d2446c7fe0f7125a56c
  if [ -d "$tmp/backplane-$os-$arch/licenses" ]; then
 diff --git a/docs/contribution-validation.md b/docs/contribution-validation.md
 new file mode 100644
-index 0000000000000000000000000000000000000000..05d724341f749972c5514baf03c67ffde2a4e4fb
+index 0000000000000000000000000000000000000000..0e73cdb66f712413543e4b1544bea231227e720d
 --- /dev/null
 +++ b/docs/contribution-validation.md
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,155 @@
 +# Contribution validation
 +
 +Run `scripts/validate-contribution.sh LANE` from an assembled contribution
@@ -2630,6 +2731,7 @@ index 0000000000000000000000000000000000000000..05d724341f749972c5514baf03c67ffd
 +| `build` | Current-source native window/hub, web and helpers via `scripts/build.sh` |
 +| `emit` | Current-source server C, web and wire inputs for compilation on a Mac |
 +| `native` | Synthetic release transactions, platform installer, integrated worktree preservation, event-log failure, reconnect and retirement effects |
++| `renderer` | Linux native font/glyph and i18n fixtures, display settling/comparison controls and actual Xvfb pixel readback |
 +| `browser` | Synthetic pages through the real helper and hub; ownership and credential boundaries |
 +| `phone` | Production bridge, recent-history/replay regressions at the phone's no-JIT stack, live bridge tests and sanitized current-type Worker state |
 +| `real-cad` | Explicitly selected KiCad integration using the pinned, verified fixture |
@@ -2644,8 +2746,48 @@ index 0000000000000000000000000000000000000000..05d724341f749972c5514baf03c67ffd
 +missing, failed or mismatched receipt fails the lane before tests start.
 +Changing the binary during validation also fails the lane.
 +
++The required Linux `renderer` lane depends on the final native-glyph harness
++at `62fa318989b092aa8712825a4c75f1e4f0c6bcbf` or its integrated successor;
++this tooling branch alone does not contain that feature. Missing source or tools
++fail before execution. It requires all seven settling controls, 29 independent
++display comparisons, X11-linked `xpoke` and presentation observer compilation,
++and exact red/green RGB readback from an owned Xvfb fixture. It then uses
++`scripts/build-app.sh` to compile the actual glyph and i18n fixtures, requires
++all seven glyph assertions (including exact original RGlyph bytes and fresh
++cold-to-warm pixels), all 705 uniquely indexed samples through the existing
++strict parser, and all nine native i18n assertions. Missing assertions, samples,
++compiled outputs or a skipped check fail even when a command exits zero.
++
++Install clang, X11 development libraries, Xvfb, `fonts-noto-cjk`,
++`fonts-dejavu-core`, `fontconfig` and `libfreetype6`. The lane records the selected
++compiler, Bend/Bun/Xvfb/fontconfig executable hashes and an actual Japanese-capable
++font's hash/languages. `CC`, `BACKPLANE_X11` and `BACKPLANE_TEST_XVFB` may explicitly
++select local dependencies. Fixture processes use a fresh private HOME,
++XDG_CACHE_HOME and BACKPLANE_HOME; compiler processes retain their toolchain HOME.
++Prebuilt and emit-only shortcuts are disabled for these fixture builds. Each
++compiled fixture is hashed before use and checked again at the end; emitted C,
++binaries, raw logs and the 705-sample summary are retained under the lane's
++evidence directory. Source changes invalidate the receipt as in every lane.
++
++The Linux workflow requires this focused lane. It does not repeat
++`scripts/check.sh all` or all unit shards, which remain separate CI gates.
++The Mac target is the hub and does not run this Linux window-renderer lane.
++These correctness checks and raw microbenchmarks do not establish whole-app
++input/display performance budgets or physical-device performance.
++The Linux native and Mac-emission jobs use `BACKPLANE_LOW_MEM=1`, two compile
++workers, no baked Google credentials and a 4 GiB Bun heap-sizing hint. Before
++emission they provision temporary runner swap only when at least 8 GiB of free
++disk remains, capped at 16 GiB. The heap hint is not a memory limit; swap and
++the recorded build flags are part of the reproducible CI configuration.
++
 +Run `build`, `phone`, and `scripts/build-wire.sh` first;
 +`native` requires that exact production phone bridge for reconnect/save/load coverage.
++Its KiCad negative control also requires the historical source object at
++`30884966ef59c383581bcd1b7653f8f739cf009e:src/server/kicad.bend`.
++The runner checks this before compiling fixtures. For a shallow checkout, run
++`git fetch --no-tags --depth=1 origin 30884966ef59c383581bcd1b7653f8f739cf009e`;
++the Linux and Mac jobs fetch exactly that commit without importing tags or
++unrelated history that could affect build version metadata.
 +Native and phone evidence records the bridge hash when consumed and checks
 +that its bytes remain unchanged for the rest of the lane.
 +The log-reader fixture is built and passed explicitly, so Unicode, large-file and
@@ -2873,6 +3015,120 @@ index 624ad9793988809f58d0aa21fc3eefa131ffa3b2..5a764a11afc16d5b66f72efbdfe09781
 +These fixtures simulate platform responses; they do not certify a Mac
 +launch, board export/view, or IPC session. Actual macOS acceptance still
 +requires an accessible Mac and a compatible published or locally built fork.
+diff --git a/docs/native-perf-reproduce.md b/docs/native-perf-reproduce.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..97bf522dc906dee881f82450532417c124223720
+--- /dev/null
++++ b/docs/native-perf-reproduce.md
+@@ -0,0 +1,108 @@
++# Reproduce native before/after measurements
++
++Use Linux x86-64, Bun 1.4.3, an existing Xvfb and the same system fonts and
++hardware for both binaries. Obtain baseline and candidate artifacts with their
++source/toolchain/hash receipts. Both apps must use LLVM 19, `-O3`,
++`BACKPLANE_LOW_MEM=1`, `BACKPLANE_JOBS=2` and `BACKPLANE_GOOGLE_BAKE=0`.
++Check the actual binary hashes against those receipts before running. Build
++the shared helper before taking measurements, if it is not already available:
++
++```sh
++mkdir -p build
++cc -O2 test/tools/xpoke.c -o build/xpoke -lX11
++bun test/tools/perf_fixture_test.ts
++# Requires an already-built production shared-client bridge:
++bun test/tools/perf_fixture_codec_test.ts mobile/build/assets/bridge.js
++```
++
++Generate the same fixture for both apps. It contains 12 history threads, 1,500
++messages, two local bot threads, their bot events, a room and an uberbot. The
++history-only predecessor lacked the room/uberbot required by normal mode; its
++failed workload is not valid performance acceptance. The current generated
++fixture is **1,520 events, 556,794 bytes**, SHA-256
++`ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543`.
++No copied user history or provider credentials are needed.
++
++```sh
++OUT=$(mktemp -d "${TMPDIR:-/tmp}/bp-native-comparison.XXXXXX")
++bun test/tools/perf_fixture.ts "$OUT/fixture.jsonl" > "$OUT/fixture-receipt.json"
++sha256sum "$OUT/fixture.jsonl"
++```
++
++Set `BASE_BIN` and `CAND_BIN` to the downloaded native `dist/backplane` files,
++and set `BASE_SOURCE` and `CAND_SOURCE` to their full 40-character source labels.
++Save the original artifact receipts alongside the results. For a CI-applied
++snapshot, the candidate label is the immutable **input commit containing the
++patch**; also retain its checkout commit, expected applied tree, patch hash and
++artifact hash. An older product HEAD does not identify an uncommitted snapshot.
++The declared labels/flags in a report do not substitute for artifact receipts.
++
++The following four fresh processes share the same fixture, driver, helper and
++flags. Run them serially while holding the actual build/measurement lock.
++The dedicated displays and ports must be unused; the driver refuses to share
++an existing display. It creates private app homes and stand-in executables.
++Do not pass a live log or an installed app path.
++
++```bash
++[[ $BASE_SOURCE =~ ^[0-9a-f]{40}$ && $CAND_SOURCE =~ ^[0-9a-f]{40}$ ]] || exit 2
++FLAGS='LLVM=19;CFLAGS=-O3;LOW_MEM=1;JOBS=2;GOOGLE_BAKE=0'
++sha256sum "$BASE_BIN" "$CAND_BIN" build/xpoke test/tools/perf_load.ts \
++  test/tools/native_display.ts test/tools/native_display_compare.ts > "$OUT/inputs.sha256"
++(
++  exec 9>/tmp/bp-wt-build.lock
++  flock -x 9
++  run() {
++    side=$1; mode=$2; binary=$3; source=$4; display=$5; port=$6
++    dir="$OUT/$side-$mode"; mkdir -p "$dir/tmp" "$dir/controller-home"
++    phases=(--phases idle,bg,fg,type,input-display,open,normal --pixel-inputs)
++    [[ $mode = cold ]] || phases=(--phases open --pixel-opens)
++    code=0
++    env TMPDIR="$dir/tmp" HOME="$dir/controller-home" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
++      bun test/tools/perf_load.ts --bin "$binary" --log "$OUT/fixture.jsonl" \
++      --xpoke "$PWD/build/xpoke" --xvfb /usr/bin/Xvfb --exclusive-display \
++      --display "$display" --port "$port" --agents 10 --secs 5 \
++      --source-sha "$source" --build-flags "$FLAGS" "${phases[@]}" \
++      --out "$dir/raw.json" --keep > "$dir/stdout.log" 2> "$dir/stderr.log" || code=$?
++    printf '%s\n' "$code" > "$dir/execution.exit"
++  }
++  run baseline cold "$BASE_BIN" "$BASE_SOURCE" :91 3891
++  run candidate cold "$CAND_BIN" "$CAND_SOURCE" :92 3892
++  run baseline warm "$BASE_BIN" "$BASE_SOURCE" :91 3891
++  run candidate warm "$CAND_BIN" "$CAND_SOURCE" :92 3892
++  for surface in input title; do
++    mode=cold; [[ $surface = input ]] || mode=warm
++    code=0
++    bun test/tools/native_display_compare.ts "$OUT/baseline-$mode/raw.json" \
++      "$OUT/candidate-$mode/raw.json" --out "$OUT/compare-$surface.json" \
++      > "$OUT/compare-$surface.log" 2>&1 || code=$?
++    printf '%s\n' "$code" > "$OUT/compare-$surface.exit"
++  done
++)
++```
++
++The configured five seconds applies to timed phases. Typing, displayed input,
++opens and normal mode run fixed event workloads and take longer. Do not stop
++the candidate because the baseline misses a budget. Keep every run's execution
++exit, phase checks and missing-sample verdicts. A zero driver exit does not mean
++every target passed. Each comparison needs exit zero **and** a parsed `pass`
++verdict with the expected identities; file existence alone proves nothing.
++
++The cold run does not calibrate the ten thread-open targets before measuring
++their first visits. Input-display separately warms its composer glyphs during
++calibration, then observes all 132 additions/Backspaces at the X-server boundary.
++The separate warm run calibrates titles and observes ten opens. Reference
++comparisons require all 12 composer prefixes or all 21 title targets and reject
++self-consistent candidate calibration errors relative to the baseline. Existing
++direct fresh-render glyph regressions remain a separate correctness anchor.
++
++Preserve the original targets: frame p99 8 ms, streaming/input 16 ms, open 50 ms
++and agent-line p99 2 ms. Report failing baseline and candidate results explicitly.
++The normal workload's **Status tab remains visually unverified** (`null` check).
++The observers cover the selected title and an ASCII composer region, not the
++entire timeline, other UI regions, compositor, physical input or scanout.
++
++Keep raw reports, traces and demand journals outside Git. A reviewable report
++should contain source/artifact/fixture hashes, the actual flags/toolchain and
++hardware, sample counts, per-phase p99/max values, budget verdicts, independent
++reference verdicts and links to the raw artifacts. Do not commit large traces or
++claim simulator/microbenchmark results establish whole-app or physical budgets.
 diff --git a/docs/perf-bench.md b/docs/perf-bench.md
 index 8411f2567f83f62f14b9fb8b006b8996356346a2..98aa55cb6f733672aeb0abf2aa339ee400f2c324 100644
 --- a/docs/perf-bench.md
@@ -5713,10 +5969,10 @@ index 0000000000000000000000000000000000000000..88c8ae8d66feafd09ab32dfb0d966cf8
 +exit "$status"
 diff --git a/scripts/validate-contribution.py b/scripts/validate-contribution.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a228a23726
+index 0000000000000000000000000000000000000000..43a234d44462da86c69d36acf85fa72580795628
 --- /dev/null
 +++ b/scripts/validate-contribution.py
-@@ -0,0 +1,302 @@
+@@ -0,0 +1,426 @@
 +#!/usr/bin/env python3
 +"""Run a required validation lane and save exact source, commands and artifacts."""
 +import argparse
@@ -5730,12 +5986,13 @@ index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a2
 +import shutil
 +import subprocess
 +import sys
++import tempfile
 +import time
 +
 +ROOT = Path(__file__).resolve().parent.parent
 +os.chdir(ROOT)
 +parser = argparse.ArgumentParser(description=__doc__)
-+parser.add_argument('lane', choices=['pure', 'native', 'browser', 'phone', 'real-cad', 'build', 'emit'])
++parser.add_argument('lane', choices=['pure', 'native', 'renderer', 'browser', 'phone', 'real-cad', 'build', 'emit'])
 +parser.add_argument('--out', type=Path, default=Path('build/validation'))
 +parser.add_argument('--binary', default='dist/backplane')
 +parser.add_argument('--build-receipt', type=Path, help='passing build/result.json for the consumed hub binary')
@@ -5748,9 +6005,9 @@ index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a2
 +args.out = output_root / args.lane
 +args.out.mkdir(parents=True, exist_ok=True)
 +
-+def capture(command):
++def capture(command, env=None):
 +    try:
-+        r = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=20)
++        r = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=20, env=env)
 +        return {'command': command, 'status': r.returncode, 'output': r.stdout.strip()}
 +    except (OSError, subprocess.TimeoutExpired) as e:
 +        return {'command': command, 'status': 'unavailable', 'output': str(e)}
@@ -5824,11 +6081,15 @@ index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a2
 + ],
 + 'build': [['scripts/build.sh']],
 + 'emit': [['scripts/build.sh', 'emit']],
++ 'renderer': [],  # Filled after checking the required Linux harness inputs.
 +}
++renderer_steps = []
++renderer_home = None
++renderer_outputs = {}
 +report = {'schema':2,'lane':args.lane,'started':datetime.now(timezone.utc).isoformat(),
 +          'source':source(),'host':{'platform':platform.platform(),'machine':platform.machine()},
 +          'toolchain':[capture(c) for c in [['bend','version'],['bun','--version'],['clang','--version'],['git','--version'],['python3','--version']]],
-+          'flags':{k:os.environ.get(k) for k in ['CC','BACKPLANE_CFLAGS','BACKPLANE_LOW_MEM','BACKPLANE_JOBS','BACKPLANE_CPUS','BACKPLANE_PREBUILT','BACKPLANE_GOOGLE_BAKE','BACKPLANE_KICAD_CLI','BUN_JSC_forceRAMSize','BUN_JSC_useJIT','BACKPLANE_CHROME','BACKPLANE_TEST_BROWSERS']},
++          'flags':{k:os.environ.get(k) for k in ['CC','BACKPLANE_CFLAGS','BACKPLANE_LOW_MEM','BACKPLANE_JOBS','BACKPLANE_CPUS','BACKPLANE_PREBUILT','BACKPLANE_GOOGLE_BAKE','BACKPLANE_KICAD_CLI','BUN_JSC_forceRAMSize','BUN_JSC_useJIT','BACKPLANE_CHROME','BACKPLANE_TEST_BROWSERS','BACKPLANE_X11','BACKPLANE_TEST_XVFB']},
 +          'steps':[], 'artifacts':[], 'consumed':{}, 'provenance':{}, 'result':'running'}
 +report_path = args.out/'result.json'
 +
@@ -5928,16 +6189,104 @@ index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a2
 +    # checked, instead of another managed installation found before PATH.
 +    os.environ['BACKPLANE_KICAD_CLI'] = binary['resolved_path']
 +
++def prepare_renderer():
++    global renderer_home
++    if platform.system() != 'Linux':
++        raise ValueError('renderer requires Linux/X11; the Mac hub lane does not cover window rendering')
++    required = [
++        'test/tools/native_display.ts', 'test/tools/native_display_test.ts',
++        'test/tools/native_display_compare.ts', 'test/tools/native_display_compare_test.ts',
++        'test/tools/native_display_readback_test.ts', 'test/tools/xpoke.c',
++        'test/tools/present_observer_fixture.c', 'test/tools/glyph_bench_report.py',
++        'test/native/glyph_table_bench.bend', 'test/native/i18n_smoke.bend',
++        'scripts/build-app.sh',
++    ]
++    dependency = 'native-glyph 62fa318989b092aa8712825a4c75f1e4f0c6bcbf (or its integrated successor)'
++    report['provenance']['renderer'] = {'required_dependency': dependency, 'inputs': []}
++    missing = [name for name in required if not (ROOT/name).is_file()]
++    if missing:
++        raise ValueError(f'renderer requires {dependency}; missing: {", ".join(missing)}')
++    report['provenance']['renderer']['inputs'] = [artifact(name, 'renderer_source') for name in required]
++    tools = {'renderer_cc': os.environ.get('CC') or 'clang',
++             'renderer_xvfb': os.environ.get('BACKPLANE_TEST_XVFB') or 'Xvfb',
++             'renderer_bun': 'bun', 'renderer_bend': 'bend', 'renderer_fontconfig': 'fc-match'}
++    for name, selected in tools.items():
++        executable = shutil.which(selected)
++        if not executable:
++            raise ValueError(f'renderer requires executable {selected}')
++        consume(name, executable)
++    cc = report['consumed']['renderer_cc']['resolved_path']
++    compiler = capture([cc, '--version'])
++    report['toolchain'].append(compiler)
++    if compiler['status'] != 0 or not compiler['output']:
++        raise ValueError('renderer compiler version probe failed')
++    renderer_home = tempfile.TemporaryDirectory(prefix='bp-renderer-home-')
++    isolated = {'HOME': renderer_home.name, 'XDG_CACHE_HOME': renderer_home.name+'/cache',
++                'BACKPLANE_HOME': renderer_home.name+'/backplane'}
++    font = capture([report['consumed']['renderer_fontconfig']['resolved_path'], '-f', '%{file}\n%{lang}\n', ':lang=ja'],
++                   env=dict(os.environ, **isolated))
++    report['provenance']['renderer']['japanese_font'] = font
++    lines = font['output'].splitlines()
++    if font['status'] != 0 or len(lines) != 2 or not re.search(r'(?:^|\|)ja(?:\||$)', lines[1]):
++        raise ValueError('renderer requires a Japanese-capable font; install fonts-noto-cjk and fontconfig')
++    consume('renderer_japanese_font', lines[0])
++    build_env = {'CC': cc, 'BACKPLANE_PREBUILT': '0', 'BACKPLANE_EMIT_ONLY': '0', 'BACKPLANE_GOOGLE_BAKE': '0'}
++    x11 = os.environ.get('BACKPLANE_X11')
++    includes = ['-I'+x11+'/include', '-L'+x11+'/lib/x86_64-linux-gnu'] if x11 else []
++    for name in ['xpoke', 'present_observer_fixture', 'glyph_table_bench', 'i18n_native_smoke']:
++        renderer_outputs[name] = str(args.out/name)
++    def step(command, **details):
++        renderer_steps.append(dict(command=command, **details))
++    step(['bun', 'test/tools/native_display_test.ts'], required_lines=[
++        'native display demand: changed target accepted; stale, wrong, indistinguishable and late content rejected',
++        'composer observer: caret blink ignored; missing/corrupt glyph pixels and wrong region size distinguished',
++        'calibration: delayed/transient frames settle; unchanged, wrong-empty, oscillating and late pixels rejected (7 controls)'])
++    step(['bun', 'test/tools/native_display_compare_test.ts'], required_lines=['29 independent native display comparison controls passed'])
++    for name, source_path in [('xpoke', 'test/tools/xpoke.c'), ('present_observer_fixture', 'test/tools/present_observer_fixture.c')]:
++        step([cc, '-O2', *includes, source_path, '-o', renderer_outputs[name], '-lX11'], produces=[name])
++    step(['bun', 'test/tools/native_display_readback_test.ts', renderer_outputs['xpoke'],
++          renderer_outputs['present_observer_fixture'], report['consumed']['renderer_xvfb']['resolved_path']],
++         env=isolated, consumes=['xpoke', 'present_observer_fixture'], required_lines=[
++             'xpoke pixels independently read exact red/green RGB bytes from X-server fixture'])
++    step(['scripts/build-app.sh', 'test/native/glyph_table_bench.bend', renderer_outputs['glyph_table_bench']],
++         env=build_env, produces=['glyph_table_bench'], emitted_c='build/cc/glyph_table_bench/all.c',
++         remove=['build/cc/glyph_table_bench/all.c'])
++    step([renderer_outputs['glyph_table_bench']], env=isolated, consumes=['glyph_table_bench'], required_lines=[
++        'ok '+name for name in ['native font loaded', 'native cold stream has wants',
++        'native nonASCII fill drains wants', 'native layout emits keys directly',
++        'native table resolves original masks', 'native keyed pixels equal original RGlyph bytes',
++        'native cold to warm frame is fresh']])
++    glyph_log = args.out/f'{len(renderer_steps)-1:02d}.log'
++    step(['python3', 'test/tools/glyph_bench_report.py', str(glyph_log), str(args.out/'glyph-summary.json')],
++         remove=[str(args.out/'glyph-summary.json')], required_lines=['705 complete native glyph samples summarized'])
++    step(['scripts/build-app.sh', 'test/native/i18n_smoke.bend', renderer_outputs['i18n_native_smoke']],
++         env=build_env, produces=['i18n_native_smoke'], emitted_c='build/cc/i18n_native_smoke/all.c',
++         remove=['build/cc/i18n_native_smoke/all.c'])
++    step([renderer_outputs['i18n_native_smoke']], env=isolated, consumes=['i18n_native_smoke'], required_lines=[
++        'ok native '+name for name in ['Japanese literal', 'Japanese save', 'English plural',
++        'Japanese count', 'exact plural', 'select', 'interpolation', 'literal fallback', 'plural fallback']])
++    lanes['renderer'] = [item['command'] for item in renderer_steps]
++    report['provenance']['renderer']['scope'] = 'Native rendering correctness and raw microbenchmarks; whole-app display budgets are separate.'
++
 +def prepare_inputs():
 +    report['provenance']['bend_version'] = bend_version(report['toolchain'])
 +    if args.lane in ['native', 'browser', 'real-cad']:
 +        validate_binary()
 +    if args.lane == 'native':
 +        consume('phone_bridge', 'mobile/build/assets/bridge.js')
++        base = '30884966ef59c383581bcd1b7653f8f739cf009e'
++        path = 'src/server/kicad.bend'
++        probe = capture(['git', 'cat-file', '-e', base+':'+path])
++        report['provenance']['native_baseline'] = dict(probe, commit=base, path=path)
++        if probe['status'] != 0:
++            raise ValueError('native KiCad negative control requires the exact baseline object; run '
++                             f'git fetch --no-tags --depth=1 origin {base} before native acceptance')
 +    if args.lane == 'real-cad':
 +        validate_cad()
 +    if args.lane == 'build' and os.environ.get('BACKPLANE_PREBUILT') == '1':
 +        validate_prebuilt()
++    if args.lane == 'renderer':
++        prepare_renderer()
 +
 +def save():
 +    temp=report_path.with_suffix('.pending')
@@ -5953,28 +6302,49 @@ index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a2
 +    print(f'FAIL provenance: {error}', flush=True)
 +save()
 +for index, command in enumerate([] if failed else lanes[args.lane]):
++    details = renderer_steps[index] if args.lane == 'renderer' else {}
 +    start=time.monotonic()
 +    log=args.out/f'{index:02d}.log'
 +    print('+ '+ ' '.join(command), flush=True)
 +    status='fail'; code=None; reason=''
 +    try:
++        for name in details.get('consumes', []):
++            consume('renderer_'+name, renderer_outputs[name])
++        for path in details.get('remove', []) + [renderer_outputs[name] for name in details.get('produces', [])]:
++            Path(path).unlink(missing_ok=True)
 +        if args.binary in command and args.lane in ['native', 'browser', 'real-cad']:
 +            consume('hub_binary', args.binary)
 +        if 'mobile/build/assets/bridge.js' in command:
 +            consume('phone_bridge', 'mobile/build/assets/bridge.js')
 +        with log.open('wb') as stream:
-+            r=subprocess.run(command,stdout=stream,stderr=subprocess.STDOUT,timeout=3600)
++            r=subprocess.run(command,stdout=stream,stderr=subprocess.STDOUT,timeout=3600,
++                             env=dict(os.environ, **details.get('env', {})))
 +        code=r.returncode
 +        text=log.read_text(errors='replace')
 +        if code == 0 and not re.search(r'^(?:FAIL\b|skip(?:ped)?\b)',text,re.M|re.I):
 +            status='pass'
 +        elif re.search(r'^skip(?:ped)?\b',text,re.M|re.I):
 +            status='skip';reason='required lane reported skipped coverage'
++        if status == 'pass' and args.lane == 'renderer':
++            missing = [line for line in details.get('required_lines', []) if line not in text.splitlines()]
++            if missing or re.search(r'^Error:', text, re.M):
++                status='fail';reason='required renderer assertions missing or failed: '+', '.join(missing)
++            else:
++                for name in details.get('produces', []):
++                    consume('renderer_'+name, renderer_outputs[name])
++                if details.get('emitted_c'):
++                    name = details['produces'][0]
++                    consume('renderer_'+name+'_emitted_c', details['emitted_c'])
++                    copied = args.out/(name+'.c')
++                    shutil.copy2(details['emitted_c'], copied)
++                    consume('renderer_'+name+'_emitted_c_evidence', copied)
++                    report['artifacts'].append(artifact(copied, 'renderer_emitted_c'))
 +    except (OSError, ValueError, subprocess.TimeoutExpired) as e:
-+        reason=str(e)
++        status='fail';reason=str(e)
 +    if status != 'pass':
 +        failed=True
-+    report['steps'].append({'command':command,'result':status,'exit_code':code,'seconds':time.monotonic()-start,'reason':reason,'log':log.name,'log_sha256':hashlib.sha256(log.read_bytes()).hexdigest() if log.exists() else None})
++    report['steps'].append({'command':command,'result':status,'exit_code':code,'seconds':time.monotonic()-start,'reason':reason,'log':log.name,'log_sha256':hashlib.sha256(log.read_bytes()).hexdigest() if log.exists() else None,
++                            **({'environment':details['env']} if details.get('env') else {})})
 +    save()
 +    if failed:
 +        break
@@ -6012,10 +6382,20 @@ index 0000000000000000000000000000000000000000..dec49c16898d03e8b556a9679c2122a2
 +        if not isinstance(metadata, dict) or metadata.get('bridgeSha256') != report['consumed'].get('phone_bridge', {}).get('sha256') or metadata.get('stateSha256') != state['sha256'] or metadata.get('rpcExecution') is not False:
 +            raise ValueError('sanitized Worker state does not match the exact bridge/state identities')
 +        report['artifacts'] += [state, artifact(metadata_path, 'sanitized_phone_state_metadata')]
++    if args.lane == 'renderer' and not failed:
++        summary_path = args.out/'glyph-summary.json'
++        summary = json.loads(summary_path.read_text())
++        expected = dict.fromkeys(['masks', 'keys', 'prekeyed', 'table-guard', 'convert-and-eq', 'key-eq', 'extension-plan'], 100)
++        expected.update(dict.fromkeys(['font-open', 'ascii-fill-table', 'nonASCII-fill-table', 'fill-redraw-and-byte-check', 'cold-frame'], 1))
++        if not isinstance(summary, dict) or not isinstance(summary.get('samples'), dict) or {name:item.get('n') for name,item in summary['samples'].items() if isinstance(item,dict)} != expected:
++            raise ValueError('renderer requires the complete 705-sample native glyph summary')
++        report['artifacts'].append(artifact(summary_path, 'renderer_glyph_summary'))
 +except (OSError, ValueError) as error:
 +    failed=True;report['provenance']['error']=str(error)
 +report['result']='fail' if failed else 'pass'
 +report['finished']=datetime.now(timezone.utc).isoformat()
++if renderer_home:
++    renderer_home.cleanup()
 +save()
 +print(f"{report['result']}: {report_path}")
 +sys.exit(1 if failed else 0)
@@ -20433,7 +20813,7 @@ index 8ee7c854583b1fe783f76d485620be294ed6ae6d..70618a50f8053582e4849b9bafb9ed18
 +def Text.keyline(+cache: Map<&2, TG>, +f: Face, s: String, +c: D.Clip, +x: U32, +y: U32, +lh: U32, +color: U32) -> List<&2, R.Op>:
 +  Text.keydraw(cache, f, s, c, x, Text.baseline(f, y, lh), color)
 diff --git a/src/gfx/tiles.bend b/src/gfx/tiles.bend
-index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34dc1c8004b 100644
+index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..0cae6d4935e70b6db3cf0a13b8dea0eac0832132 100644
 --- a/src/gfx/tiles.bend
 +++ b/src/gfx/tiles.bend
 @@ -50,13 +50,26 @@ def Eq.run(a: R.Run, b: R.Run) -> Bool:
@@ -20875,7 +21255,58 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # Tiles.make's plan: every tile to draw
  def Tiles.plan.make(k: Nat, +e: Nat, +ops: List<&2, R.Op>, +base: Image, +rx: U32, +ry: U32, +n: U32) -> Plan:
-@@ -656,8 +832,8 @@ def Tile.plan2.k(same: Bool, +e: Nat, c: Cut, +base: Image, t: Tile, p: Past, +r
+@@ -614,6 +790,40 @@ def Keep.ok(o: R.Op, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, ys: List<&
+     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
+       Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
+ 
++# Advance the old list and compare its head from one clipped shape. The
++# former Keep.ys/Keep.ok pair clipped every run or polygon twice at every
++# visited child, including the unchanged children that the plan keeps.
++type KeepStep is Data:
++  KStep{ys: List<&2, R.Op>, same: Bool}
++
++def Keep.step.ys(s: KeepStep) -> List<&2, R.Op>:
++  match s:
++    case KStep{ys, _}: ys
++
++def Keep.step.same(s: KeepStep) -> Bool:
++  match s:
++    case KStep{_, same}: same
++
++def Keep.step.k(kept: Bool, +x0: U32, +y0: U32, +x1: U32, +y1: U32, +c: U32, +a: U32, s2: R.Shape, +ys: List<&2, R.Op>) -> KeepStep:
++  match kept:
++    case True{}:
++      KStep{Keep.drop1(ys), Keep.ok.c(x0, y0, x1, y1, c, a, s2, ys)}
++    case False{}:
++      KStep{ys, True{}}
++
++def Keep.step.h(hit: Bool, +x0: U32, +y0: U32, +x1: U32, +y1: U32, +c: U32, +a: U32, +s: R.Shape, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>) -> KeepStep:
++  match hit:
++    case True{}:
++      +s2 = R.Region.move(s, px, py, rx, ry, n)
++      Keep.step.k(Bool.not(R.Region.empty(s2)), x0, y0, x1, y1, c, a, s2, ys)
++    case False{}:
++      KStep{ys, True{}}
++
++def Keep.step(o: R.Op, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>) -> KeepStep:
++  match o:
++    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
++      Keep.step.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
++
+ # Eq.ops.go(Region.keep(ops, px, py, rx, ry, n), ys, ok) without building
+ # the list (law keep_eq); it stops at the first op that differs
+ def Keep.eq(ops: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>, ok: Bool) -> Bool:
+@@ -623,7 +833,8 @@ def Keep.eq(ops: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32
+     case Nil{} True{}:
+       Eq.ops.go(Nil{}, ys, True{})
+     case +o <> t True{}:
+-      Keep.eq(t, px, py, rx, ry, n, Keep.ys(o, px, py, rx, ry, n, ys), Keep.ok(o, px, py, rx, ry, n, ys))
++      +step = Keep.step(o, px, py, rx, ry, n, ys)
++      Keep.eq(t, px, py, rx, ry, n, Keep.step.ys(step), Keep.step.same(step))
+ 
+ # Eq.ops(Cut.get(c), ys) (law cut_eq)
+ def Cut.eq(c: Cut, +ys: List<&2, R.Op>) -> Bool:
+@@ -656,8 +867,8 @@ def Tile.plan2.k(same: Bool, +e: Nat, c: Cut, +base: Image, t: Tile, p: Past, +r
  # Tile.plan of Cut.get(c)
  def Tile.plan2(+e: Nat, +c: Cut, +base: Image, t: Tile, p: Past, +rx: U32, +ry: U32, +n: U32) -> Plan:
    match t:
@@ -20886,7 +21317,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # Tiles.plan.go of Cut.get(c) (law plan2_go): a changed node builds its ops
  # and hands its children theirs uncut
-@@ -739,14 +915,14 @@ type Drawn is Data:
+@@ -739,14 +950,14 @@ type Drawn is Data:
    DOne{l: List<&2, R.Op>, base: Image, img: Image}
    DTwo{a: Drawn, b: Drawn}
  
@@ -20904,7 +21335,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
        DTwo{x, y}
  
  # the bits of i, lowest first (as many as a list of 2^24 needs)
-@@ -757,50 +933,50 @@ def Jobs.path(+d: Nat, +i: Nat) -> List<&2, Bool>:
+@@ -757,50 +968,50 @@ def Jobs.path(+d: Nat, +i: Nat) -> List<&2, Bool>:
      case 1n+k:
        Nat.is_eq(Nat.mod(i, 2n), 1n) <> Jobs.path(k, Nat.div(i, 2n))
  
@@ -20971,7 +21402,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  def Frame.plan.k(same: Bool, +w: U32, +h: U32, +ops: List<&2, R.Op>, +base: Image, +prev: Tiles, +dy: U32) -> Plan:
    match same:
-@@ -810,16 +986,16 @@ def Frame.plan.k(same: Bool, +w: U32, +h: U32, +ops: List<&2, R.Op>, +base: Imag
+@@ -810,16 +1021,16 @@ def Frame.plan.k(same: Bool, +w: U32, +h: U32, +ops: List<&2, R.Op>, +base: Imag
        Tiles.plan.make(Frame.levels(w, h), Frame.edge(w, h), ops, base, 0, 0, U32.shln(1, R.Frame.depth(w, h)))
  
  # Frame.again's plan
@@ -20993,7 +21424,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  
  # Caret blinks
-@@ -882,18 +1058,18 @@ def Caret.fresh.go(ops: List<&2, R.Op>, +on: Bool, ok: Bool) -> Bool:
+@@ -882,18 +1093,18 @@ def Caret.fresh.go(ops: List<&2, R.Op>, +on: Bool, ok: Bool) -> Bool:
  def Caret.fresh(ops: List<&2, R.Op>, +on: Bool) -> Bool:
    Caret.fresh.go(ops, on, True{})
  
@@ -21018,7 +21449,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # a node's carets are all as on says already (a leaf: Tile.blink looks)
  def Tiles.fresh(t: Tiles, +on: Bool) -> Bool:
-@@ -906,26 +1082,26 @@ def Tiles.fresh(t: Tiles, +on: Bool) -> Bool:
+@@ -906,26 +1117,26 @@ def Tiles.fresh(t: Tiles, +on: Bool) -> Bool:
  # the tiles with every caret shown (on) or hidden: a node already so is
  # kept whole, and only the tiles under a caret that changed are drawn
  # again (fresh: Tiles.fresh of t; law tiles_blink_exact)
@@ -21052,7 +21483,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # Cat frames
  # ----------
-@@ -955,20 +1131,20 @@ def Ops.after(cs: List<&2, R.Op>, o: List<&2, R.Op>) -> List<&2, R.Op>:
+@@ -955,20 +1166,20 @@ def Ops.after(cs: List<&2, R.Op>, o: List<&2, R.Op>) -> List<&2, R.Op>:
      case c <> ct Nil{}:
        Nil{}
  
@@ -21078,7 +21509,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
      case 1n+j0 TNode{o, b, +pa, +pb, +pc, +pd} False{}:
        +j = j0
        +h = U32.shr(n)
-@@ -980,18 +1156,18 @@ def Tiles.recat.go(k: Nat, +e: Nat, +cs: List<&2, R.Op>, +cs2: List<&2, R.Op>, t
+@@ -980,18 +1191,18 @@ def Tiles.recat.go(k: Nat, +e: Nat, +cs: List<&2, R.Op>, +cs2: List<&2, R.Op>, t
        +dc = R.Region.keep(cs2, rx, ry, rx, (ry + h : U32), h)
        +cd = R.Region.keep(cs, rx, ry, (rx + h : U32), (ry + h : U32), h)
        +dd = R.Region.keep(cs2, rx, ry, (rx + h : U32), (ry + h : U32), h)
@@ -25271,6 +25702,77 @@ index 0000000000000000000000000000000000000000..0f164530127ff8e17fa4644ed4374500
 +    C.Check.str("online stays online", F.yes(J.Json.get_bool(at(duplicate(), 0n), "online", False{})), "yes")
 +    C.Check.str("refresh routes to owning machine", F.cmds(H.Hubs.cmds(H.Hubs.act(F.two(), "usage-refresh", "box:3787|"))), "send@box:3787 ")
 +    C.Check.str("refresh preserves focus", H.Hubs.cur(H.Hubs.after(H.Hubs.act(F.two(), "usage-refresh", "box:3787|"))), H.Hubs.cur(F.two()))
+diff --git a/test/keep_step_test.bend b/test/keep_step_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..c294a7eb1cca8917ebee1dfdac3358e741cafdfe
+--- /dev/null
++++ b/test/keep_step_test.bend
+@@ -0,0 +1,65 @@
++import Base
++import ./check.bend as C
++import ./glyph_table_test.bend as G
++import ../src/gfx/raster.bend as R
++import ../src/gfx/draw.bend as D
++import ../src/gfx/text.bend as X
++import ../src/gfx/tiles.bend as T
++
++# Compare with the independently materialized Region.keep list, including
++# drops, empty clipped runs, missing/extra/changed ops and changed bases.
++def ops() -> List<&2, R.Op>:
++  List.concat(&2, R.Op, [
++    X.Text.keydraw(G.cache(4294967295), G.face(), "A日A日", D.Clip.all(), 61, 8, 16777215),
++    [R.Op{30, 1, 78, 35, 16711680, 145, R.SPoly{False{}, [R.Edge{30.0, 1.0, 78.0, 12.0}, R.Edge{78.0, 12.0, 38.0, 35.0}, R.Edge{38.0, 35.0, 30.0, 1.0}]}},
++     R.Op{2, 2, 79, 39, 65535, 255, R.SRun{0, 0, R.RNone{}}},
++     D.Draw.rect(D.Clip.all(), 76, 30, 4, 9, 255, 127),
++     D.Draw.rect(D.Clip.all(), 0, 0, 80, 40, 2236962, 255)]])
++
++def polygon(os: List<&2, R.Op>) -> List<&2, R.Op>:
++  match os:
++    case Nil{}: Nil{}
++    case R.Op{x0, y0, x1, y1, _, a, R.SPoly{i, es}} <> t:
++      R.Op{x0, y0, x1, y1, 65280, a, R.SPoly{i, es}} <> t
++    case o <> t:
++      o <> polygon(t)
++
++def region(+os: List<&2, R.Op>, +x: U32, +y: U32, +n: U32, +ys: List<&2, R.Op>, +label: String) -> IO(Unit):
++  do IO<Unit>:
++    C.Check.str(label, Bool.show(T.Keep.eq(os, 0, 0, x, y, n, ys, True{})), Bool.show(T.Eq.ops(R.Region.keep(os, 0, 0, x, y, n), ys)))
++    C.Check.str(label ++ " false flag", Bool.show(T.Keep.eq(os, 0, 0, x, y, n, ys, False{})), "False")
++
++def regions(+os: List<&2, R.Op>, +x: U32, +y: U32, +n: U32) -> IO(Unit):
++  +ys = R.Region.keep(os, 0, 0, x, y, n)
++  +tag = U32.show(x) ++ "," ++ U32.show(y) ++ "," ++ U32.show(n)
++  do IO<Unit>:
++    region(os, x, y, n, ys, tag ++ " equal")
++    region(os, x, y, n, Nil{}, tag ++ " removed")
++    region(os, x, y, n, D.Draw.rect(D.Clip.all(), 0, 0, 1, 1, 99, 255) <> ys, tag ++ " inserted")
++    region(os, x, y, n, List.reverse(&2, R.Op, ys), tag ++ " reordered")
++
++def exact(+os: List<&2, R.Op>, +base: Image, +prev: T.Frames, +dy: U32, label: String) -> IO(Unit):
++  +tab = X.Text.table(G.cache(4294967295))
++  +img = T.Tiles.image(T.Frame.par(80, 40, os, base, tab, prev, dy))
++  +fresh = T.Tiles.image(T.Frame.make(80, 40, os, base, tab))
++  C.Check.str(label, G.same(img, fresh), "True")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    +os : List<&2, R.Op> = ops()
++    regions(os, 0, 0, 128)
++    regions(os, 0, 0, 64)
++    regions(os, 64, 0, 64)
++    regions(os, 16, 16, 16)
++    regions(os, 256, 256, 32)
++    +tab : R.Tab = X.Text.table(G.cache(4294967295))
++    +prev : T.Frames = T.FSome{80, 40, tab, T.Frame.make(80, 40, os, Pix{0}, tab)}
++    +changed : List<&2, R.Op> = X.Text.keydraw(G.cache(4294967295), G.face(), "日日AA", D.Clip.all(), 61, 8, 16777215)
++    exact(os, Pix{0}, prev, 0, "unchanged exact pixels")
++    exact(changed, Pix{0}, prev, 0, "changed run exact pixels")
++    exact(List.reverse(&2, R.Op, os), Pix{0}, prev, 0, "reordered ops exact pixels")
++    exact(os, Qua{Pix{1}, Pix{2}, Pix{3}, Pix{4}}, prev, 0, "changed base exact pixels")
++    exact(changed, Pix{0}, prev, 64, "scroll hint still exact pixels")
++    exact(polygon(os), Pix{0}, prev, 0, "changed polygon exact pixels")
++    C.Check.str("changed polygon negative control", G.same(T.Tiles.image(T.Frame.make(80, 40, polygon(os), Pix{0}, tab)), T.Tiles.image(T.Frame.make(80, 40, os, Pix{0}, tab))), "False")
++    C.Check.str("changed run negative control", G.same(T.Tiles.image(T.Frame.make(80, 40, changed, Pix{0}, tab)), T.Tiles.image(T.Frame.make(80, 40, os, Pix{0}, tab))), "False")
 diff --git a/test/kicadcli_test.bend b/test/kicadcli_test.bend
 new file mode 100644
 index 0000000000000000000000000000000000000000..ce9220e7cc56fbe335a6f556a1d15089422dcd64
@@ -25883,6 +26385,95 @@ index 0000000000000000000000000000000000000000..c79ad2796afd11caf85b3cca464fc2c8
 +    +masks : T.Tiles = T.Tiles.make(T.Frame.levels(1400, 900), T.Frame.edge(1400, 900), R.TNil{}, os, Pix{0}, 0, 0, 2048)
 +    +grown : R.Tab = X.Text.table(Map.set(&2, X.TG, c, X.Text.key(X.Face.id(f), 26412), X.Text.get(c, f, 65)))
 +    plans(100n, os, R.Key.ops(os), tab, grown, keys, masks)
+diff --git a/test/native/keep_plan_bench.bend b/test/native/keep_plan_bench.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..c4b2e9d285c82473df151b46dcb7de4801b00131
+--- /dev/null
++++ b/test/native/keep_plan_bench.bend
+@@ -0,0 +1,83 @@
++import Base
++import ../check.bend as C
++import ../glyph_table_test.bend as G
++import ../keep_step_test.bend as K
++import ../../src/gfx/text.bend as X
++import ../../src/gfx/raster.bend as R
++import ../../src/gfx/draw.bend as D
++import ../../src/gfx/tiles.bend as T
++import ../../src/server/perf.bend as P
++
++# The previous production comparator, kept independent of Keep.step.
++def Ref.keep(os: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>, ok: Bool) -> Bool:
++  match os ok:
++    case _ False{}: False{}
++    case Nil{} True{}: T.Eq.ops.go(Nil{}, ys, True{})
++    case +o <> t True{}:
++      Ref.keep(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys))
++
++def Ref.eq(c: T.Cut, +ys: List<&2, R.Op>) -> Bool:
++  match c:
++    case T.CAll{o}: T.Eq.ops(o, ys)
++    case T.CIn{o, px, py, rx, ry, n}: Ref.keep(o, px, py, rx, ry, n, ys, True{})
++
++def Ref.same(c: T.Cut, +base: Image, t: T.Tiles) -> Bool:
++  match t:
++    case T.TLeaf{_}: False{}
++    case T.TNode{o, b, _, _, _, _}: T.Eq.tile.k(Ref.eq(c, o), base, b)
++
++def Ref.leaf(+e: Nat, +c: T.Cut, +base: Image, t: T.Tile, p: T.Past, +rx: U32, +ry: U32, +n: U32) -> T.Plan:
++  match t:
++    case T.Tile{+o, l, +b, i, keys}:
++      T.Tile.plan2.k(T.Eq.tile.k(Ref.eq(c, o), base, b), e, c, base, T.Tile{o, l, b, i, keys}, p, rx, ry, n)
++
++def Ref.plan(+k: Nat, +e: Nat, c: T.Cut, +base: Image, prev: T.Tiles, +p: T.Past, +rx: U32, +ry: U32, +n: U32, same: Bool) -> T.Plan:
++  match k prev same:
++    case 0n T.TLeaf{t} _: Ref.leaf(e, c, base, t, p, rx, ry, n)
++    case 1n+j0 T.TNode{o, b, pa, pb, pc, pd} True{}: T.PKeepN{T.TNode{o, b, pa, pb, pc, pd}}
++    case 1n+j0 T.TNode{_, _, +pa, +pb, +pc, +pd} False{}:
++      +j = j0
++      +h = U32.shr(n)
++      +os = T.Cut.get(c)
++      T.Plan.node(os, base,
++        Ref.plan(j, e, T.CIn{os, rx, ry, rx, ry, h}, T.Img.q(base, 0n), pa, p, rx, ry, h, Ref.same(T.CIn{os, rx, ry, rx, ry, h}, T.Img.q(base, 0n), pa)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, (rx + h : U32), ry, h}, T.Img.q(base, 1n), pb, p, (rx + h : U32), ry, h, Ref.same(T.CIn{os, rx, ry, (rx + h : U32), ry, h}, T.Img.q(base, 1n), pb)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, rx, (ry + h : U32), h}, T.Img.q(base, 2n), pc, p, rx, (ry + h : U32), h, Ref.same(T.CIn{os, rx, ry, rx, (ry + h : U32), h}, T.Img.q(base, 2n), pc)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, (rx + h : U32), (ry + h : U32), h}, T.Img.q(base, 3n), pd, p, (rx + h : U32), (ry + h : U32), h, Ref.same(T.CIn{os, rx, ry, (rx + h : U32), (ry + h : U32), h}, T.Img.q(base, 3n), pd)))
++    case _ _ _: T.Tiles.plan.make(k, e, T.Cut.get(c), base, rx, ry, n)
++
++def Ref.frame(+os: List<&2, R.Op>, +prev: T.Tiles) -> T.Plan:
++  Ref.plan(5n, 6n, T.CAll{os}, Pix{0}, prev, T.Past{5n, prev, 2048, 0}, 0, 0, 2048, T.Tiles.same(os, Pix{0}, prev))
++
++def rows(+n: Nat, +c: Map<&2, X.TG>, +f: X.Face) -> List<&2, R.Op>:
++  match n:
++    case 0n: Nil{}
++    case 1n+k:
++      List.append(&2, R.Op, X.Text.keydraw(c, f, "The regulator enable pin is pulled up through R12 to VBAT; check U3 footprint, then rerun DRC.", D.Clip.all(), 300, U32.from_nat(Nat.add(24n, Nat.mul(k, 19n))), 15790320), rows(k, c, f))
++
++def sample(+n: Nat, +os: List<&2, R.Op>, +prev: T.Tiles) -> IO(Unit):
++  match n:
++    case 0n: IO.pure(Unit, Unit{})
++    case 1n+k:
++      do IO<Unit>:
++        a : U32 <- P.Perf.us()
++        old : Nat = T.Plan.count(Ref.frame(os, prev))
++        +b : U32 <- P.Perf.us()
++        new : Nat = T.Plan.count(T.Frame.plan.k(True{}, 1400, 900, os, Pix{0}, prev, 0))
++        z : U32 <- P.Perf.us()
++        IO.print("sample," ++ Nat.show(k) ++ "," ++ U32.show((b - a : U32)) ++ "," ++ U32.show((z - b : U32)) ++ "," ++ Nat.show(old) ++ "," ++ Nat.show(new))
++        sample(k, os, prev)
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    K.main()
++    +f : X.Face <- X.Text.face(["monospace"], 14)
++    +c : Map<&2, X.TG> <- X.Text.warm(Map.new(&2, X.TG), f)
++    +tab : R.Tab = X.Text.table(c)
++    +os : List<&2, R.Op> = rows(44n, c, f)
++    +old : T.Tiles = T.Frame.make(1400, 900, os, Pix{0}, tab)
++    +changed : List<&2, R.Op> = List.append(&2, R.Op, X.Text.keydraw(c, f, "Backplane typed", D.Clip.all(), 300, 840, 16777215), os)
++    +a : Image = T.Tiles.image(T.Plan.run(Ref.frame(changed, old), 6n, tab))
++    +b : Image = T.Tiles.image(T.Plan.run(T.Frame.plan.k(True{}, 1400, 900, changed, Pix{0}, old, 0), 6n, tab))
++    C.Check.str("whole plan exact image", Bool.show(T.Eq.image(a, b)), "True")
++    sample(100n, changed, old)
 diff --git a/test/native/kicad_platform.bend b/test/native/kicad_platform.bend
 new file mode 100644
 index 0000000000000000000000000000000000000000..511f912d6fe17292ff916fd2e151aa94022b1953
@@ -28823,10 +29414,10 @@ index 0000000000000000000000000000000000000000..f1253ffa7c6c7b736bcc208126dbbd59
 +print("PASS actual production Worker lifetime diagnostic; no RPC execution")
 diff --git a/test/tools/kicad_platform_e2e.ts b/test/tools/kicad_platform_e2e.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..ed6f3e0619fe948c372f8cbb9521e642fe35717f
+index 0000000000000000000000000000000000000000..ef907314eb2bb7edfd2660525b10c6464f34762b
 --- /dev/null
 +++ b/test/tools/kicad_platform_e2e.ts
-@@ -0,0 +1,153 @@
+@@ -0,0 +1,164 @@
 +// Synthetic, offline acceptance of the production discovery and installer.
 +// scripts/build-app.sh test/native/kicad_platform.bend build/kicad_platform
 +// bun test/tools/kicad_platform_e2e.ts build/kicad_platform
@@ -28835,6 +29426,18 @@ index 0000000000000000000000000000000000000000..ed6f3e0619fe948c372f8cbb9521e642
 +import { tmpdir } from "node:os";
 +import { dirname, join, resolve } from "node:path";
 +import { spawnSync } from "node:child_process";
++const BASE = "30884966ef59c383581bcd1b7653f8f739cf009e";
++function baselineSource(): string {
++  const result = spawnSync("git", ["show", `${BASE}:src/server/kicad.bend`], {encoding:"utf8"});
++  if (result.error || result.status !== 0) {
++    const detail = result.error?.message ?? (result.stderr.trim() || `exit ${result.status}, signal ${result.signal}`);
++    throw new Error(`Pinned KiCad baseline ${BASE} is unavailable: ${detail}\nFetch the exact fixture input before running acceptance: git fetch --no-tags --depth=1 origin ${BASE}`);
++  }
++  return result.stdout;
++}
++// Fail before running native fixtures when a shallow checkout lacks the pinned
++// regression input. A failed git command's stdout is never accepted as source.
++const baseline = baselineSource();
 +const binary = resolve(process.argv[2] ?? "build/kicad_platform");
 +const root = mkdtempSync(join(tmpdir(), "bp-kicad-platform-"));
 +const bin = join(root, "bin"), data = join(root, "data"), user = join(root, "user"), exe = join(root, "app");
@@ -28970,7 +29573,6 @@ index 0000000000000000000000000000000000000000..ed6f3e0619fe948c372f8cbb9521e642
 +  mkdirSync(`${final}.install-lock`);
 +  const locked=run(args,fixture); check("concurrent installer refused",locked.status!==0 && (locked.stdout+locked.stderr).includes("in progress")); check("lock refusal preserves runtime",snapshot(final)===current); rmSync(`${final}.install-lock`,{recursive:true});
 +  // Reproduce baseline's partial-overwrite defect using its exact shell body.
-+  const baseline=spawnSync("git",["show","30884966ef59c383581bcd1b7653f8f739cf009e:src/server/kicad.bend"],{encoding:"utf8"}).stdout;
 +  const match=baseline.match(/"set -e; cd .*?"(?=,\n\s+"sh", dir, base, name, KiCad.sha256\(\))/);
 +  check("baseline installer source found",!!match);
 +  writeFileSync(join(final,"bin/kicad-cli"),"old runtime bytes\n");
@@ -29286,10 +29888,10 @@ index 0000000000000000000000000000000000000000..ea2262f03df6432e94b52ea5959d71f2
 +echo MAC_RSS_STDIO_STATUS_KIB_PASS
 diff --git a/test/tools/native_display.ts b/test/tools/native_display.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..434b5bc95cf118188b4b89bebde8ef8c30753e55
+index 0000000000000000000000000000000000000000..59cc51bd0f4a1e10386f1f40c76923488089ee84
 --- /dev/null
 +++ b/test/tools/native_display.ts
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,62 @@
 +// A demand comes from the driver before dispatch. An independent pixel
 +// reader must observe the calibrated target region after dispatch.
 +// This is X-server content acceptance, not compositor/physical scanout.
@@ -29330,6 +29932,27 @@ index 0000000000000000000000000000000000000000..434b5bc95cf118188b4b89bebde8ef8c
 +    await pause(4);
 +  }
 +  throw new Error("display demand timed out: expected content never reached the X-server region");
++}
++
++// Calibration is outside measured demand latency. A dispatched key is queued,
++// so two early reads can straddle its first frame. Require changed content (or
++// a known pristine empty target) to remain exactly stable for a bounded period.
++export async function calibrateDisplay(
++  read: () => Promise<string>,
++  options: { before?: string; expected?: string; stableMs?: number; timeoutMs?: number } = {},
++  now: () => number = () => performance.now(),
++  pause: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms)),
++): Promise<string> {
++  const started=now(),stableMs=options.stableMs ?? 300,timeoutMs=options.timeoutMs ?? 5000;
++  let value="",since=started,samples=0;
++  while(now()-started<=timeoutMs) {
++    const actual=await read(),at=now();
++    const allowed=actual && actual!==options.before && (!options.expected || actual===options.expected);
++    if(!allowed || actual!==value){value=allowed?actual:"";since=at;samples=0;}
++    if(allowed && value===actual && ++samples>=3 && at-since>=stableMs && at-started<=timeoutMs)return actual;
++    await pause(40);
++  }
++  throw new Error("calibration timed out: changed/expected pixels never became stable");
 +}
 diff --git a/test/tools/native_display_compare.ts b/test/tools/native_display_compare.ts
 new file mode 100644
@@ -29559,12 +30182,12 @@ index 0000000000000000000000000000000000000000..7554560e4754acc96e846097948ea74f
 +} finally {fx?.kill();xs.kill();if(fx)await fx.exited;await xs.exited;}
 diff --git a/test/tools/native_display_test.ts b/test/tools/native_display_test.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..a88f112140801953cc57a05f436b21fc2309b532
+index 0000000000000000000000000000000000000000..63ad4270bbc18c0c2d68f137fe34f09ebfbfdffc
 --- /dev/null
 +++ b/test/tools/native_display_test.ts
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,39 @@
 +import { strict as assert } from "node:assert";
-+import { awaitDisplay, displayPixels } from "./native_display";
++import { awaitDisplay, calibrateDisplay, displayPixels } from "./native_display";
 +async function scenario(values: string[], target = "target", before = "old") {
 +  let t = 0;
 +  return awaitDisplay(target, before, async () => { t += 2; return values.shift() ?? "stale"; }, () => t, async ms => {t += ms;}, 0, 20);
@@ -29587,6 +30210,21 @@ index 0000000000000000000000000000000000000000..a88f112140801953cc57a05f436b21fc
 +assert.notDeepEqual(displayPixels(ppm([14277092,1250843]),2,1,true), displayPixels(ppm([14277093,1250843]),2,1,true));
 +assert.throws(() => displayPixels(ppm([1,2]),3,1), /expected RGB PPM/);
 +console.log("composer observer: caret blink ignored; missing/corrupt glyph pixels and wrong region size distinguished");
++
++async function calibration(values:string[],options:{before?:string;expected?:string}={}){
++  let now=0,index=0;
++  return calibrateDisplay(async()=>values[Math.min(index++,values.length-1)],{...options,stableMs:120,timeoutMs:500},()=>now,async ms=>{now+=ms;});
++}
++assert.equal(await calibration(["old","old","new","new","new","new"],{before:"old"}),"new");
++assert.equal(await calibration(["wrong","wrong","empty","empty","empty","empty"],{expected:"empty"}),"empty");
++assert.equal(await calibration(["old","new","old","new","new","new","new"],{before:"old"}),"new");
++await assert.rejects(calibration(["old"],{before:"old"}),/timed out/);
++await assert.rejects(calibration(["wrong"],{expected:"empty"}),/timed out/);
++let clock=0,step=0;
++await assert.rejects(calibrateDisplay(async()=>++step%2?"a":"b",{stableMs:120,timeoutMs:500},()=>clock,async ms=>{clock+=ms;}),/timed out/);
++let lateCalibration=0;
++await assert.rejects(calibrateDisplay(async()=>{lateCalibration=501;return "new";},{timeoutMs:500},()=>lateCalibration,async()=>{}),/timed out/);
++console.log("calibration: delayed/transient frames settle; unchanged, wrong-empty, oscillating and late pixels rejected (7 controls)");
 diff --git a/test/tools/outbox_e2e.ts b/test/tools/outbox_e2e.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..5467f5b75be4c1335caac3de696848e5c04b3ec7
@@ -29823,46 +30461,200 @@ index 0000000000000000000000000000000000000000..5467f5b75be4c1335caac3de696848e5
 +process.exit(failed ? 1 : 0);
 diff --git a/test/tools/perf_fixture.ts b/test/tools/perf_fixture.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..dd13e35ed79dfebefddabebe8970aa2541007e2f
+index 0000000000000000000000000000000000000000..36100ea6ff9643d9a41200f4c6f2f703855da440
 --- /dev/null
 +++ b/test/tools/perf_fixture.ts
-@@ -0,0 +1,21 @@
-+// Deterministic generated fixture for native before/after comparisons.
-+// No copied user events, credentials, repositories, or live providers.
-+import { writeFileSync } from "node:fs";
-+const output = process.argv[2];
-+if (!output) throw new Error("usage: bun test/tools/perf_fixture.ts OUTPUT.jsonl");
-+const events: object[] = [{ $: "ProjectCreated", id: "fixture-project", title: "Synthetic hardware review", root: "/tmp/native-fixture-project", at: 1 }];
-+for (let t=0;t<12;t++) {
-+  const id = `fixture-thread-${t}`;
-+  events.push({ $: "ThreadCreated", id, project: "fixture-project", title: `Synthetic board review ${String(t).padStart(2,"0")}`, env: "local", branch: "", worktree: "", provider: "claude", model: "", at: 2+t });
-+  for (let m=0;m<180-t*10;m++) {
-+    let text = `Message ${String(m).padStart(3,"0")}: regulator U3 enable through R12 to VBAT; inspect layout branch ${t}.\n\n`;
-+    text += "The next check compares routing, top and bottom assembly labels, and connector pin 1. ";
-+    if (t%3===1) text += "日本語の基板検査、電源と信号。 ";
-+    if (t%3===2) text += "Café α→β and 5 µF capacitor. ";
-+    text += "\n\n- Confirm clearance\n- Rebuild DRC\n- Save review notes";
-+    events.push({ $: "MessagePosted", thread: id, msg: `fixture-message-${t}-${m}`, role: m%2 ? "assistant" : "user", text, at:1000+t*200+m });
+@@ -0,0 +1,48 @@
++// Generated native before/after fixture. No user history or live providers.
++// The output argument is required; importing this module performs no IO.
++import { existsSync, readFileSync, writeFileSync } from "node:fs";
++
++export const fixtureSha256 = "ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543";
++export const historySha256 = "242a722701dfca4c8b7d763575e3c8e6260eaa70a001abb52bef63a2fb9c098b";
++
++export function fixtureEvents(): Record<string, unknown>[] {
++  const events: Record<string, unknown>[] = [{$:"ProjectCreated",id:"fixture-project",title:"Synthetic hardware review",root:"/tmp/native-fixture-project",at:1}];
++  for(let t=0;t<12;t++) {
++    const id=`fixture-thread-${t}`;
++    events.push({$:"ThreadCreated",id,project:"fixture-project",title:`Synthetic board review ${String(t).padStart(2,"0")}`,env:"local",branch:"",worktree:"",provider:"claude",model:"",at:2+t});
++    for(let m=0;m<180-t*10;m++) {
++      let text=`Message ${String(m).padStart(3,"0")}: regulator U3 enable through R12 to VBAT; inspect layout branch ${t}.\n\n`;
++      text+="The next check compares routing, top and bottom assembly labels, and connector pin 1. ";
++      if(t%3===1)text+="日本語の基板検査、電源と信号。 ";
++      if(t%3===2)text+="Café α→β and 5 µF capacitor. ";
++      text+="\n\n- Confirm clearance\n- Rebuild DRC\n- Save review notes";
++      events.push({$:"MessagePosted",thread:id,msg:`fixture-message-${t}-${m}`,role:m%2?"assistant":"user",text,at:1000+t*200+m});
++    }
 +  }
++  // Normal mode selects the uberbot and posts to a room. An otherwise valid
++  // history-only fixture cannot meet those workload guards.
++  for(const [index,name] of ["Fixture Steward","Fixture Inspector"].entries()) {
++    const thread=`fixture-bot-thread-${index}`,id=`fixture-bot-${index}`;
++    events.push({$:"ThreadCreated",id:thread,project:"",title:name,env:"local",branch:"",worktree:"",provider:"claude",model:"",at:4000+index*2});
++    events.push({$:"BotSet",id,name,thread,look:index,persona:"",at:4001+index*2});
++  }
++  events.push({$:"UberSet",bot:"fixture-bot-0",uid:"fixture-uber-identity",at:4010});
++  events.push({$:"RoomSet",id:"fixture-review-room",name:"Synthetic board review",members:"fixture-bot-0\nfixture-bot-1",at:4011});
++  events.push({$:"SettingSet",key:"restart.continue",value:"off",at:4012});
++  return events;
 +}
-+const bytes = events.map(e => JSON.stringify(e)).join("\n")+"\n";
-+writeFileSync(output,bytes);
-+console.log(JSON.stringify({events:events.length,bytes:Buffer.byteLength(bytes),sha256:new Bun.CryptoHasher("sha256").update(bytes).digest("hex")}));
++
++export function fixtureJSONL(events=fixtureEvents()): string {
++  return events.map(event=>JSON.stringify(event)).join("\n")+"\n";
++}
++
++if(import.meta.main) {
++  const [output,...extra]=process.argv.slice(2);
++  if(!output || extra.length) throw new Error("usage: bun test/tools/perf_fixture.ts OUTPUT.jsonl");
++  const events=fixtureEvents(),bytes=fixtureJSONL(events);
++  const sha256=new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
++  if(sha256!==fixtureSha256)throw new Error("generated fixture bytes differ from the reviewed fixture");
++  if(existsSync(output) && readFileSync(output,"utf8")!==bytes)throw new Error("refusing to replace a different existing fixture");
++  writeFileSync(output,bytes);
++  console.log(JSON.stringify({events:events.length,bytes:Buffer.byteLength(bytes),sha256}));
++}
+diff --git a/test/tools/perf_fixture_codec_test.ts b/test/tools/perf_fixture_codec_test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..1102c71385fc006d95394a315b63dff2ce8ed062
+--- /dev/null
++++ b/test/tools/perf_fixture_codec_test.ts
+@@ -0,0 +1,33 @@
++// Requires an already-built production shared-client bridge. No app/hub runs.
++// bun test/tools/perf_fixture_codec_test.ts mobile/build/assets/bridge.js
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++import { fixtureEvents } from "./perf_fixture";
++const [bridge,...extra]=process.argv.slice(2);
++if(!bridge || extra.length)throw new Error("usage: bun test/tools/perf_fixture_codec_test.ts BRIDGE.js");
++(0,eval)(readFileSync(bridge,"utf8"));
++const B=(globalThis as any).Backplane;
++assert(B,"production Backplane bridge export missing");
++function cbor(value:any):string {
++  const out:number[]=[];
++  function head(major:number,n:number){const tag=major<<5;if(n<24)out.push(tag|n);else if(n<256)out.push(tag|24,n);else if(n<65536)out.push(tag|25,n>>8,n&255);else out.push(tag|26,(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255);}
++  function item(v:any){
++    if(v===null)out.push(0xf6);else if(typeof v==="boolean")out.push(v?0xf5:0xf4);
++    else if(typeof v==="number"){assert(Number.isInteger(v)&&v>=0);head(0,v);}
++    else if(typeof v==="string"){const bytes=Buffer.from(v);head(3,bytes.length);for(const b of bytes)out.push(b);}
++    else if(Array.isArray(v)){head(4,v.length);for(const entry of v)item(entry);}
++    else{const entries=Object.entries(v);head(5,entries.length);for(const [key,entry]of entries){item(key);item(entry);}}
++  }
++  item(value);return Buffer.from(out).toString("base64");
++}
++const added=fixtureEvents().slice(-7);
++function decoded(events:any[]){B.start("fixture-codec","{}");B.hubs(["fixture"]);B.recv("fixture",cbor({t:"log",since:0,head:events.length,items:events}),false,false);return JSON.parse(B.save());}
++const state=decoded(added),bot=(node:any)=>typeof node?.$==="string"&&node.$.endsWith("/bot.Bot");
++assert(state.nodes.filter(bot).length===2 && state.nodes.some((node:any)=>bot(node)&&node.id==="fixture-bot-0") && state.nodes.some((node:any)=>bot(node)&&node.thread==="fixture-bot-thread-1"));
++console.log("ok production codec replays both BotSet events with correct thread identity");
++assert(JSON.stringify(state).includes("fixture-review-room")&&JSON.stringify(state).includes("fixture-uber-identity"));
++console.log("ok production codec retains room and uberbot identity");
++const unknown=decoded(added.map(event=>event.$==="BotSet"?{...event,$:"UnknownFixtureEvent"}:event));
++assert(unknown.nodes.filter(bot).length===0);
++console.log("ok production codec rejects unknown bot-event negative control");
++console.log("3 production codec controls passed");
+diff --git a/test/tools/perf_fixture_test.ts b/test/tools/perf_fixture_test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..80372da2d0371767b870da496c4e25ffbdac01be
+--- /dev/null
++++ b/test/tools/perf_fixture_test.ts
+@@ -0,0 +1,63 @@
++// Fixture/stand-in controls only; no hub or native app is launched.
++// Normally run in the repo. --repo ROOT supports reviewing an isolated proposal.
++import assert from "node:assert/strict";
++import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join, resolve } from "node:path";
++import { pathToFileURL } from "node:url";
++import { spawnSync } from "node:child_process";
++import { fixtureEvents, fixtureJSONL, fixtureSha256, historySha256 } from "./perf_fixture";
++
++const args=process.argv.slice(2);
++assert(args.length===0 || (args.length===2 && args[0]==="--repo"),"usage: bun test/tools/perf_fixture_test.ts [--repo ROOT]");
++const repo=resolve(args[1] ?? join(import.meta.dir,"../.."));
++const {FixtureBots}=await import(pathToFileURL(join(repo,"test/tools/perf_guard.ts")).href);
++const {standinScript}=await import(pathToFileURL(join(repo,"test/tools/perf_standin.ts")).href);
++let checks=0;
++function check(name:string,condition:unknown) {assert(condition,name);console.log(`ok ${name}`);checks++;}
++const rows=fixtureEvents(),bytes=fixtureJSONL(rows),history=rows.slice(0,-7);
++const hash=(value:string)=>new Bun.CryptoHasher("sha256").update(value).digest("hex");
++function prerequisites(events:Record<string,unknown>[]) {
++  const bots=new FixtureBots(),rooms:any[]=[];
++  for(const event of events){bots.apply(event);if(event.$==="RoomSet")rooms.push(event);}
++  return {bots,rooms:rooms.filter(room=>room.members.split("\n").some((id:string)=>bots.threads.get(id)))};
++}
++const before=prerequisites(history),after=prerequisites(rows);
++check("fixture generation is deterministic",bytes===fixtureJSONL());
++check("reviewed fixture count/bytes/hash match",rows.length===1520 && Buffer.byteLength(bytes)===556794 && hash(bytes)===fixtureSha256);
++check("all original history bytes are preserved",history.length===1513 && hash(fixtureJSONL(history))===historySha256);
++check("history-only negative control misses normal prerequisites",before.rooms.length===0 && !before.bots.uber);
++check("uberbot maps to a fixture thread",Boolean(after.bots.threads.get(after.bots.uber)));
++check("room participants map to two local fixture bots",after.rooms.length===1 && after.rooms[0].members.split("\n").length===2 && after.rooms[0].members.split("\n").every((id:string)=>after.bots.threads.get(id)));
++check("twelve non-bot history threads remain",rows.filter(event=>event.$==="ThreadCreated" && ![...after.bots.threads.values()].includes(event.id as string)).length===12);
++check("persisted events cannot resume a turn or schedule a wake",rows.every(event=>["ProjectCreated","ThreadCreated","MessagePosted","BotSet","RoomSet","UberSet","SettingSet"].includes(event.$ as string)));
++check("all fixture providers use the stand-in protocol",rows.filter(event=>event.$==="ThreadCreated").every(event=>event.provider==="claude" && event.worktree===""));
++check("restart continuation is disabled",rows.some(event=>event.$==="SettingSet" && event.key==="restart.continue" && event.value==="off"));
++
++const temp=mkdtempSync(join(tmpdir(),"bp-perf-fixture-test-"));
++try {
++  const env={HOME:temp,PATH:"/usr/bin:/bin"};
++  const generator=join(import.meta.dir,"perf_fixture.ts"),output=join(temp,"fixture.jsonl");
++  const missing=spawnSync(process.execPath,[generator],{env,encoding:"utf8"});
++  check("generator requires an explicit output argument",missing.status!==0 && missing.stderr.includes("OUTPUT.jsonl"));
++  const generated=spawnSync(process.execPath,[generator,output],{env,encoding:"utf8"});
++  check("standalone generator writes the reviewed bytes and receipt",generated.status===0 && readFileSync(output,"utf8")===bytes && JSON.parse(generated.stdout).sha256===fixtureSha256);
++  writeFileSync(output,"retain previous fixture\n");
++  const overwritten=spawnSync(process.execPath,[generator,output],{env,encoding:"utf8"});
++  check("generator preserves an existing different fixture",overwritten.status!==0 && readFileSync(output,"utf8")==="retain previous fixture\n");
++  const fake=join(temp,"fake"),blocks=join(temp,"blocks"),fallback=join(temp,"fallback"),marker=join(temp,"fallback-used"),log=join(temp,"agents.log");
++  for(const path of [fake,blocks,fallback])mkdirSync(path);
++  writeFileSync(join(fake,"claude"),standinScript);chmodSync(join(fake,"claude"),0o755);
++  for(const name of ["claude","codex","grok","muse"]){writeFileSync(join(fallback,name),`#!/bin/sh\nprintf used > '${marker}'\n`);chmodSync(join(fallback,name),0o755);}
++  const source=readFileSync(join(repo,"src/core/standin.bend"),"utf8");
++  const body=source.split("def Standin.sh() -> String:\n")[1].split("\n\ndef ")[0];
++  const shell=[...body.matchAll(/"(?:[^"\\]|\\.)*"/g)].map(match=>JSON.parse(match[0])).join("");
++  const isolated={...env,PATH:`${fake}:${blocks}:${fallback}:/usr/bin:/bin`,FAKE_LOG:log};
++  const prepared=spawnSync("/bin/sh",["-c",shell,"sh",fake,blocks,"BACKPLANE-STANDIN-MISSING","claude","codex","grok","muse"],{env:isolated,encoding:"utf8"});
++  check("production stand-in binding prepares private blocks",prepared.status===0 && prepared.stdout===fake);
++  const protocol=spawnSync(join(fake,"claude"),[],{env:isolated,input:"",encoding:"utf8"});
++  check("production stand-in starts no turn on empty input",protocol.status===0 && existsSync(log) && !readFileSync(log,"utf8").includes("TURN"));
++  const blocked=spawnSync("/bin/sh",["-c","codex"],{env:isolated,encoding:"utf8"});
++  check("absent provider cannot fall through to another executable",blocked.status===127 && blocked.stderr.includes("never used") && !existsSync(marker));
++} finally {rmSync(temp,{recursive:true,force:true});}
++console.log(`${checks} fixture/isolation controls passed`);
 diff --git a/test/tools/perf_load.ts b/test/tools/perf_load.ts
-index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd465d65a446 100644
+index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..9e89c06ee7374cab51e09c23f33aef496e58661d 100644
 --- a/test/tools/perf_load.ts
 +++ b/test/tools/perf_load.ts
-@@ -14,14 +14,15 @@
+@@ -14,14 +14,34 @@
  // stand-in `claude` first on PATH, and only the PIDs started here are
  // stopped.
  import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, openSync, readSync, closeSync, statSync } from "node:fs";
 -import { homedir, tmpdir } from "node:os";
 +import { homedir, tmpdir, hostname, arch, platform, release, cpus } from "node:os";
-+import { awaitDisplay, displayPixels } from "./native_display";
++import { awaitDisplay, calibrateDisplay, displayPixels } from "./native_display";
  import { standinScript as claude } from "./perf_standin";
  import { completeOpens, FixtureBots, streamWindow } from "./perf_guard";
  import { dirname, join, resolve } from "node:path";
  
++const ownedPids: {pid:number;what:string;kill:()=>void;exited:Promise<any>}[]=[];
++const ownedTimers=new Set<ReturnType<typeof setInterval>>();
++const partial:any={schema_version:1,complete:false,execution_status:"starting",phases:[]};
++let outputOnFailure="",cleanupPromise:Promise<void>|null=null;
++async function cleanup(){
++  if(cleanupPromise)return cleanupPromise;
++  cleanupPromise=(async()=>{
++    for(const timer of ownedTimers)clearInterval(timer);
++    for(const p of [...ownedPids].reverse()){try{p.kill();}catch{}await Promise.race([p.exited,new Promise(r=>setTimeout(r,5000))]);}
++  })();
++  return cleanupPromise;
++}
++function failed(error:unknown){
++  const report={...partial,complete:false,execution_status:"failed",error:String(error),stack:error instanceof Error?error.stack:undefined};
++  const text=JSON.stringify(report,(_,value)=>value instanceof Map?Object.fromEntries(value):value,2);
++  if(partial.root)writeFileSync(join(partial.root,"failure.json"),text);
++  if(outputOnFailure)writeFileSync(outputOnFailure,text);
++}
++async function main(){
  const argv = process.argv.slice(2);
  if (argv.includes("--help")) {
 -  console.log("bun test/tools/perf_load.ts --bin BUILD --log SNAPSHOT [--agents 10] [--secs 20] [--phases normal,idle,bg,fg,type,open,plane,mail] [--out results.json] [--shots DIR] [--fail-on-target] [--keep]");
@@ -29870,16 +30662,18 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
    process.exit(0);
  }
  const opt = (name: string, d: string) => {
-@@ -42,6 +43,8 @@ const nAgents = Number(opt("agents", "10"));
+@@ -41,7 +61,10 @@ const display = opt("display", ":77");
+ const nAgents = Number(opt("agents", "10"));
  const secs = Number(opt("secs", "20"));
  const outPath = opt("out", "");
++outputOnFailure=outPath;
  const keep = argv.includes("--keep");
 +const pixelOpens = argv.includes("--pixel-opens");
 +const pixelInputs = argv.includes("--pixel-inputs");
  const failOnTarget = argv.includes("--fail-on-target");
  const shots = opt("shots", ""); // a folder: a screenshot at the end of each phase (ImageMagick's import)
  const phasesWanted = opt("phases", "normal,idle,bg,fg,type,open,plane").split(",");
-@@ -54,8 +57,9 @@ const say = (s: string) => console.error(`[perf_load] ${s}`);
+@@ -54,8 +77,9 @@ const say = (s: string) => console.error(`[perf_load] ${s}`);
  if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error("--port must be 1024..65535");
  if (!Number.isInteger(nAgents) || nAgents < 1 || nAgents > 26) throw new Error("--agents must be 1..26");
  if (!Number.isFinite(secs) || secs <= 0) throw new Error("--secs must be positive");
@@ -29890,7 +30684,50 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  if (port === 3787) throw new Error("3787 is the live hub's port");
  if (!existsSync(bin)) throw new Error(`no binary at ${bin}`);
  if (realpathSync(bin).startsWith(join(homedir(), ".local/share/backplane"))) throw new Error("refusing to run the installed binary");
-@@ -458,6 +462,88 @@ const W = 1400, H = 900;
+@@ -68,6 +92,7 @@ try {
+ }
+ 
+ const root = mkdtempSync(join(tmpdir(), "bp-perfload-"));
++Object.assign(partial,{root,bin,source_sha_declared:opt("source-sha","unspecified"),build_flags_declared:opt("build-flags","unspecified"),display,port});
+ const home = join(root, "home");
+ const user = join(root, "user");
+ const fake = join(root, "bin");
+@@ -76,6 +101,7 @@ const proj = join(root, mailReuseHome ? "ui-replay-project" : "proj");
+ for (const d of [home, user, fake, locks, proj]) mkdirSync(d, { recursive: true });
+ if (shots) mkdirSync(shots, { recursive: true });
+ const trace = join(root, "trace.json");
++partial.trace=trace;
+ const fakeLog = join(root, "agents.log");
+ 
+ // The log, copied and sanitized
+@@ -248,7 +274,7 @@ function cborDec(b: Uint8Array): any {
+ 
+ // The app
+ // -------
+-const ownPids: { pid: number; what: string; kill: () => void; exited: Promise<any> }[] = [];
++const ownPids=ownedPids;
+ let xvfbPid = 0;
+ const xsock = `/tmp/.X11-unix/X${display.replace(/^:/, "").split(".")[0]}`;
+ if (argv.includes("--exclusive-display") && existsSync(xsock)) throw new Error(`exclusive X display ${display} already exists; refusing to share another job's X server`);
+@@ -278,16 +304,7 @@ const app = Bun.spawn([bin, "--home", home, "--port", String(port), "--no-tailsc
+ ownPids.push({ pid: app.pid, what: "backplane", kill: () => app.kill(), exited: app.exited });
+ say(`app pid ${app.pid}, home ${home}`);
+ 
+-async function cleanup() {
+-  for (const p of ownPids.reverse()) {
+-    try { p.kill(); } catch {}
+-    await Promise.race([p.exited, sleep(5000)]);
+-  }
+-}
+-process.on("SIGINT", async () => { await cleanup(); process.exit(130); });
+-const bail = async (e: any) => { console.error(e); await cleanup(); process.exit(1); };
+-process.on("uncaughtException", bail);
+-process.on("unhandledRejection", bail);
++process.once("SIGINT",async()=>{failed(new Error("interrupted by SIGINT"));await cleanup();process.exit(130);});
+ 
+ const pj = async (path: string) => (await fetch(`http://127.0.0.1:${port}${path}`)).json();
+ let ready = false;
+@@ -458,6 +475,87 @@ const W = 1400, H = 900;
  const MAINX = 264 + (W - 264) / 2, MIDY = H / 2;
  // a thread by its (unique) title: ctrl+k, the title, Return. Answers the
  // trace window of the Return alone (the open).
@@ -29941,24 +30778,23 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
 +const inputProbe = "Backplane42";
 +const inputRepeats = 6; // 66 additions and 66 independent Backspace demands
 +const inputTargets = new Map<string,string>();
++Object.assign(partial,{demand_journal:displayDemandLog,input_targets:inputTargets,title_targets:displayTargets,demands:displayDemands});
++let emptyComposerTarget="";
 +async function calibratedComposer() {
 +  await composer();
-+  const capture = async (draft:string) => {
-+    await sleep(100);
-+    const first = await composerPixels();
-+    await sleep(80);
-+    if (first !== await composerPixels()) throw new Error(`unstable composer glyph pixels for ${JSON.stringify(draft)}`);
-+    inputTargets.set(draft, first);
++  const capture = async (draft:string,before?:string) => {
++    partial.calibration={surface:"composer",draft};
++    const target=await calibrateDisplay(composerPixels,{before,expected:draft===""?emptyComposerTarget:undefined});
++    inputTargets.set(draft,target);
 +  };
 +  // These runs start with a generated empty draft. Avoid sending Return:
 +  // this phase never starts a turn from the measured text.
 +  await capture("");
 +  let draft = "";
-+  for (const key of inputProbe) { await poke("type",key); draft += key; await capture(draft); }
++  for (const key of inputProbe) {const before=inputTargets.get(draft);await poke("type",key);draft+=key;await capture(draft,before);}
 +  if (new Set(inputTargets.values()).size !== inputTargets.size) throw new Error("composer region does not distinguish every input prefix after caret normalization");
 +  for (let i=0;i<inputProbe.length;i++) await poke("key","BackSpace");
-+  await sleep(200);
-+  if (await composerPixels() !== inputTargets.get("")) throw new Error("composer calibration did not return to its empty glyph state");
++  await calibrateDisplay(composerPixels,{expected:inputTargets.get("")});
 +}
 +async function displayedInputs() {
 +  let draft = "", before = await composerPixels();
@@ -29979,7 +30815,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  async function openByTitle(title: string): Promise<[number, number]> {
    const expected = title === "zqlong" ? longT.id
      : /^zqopen[a-j]$/.test(title) ? openTs[title.charCodeAt(title.length - 1) - 97]?.id
-@@ -467,8 +553,13 @@ async function openByTitle(title: string): Promise<[number, number]> {
+@@ -467,8 +565,13 @@ async function openByTitle(title: string): Promise<[number, number]> {
    await sleep(250);
    await poke("type", title);
    await sleep(600);
@@ -29994,17 +30830,52 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
    await sleep(700);
    const b = await upMs();
    // The native client reports its selection through the existing desk.look
-@@ -505,7 +596,9 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
+@@ -497,6 +600,7 @@ async function reading(): Promise<Reading> {
+ const upMs = async () => (await reading()).up;
+ let rssMax = 0;
+ const rssTimer = setInterval(() => { rssMax = Math.max(rssMax, rssKb()); }, 500);
++ownedTimers.add(rssTimer);
+ 
+ type Phase = { name: string; what: string; a: Reading; b: Reading; rssMax: number; trafficBefore: Record<string, number>; trafficAfter: Record<string, number>; streamStart: number; streamEnd: number; marks?: [number, number][]; notes?: string[]; mailReads?: number[]; mailTraffic?: number; mailSeed?: object };
+ const phases: Phase[] = [];
+@@ -505,7 +609,10 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
    say(`phase ${name}: ${what}`);
    rssMax = 0;
    const p: Phase = { name, what, a: await reading(), b: null as any, rssMax: 0, trafficBefore: traffic(), trafficAfter: {}, streamStart: performance.now(), streamEnd: 0, marks: [], notes: [] };
 +  activePhase = name;
++  partial.active_phase=name;
    await body(p);
 +  activePhase = "setup";
    p.b = await reading();
    p.trafficAfter = traffic();
    p.streamEnd = performance.now();
-@@ -598,6 +691,26 @@ await phase("type", "streaming; 60 keys typed into the streaming thread's compos
+@@ -517,6 +624,7 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
+   }
+   p.rssMax = Math.max(rssMax, p.b.rss);
+   phases.push(p);
++  partial.phases.push({name,what,complete:true});
+ }
+ 
+ // Streaming
+@@ -545,6 +653,7 @@ const startPosts = () => {
+     if (!postedRooms.has(r.id)) postedRooms.set(r.id, { at: performance.now(), bots: roomBots(r) });
+     send("bots.post", { room: r.id, text: `zqshort a quick note for the room, post ${posts}` });
+   }, 4000);
++  ownedTimers.add(posting);
+ };
+ const stopPosts = () => { if (posting) clearInterval(posting); posting = null; };
+ const typeKeys = async (n: number, gapMs: number) => {
+@@ -592,12 +701,36 @@ await phase("fg", "streaming; the window shows a streaming thread with its Subag
+   await sleep(secs * 1000);
+ });
+ 
++if(pixelInputs && phasesWanted.includes("input-display")){
++  await composer();
++  emptyComposerTarget=await calibrateDisplay(composerPixels);
++}
+ await phase("type", "streaming; 60 keys typed into the streaming thread's composer (8/s), then deleted", async () => {
+   await composer();
+   await typeKeys(60, 125);
    await sleep(1000);
  });
  
@@ -30017,21 +30888,21 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
 +if (pixelOpens && phasesWanted.includes("open")) {
 +  calibratingDisplay = true;
 +  for (const title of ["zqlong", ...openTs.map((_,i) => `zqopen${String.fromCharCode(97+i)}`), ...ours.map((t:any) => t.title.split(" ")[0])]) {
++    const before=await headerPixels();
 +    await openByTitle(title);
-+    const first = await headerPixels();
-+    await sleep(80);
-+    if (first !== await headerPixels()) throw new Error(`unstable native title pixels for ${title}`);
-+    displayTargets.set(title, first);
++    partial.calibration={surface:"title",title};
++    displayTargets.set(title,await calibrateDisplay(headerPixels,{before}));
 +  }
 +  if (new Set(displayTargets.values()).size !== displayTargets.size) throw new Error("native header region does not distinguish every target");
 +  await openByTitle("zqlong");
++  await calibrateDisplay(headerPixels,{expected:displayTargets.get("zqlong")});
 +  calibratingDisplay = false;
 +  displayReady = true;
 +}
  await phase("open", "streaming; 10 real threads opened one after another (ctrl+k, title, Return)", async (p) => {
    for (let i = 0; i < 10; i++) p.marks!.push(await openByTitle(`zqopen${String.fromCharCode(97 + i)}`));
  });
-@@ -711,8 +824,11 @@ const stat = (es: Ev[], name: string | RegExp): Sum => {
+@@ -711,8 +844,11 @@ const stat = (es: Ev[], name: string | RegExp): Sum => {
    return { n: d.length, p50: pctOf(d, 50), p99: pctOf(d, 99), max: d.length ? Math.max(...d) : NaN, sum: d.reduce((a, b) => a + b, 0), over8: d.filter((x) => x > 8).length, over16: d.filter((x) => x > 16).length };
  };
  const f1 = (x: number) => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "-");
@@ -30045,7 +30916,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  const rows: string[] = [];
  const verdicts: string[] = [];
  for (const name of order) {
-@@ -752,7 +868,11 @@ for (const name of order) {
+@@ -752,7 +888,11 @@ for (const name of order) {
    const key = { n: keys.length, p50: pctOf(keys, 50), p99: pctOf(keys, 99), max: keys.length ? Math.max(...keys) : NaN };
    const streamingCounts = Object.fromEntries(ours.map((t: any) => [t.id, (p.trafficAfter[t.id] ?? 0) - (p.trafficBefore[t.id] ?? 0)]));
    const streamWindows = Object.fromEntries(ours.map((t: any) => [t.id, streamWindow(deltaTimes.get(t.id) ?? [], p.streamStart, p.streamEnd)]));
@@ -30057,7 +30928,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
      ...(name !== "idle" ? [["all agents streaming", Object.values(streamWindows).every((w) => w.sustained)] as [string, boolean | null]] : []),
      ...(["open", "mail"].includes(name) ? [["all ten opens sampled", completeOpens(opens, 10)] as [string, boolean | null]] : []),
      ...(name === "mail" ? [["Mailroom and ten conversation selections visually verified", null] as [string, boolean | null]] : []),
-@@ -781,7 +901,7 @@ for (const name of order) {
+@@ -781,7 +921,7 @@ for (const name of order) {
    const mailHitBefore = p.a.rows.get("ui.mail.body.hit");
    const mailHitAfter = p.b.rows.get("ui.mail.body.hit");
    const mailBodyCache = { frames: (mailHitAfter?.n ?? 0) - (mailHitBefore?.n ?? 0), hits: (mailHitAfter?.sum ?? 0) - (mailHitBefore?.sum ?? 0) };
@@ -30066,7 +30937,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  }
  console.log(`\nperf_load: ${bin}\n  log ${logSrc} (${kept.length} lines; sha256 ${logSha256}), ${nAgents} agents, ${botRooms.length} bot rooms, ${secs} s phases, port ${port}, display ${display}`);
  console.log(`  ms; frame = ui.frame n p50/p99/max >8/>16; input = ui.input; key>frame = ui.msg.win + ui.input; open = the slowest thread open, Return to frame; line = hub.agent_line n p50/p99/max; hub% = hub.* span time / wall; cpu% = whole app process`);
-@@ -789,6 +909,14 @@ console.log(`phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 rast
+@@ -789,6 +929,14 @@ console.log(`phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 rast
  for (const r of rows) console.log(r);
  console.log("\ntargets: frame p99<=8, no frame>16 from streaming (idle/bg), typing input p99<=16, thread open<=50, agent_line p99<=2");
  for (const v of verdicts) console.log(v);
@@ -30081,7 +30952,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  for (const p of results.phases) {
    console.log(`\n${p.name}: heaviest spans (total ms in phase, n, mean, max)`);
    for (const t of p.top.slice(0, 8)) console.log(`  ${t.name.padEnd(28)} ${String(t.sum_ms).padStart(9)} ${String(t.n).padStart(6)} ${String(t.mean_ms).padStart(8)} ${String(t.max_ms).padStart(8)}`);
-@@ -806,6 +934,7 @@ results.open_selections = openEvidence;
+@@ -806,6 +954,7 @@ results.open_selections = openEvidence;
  results.stray_agents = strays;
  results.agentsLog = readFileSync(fakeLog, "utf8").split("\n").filter((l) => l.startsWith("TURN")).length;
  results.appErrTail = appLogTail;
@@ -30089,6 +30960,12 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  if (outPath) { writeFileSync(outPath, JSON.stringify(results, null, 1)); console.log(`\nraw JSON: ${outPath}`); }
  if (!keep) rmSync(root, { recursive: true, force: true });
  else console.log(`kept ${root}`);
+@@ -828,3 +977,5 @@ async function statusPlaneImpl(_p: Phase): Promise<boolean> {
+   _p.notes!.push("Uberbot selection observed through desk.look; Status tab itself is unverified (strict coverage check remains n/a).");
+   return false;
+ }
++}
++try{await main();}catch(error){console.error(error);failed(error);process.exitCode=1;}finally{await cleanup();}
 diff --git a/test/tools/plot2d_cache.mjs b/test/tools/plot2d_cache.mjs
 new file mode 100644
 index 0000000000000000000000000000000000000000..64c52ec4675f02838181a4e5aa76c906198eccab
@@ -30965,10 +31842,10 @@ index 4ce00faa0ee97e59e223aff81e6fb86a34a25a87..f48047e6563dbeb7bca81312dbbb1aee
    }).then((r) => r.json());
 diff --git a/test/tools/validation_evidence_test.py b/test/tools/validation_evidence_test.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..ca0148b10ff89a65950c2d539192e155cad2adfb
+index 0000000000000000000000000000000000000000..c70a102371183bcba8f28efd304ca28fb38e2ac9
 --- /dev/null
 +++ b/test/tools/validation_evidence_test.py
-@@ -0,0 +1,174 @@
+@@ -0,0 +1,186 @@
 +#!/usr/bin/env python3
 +"""Validation must distinguish pass, skip, missing commands and source changes."""
 +import json
@@ -30976,6 +31853,7 @@ index 0000000000000000000000000000000000000000..ca0148b10ff89a65950c2d539192e155
 +import os
 +from pathlib import Path
 +import shutil
++import shlex
 +import subprocess
 +import tempfile
 +
@@ -31013,6 +31891,14 @@ index 0000000000000000000000000000000000000000..ca0148b10ff89a65950c2d539192e155
 +''')
 +    (root/'scripts/fetch-cad-fixture.py').write_text("print('ok fixture CAD')\n")
 +    script('bin/kicad-cli', 'printf "%s\\n" "${EVIDENCE_KICAD_VERSION:-10.0.6}"\nexit "${EVIDENCE_KICAD_STATUS:-0}"\n')
++    # Tiny repositories cannot contain the production baseline commit. Only
++    # its existence probe is synthetic; all source/receipt Git work stays real.
++    script('bin/git', '''
++if [ "$#" = 3 ] && [ "$1" = cat-file ] && [ "$2" = -e ] && [ "$3" = 30884966ef59c383581bcd1b7653f8f739cf009e:src/server/kicad.bend ]; then
++  exit "${EVIDENCE_MISSING_NATIVE_BASE:-0}"
++fi
++exec '''+shlex.quote(shutil.which('git'))+''' "$@"
++''')
 +    for name in ['bun','bend','clang']:
 +        script(f'bin/{name}', '''
 +if [ "$(basename "$0")" = bend ]; then
@@ -31111,12 +31997,15 @@ index 0000000000000000000000000000000000000000..ca0148b10ff89a65950c2d539192e155
 +    code,e=run('browser');assert code and not e['steps'] and 'Bend version probe' in e['provenance']['error']
 +    build_receipt.write_bytes(saved_receipt)
 +    print('ok failed/malformed producers and failed or wrong-argv Bend metadata fail before consumer tests')
++    code,e=run('native',extra_env={'EVIDENCE_MISSING_NATIVE_BASE':'1'})
++    assert code and not e['steps'] and 'git fetch --no-tags --depth=1 origin 30884966' in e['provenance']['error']
++    assert e['provenance']['native_baseline']['status']==1
 +    code,e=run('native')
 +    assert code==0 and e['consumed']['phone_bridge']['sha256']==hashlib.sha256(bridge.read_bytes()).hexdigest()
 +    code,e=run('native',extra_env={'EVIDENCE_MUTATE_BRIDGE':'1'})
 +    assert code and 'consumed phone_bridge changed' in e['provenance']['error']
 +    bridge.write_text('fixture bridge\n')
-+    print('ok the exact reconnect bridge is recorded and mutation invalidates acceptance')
++    print('ok missing native baseline fails before compilation; exact reconnect bridge mutation invalidates acceptance')
 +    external.write_bytes((root/'dist/backplane').read_bytes())
 +    code,e=run('browser','--binary',external,extra_env={'EVIDENCE_MUTATE_BINARY':'1'})
 +    assert code and 'consumed hub_binary changed' in e['provenance']['error']
@@ -31143,6 +32032,184 @@ index 0000000000000000000000000000000000000000..ca0148b10ff89a65950c2d539192e155
 +    code,e=run('browser','--out','evidence-output')
 +    assert code==0 and e['provenance']['build']['receipt']==str(root/'evidence-output/build/result.json')
 +    print('ok custom evidence output stays outside source identity across producer and consumer lanes')
+diff --git a/test/tools/validation_renderer_test.py b/test/tools/validation_renderer_test.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed93df75bbec0dd25938ff8a665691843c913bc1
+--- /dev/null
++++ b/test/tools/validation_renderer_test.py
+@@ -0,0 +1,172 @@
++#!/usr/bin/env python3
++"""Required renderer receipts with tiny fake tools; no compiler, Bend or X server."""
++import hashlib
++import json
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++
++RUNNER = Path('scripts/validate-contribution.py').read_text()
++GLYPH = ['native font loaded', 'native cold stream has wants',
++         'native nonASCII fill drains wants', 'native layout emits keys directly',
++         'native table resolves original masks', 'native keyed pixels equal original RGlyph bytes',
++         'native cold to warm frame is fresh']
++I18N = ['Japanese literal', 'Japanese save', 'English plural', 'Japanese count',
++        'exact plural', 'select', 'interpolation', 'literal fallback', 'plural fallback']
++COUNTS = dict.fromkeys(['masks', 'keys', 'prekeyed', 'table-guard', 'convert-and-eq', 'key-eq', 'extension-plan'], 100)
++COUNTS.update(dict.fromkeys(['font-open', 'ascii-fill-table', 'nonASCII-fill-table', 'fill-redraw-and-byte-check', 'cold-frame'], 1))
++
++with tempfile.TemporaryDirectory(prefix='bp-validation-renderer-') as tmp:
++    root = Path(tmp)/'repo'
++    def write(name, text, executable=False):
++        path = root/name
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_text(text)
++        if executable:
++            path.chmod(0o755)
++        return path
++    def python(name, text):
++        return write(name, '#!/usr/bin/env python3\n'+text, True)
++    write('scripts/validate-contribution.py', RUNNER)
++    write('.gitignore', 'build/\n')
++    for name in ['native_display.ts', 'native_display_test.ts', 'native_display_compare.ts',
++                 'native_display_compare_test.ts', 'native_display_readback_test.ts',
++                 'xpoke.c', 'present_observer_fixture.c']:
++        write('test/tools/'+name, '// synthetic harness input\n')
++    for name in ['glyph_table_bench', 'i18n_smoke']:
++        write('test/native/'+name+'.bend', '# synthetic source, never compiled\n')
++    write('font.dat', 'synthetic Japanese font\n')
++    fake_tool = '''import os, pathlib, sys
++name = pathlib.Path(sys.argv[0]).name
++if name == 'bend':
++    assert sys.argv[1:] == ['version']
++    print('2.0.36')
++elif name == 'clang':
++    if sys.argv[1:] == ['--version']:
++        print('fixture clang 19')
++    else:
++        assert '-lX11' in sys.argv
++        out = pathlib.Path(sys.argv[sys.argv.index('-o')+1])
++        if not os.getenv('CONTROL_NO_XPOKE'):
++            out.write_text('#!/bin/sh\\nexit 0\\n'); out.chmod(0o755)
++elif name == 'fc-match':
++    print(pathlib.Path('font.dat').resolve())
++    print('en' if os.getenv('CONTROL_NO_JAPANESE') else 'en|ja')
++elif name == 'bun':
++    test = sys.argv[1]
++    if test == '--version': print('fixture Bun 1')
++    elif test.endswith('/native_display_test.ts'):
++        print('native display demand: changed target accepted; stale, wrong, indistinguishable and late content rejected')
++        print('composer observer: caret blink ignored; missing/corrupt glyph pixels and wrong region size distinguished')
++        if not os.getenv('CONTROL_OLD_POLICY'):
++            print('calibration: delayed/transient frames settle; unchanged, wrong-empty, oscillating and late pixels rejected (7 controls)')
++        if os.getenv('CONTROL_SOURCE_CHANGE'): pathlib.Path('font.dat').write_text('changed source')
++    elif test.endswith('/native_display_compare_test.ts'):
++        print(('28' if os.getenv('CONTROL_OLD_COMPARE') else '29')+' independent native display comparison controls passed')
++    elif test.endswith('/native_display_readback_test.ts'):
++        assert len(sys.argv) == 5
++        assert all(pathlib.Path(p).is_file() for p in sys.argv[2:])
++        assert os.environ['HOME'] != os.environ['CONTROL_ORIGINAL_HOME']
++        if not os.getenv('CONTROL_NO_READBACK'):
++            print('xpoke pixels independently read exact red/green RGB bytes from X-server fixture')
++    else: raise AssertionError(test)
++elif name == 'Xvfb': raise AssertionError('fake Bun must not start an X server')
++else: raise AssertionError(name)
++'''
++    for name in ['bun', 'bend', 'clang', 'Xvfb', 'fc-match']:
++        python('bin/'+name, fake_tool)
++    runtime = '''import os, pathlib, sys
++assert os.environ['HOME'] != os.environ['CONTROL_ORIGINAL_HOME']
++assert os.environ['XDG_CACHE_HOME'].startswith(os.environ['HOME']+'/')
++assert os.environ['BACKPLANE_HOME'].startswith(os.environ['HOME']+'/')
++glyph = pathlib.Path(sys.argv[0]).name == 'glyph_table_bench'
++checks = GLYPH if glyph else ['native '+name for name in I18N]
++for check in checks:
++    if os.getenv('CONTROL_MISSING_ASSERT') == ('glyph' if glyph else 'i18n') and check == checks[-1]: continue
++    if os.getenv('CONTROL_MISSING_ASSERT') == 'rglyph' and 'RGlyph bytes' in check: continue
++    print('ok '+check)
++if os.getenv('CONTROL_ERROR'): print('Error: fixture failure despite zero exit')
++if os.getenv('CONTROL_SKIP'): print('skip required renderer check')
++if not glyph and os.getenv('CONTROL_MUTATE_BINARY'):
++    with (pathlib.Path(sys.argv[0]).parent/'glyph_table_bench').open('a') as f: f.write('# changed after consumption\\n')
++if not glyph and os.getenv('CONTROL_MUTATE_C'):
++    with pathlib.Path('build/cc/glyph_table_bench/all.c').open('a') as f: f.write('changed after compilation\\n')
++'''
++    python('scripts/build-app.sh', '''import os, pathlib, sys
++assert os.environ['HOME'] == os.environ['CONTROL_ORIGINAL_HOME'], 'compiler lost its toolchain HOME'
++assert os.environ['BACKPLANE_PREBUILT'] == '0'
++assert os.environ['BACKPLANE_EMIT_ONLY'] == '0'
++assert os.environ['BACKPLANE_GOOGLE_BAKE'] == '0'
++out = pathlib.Path(sys.argv[2]); work = pathlib.Path('build/cc')/out.name
++work.mkdir(parents=True, exist_ok=True)
++if not os.getenv('CONTROL_NO_C'): (work/'all.c').write_text('fresh synthetic C\\n')
++out.write_text(RUNTIME); out.chmod(0o755)
++'''.replace('RUNTIME', repr('#!/usr/bin/env python3\nGLYPH = '+repr(GLYPH)+'\nI18N = '+repr(I18N)+'\n'+runtime)))
++    python('test/tools/glyph_bench_report.py', '''import json, os, pathlib, sys
++if not os.getenv('CONTROL_NO_SUMMARY'):
++    counts = COUNTS.copy()
++    if os.getenv('CONTROL_INCOMPLETE_SAMPLES'): counts['masks'] = 99
++    pathlib.Path(sys.argv[2]).write_text(json.dumps({'samples': {name:{'n':n} for name,n in counts.items()}}))
++print('705 complete native glyph samples summarized')
++'''.replace('COUNTS', repr(COUNTS)))
++    env = dict(os.environ, PATH=str(root/'bin')+os.pathsep+os.environ['PATH'],
++               CONTROL_ORIGINAL_HOME=os.environ['HOME'], GIT_CONFIG_NOSYSTEM='1',
++               GIT_CONFIG_GLOBAL=str(Path(tmp)/'no-config'))
++    for command in [['git', 'init', '-q'], ['git', 'add', '.'],
++                    ['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fixture']]:
++        subprocess.run(command, cwd=root, env=env, check=True, stdout=subprocess.DEVNULL)
++    def run(**settings):
++        code = subprocess.run(['python3', 'scripts/validate-contribution.py', 'renderer'],
++                              cwd=root, env=dict(env, **settings), stdout=subprocess.DEVNULL).returncode
++        report = json.loads((root/'build/validation/renderer/result.json').read_text())
++        assert (code == 0) == (report['result'] == 'pass')
++        return code, report
++    harness = root/'test/tools/present_observer_fixture.c'
++    data = harness.read_bytes(); harness.unlink()
++    code, r = run()
++    assert code and not r['steps'] and '62fa318' in r['provenance']['error']
++    harness.write_bytes(data)
++    print('ok absent native integration is an explicit required dependency failure')
++    code, r = run(BACKPLANE_TEST_XVFB=str(root/'missing-Xvfb'))
++    assert code and not r['steps'] and 'requires executable' in r['provenance']['error']
++    code, r = run(CONTROL_NO_JAPANESE='1')
++    assert code and not r['steps'] and 'Japanese-capable font' in r['provenance']['error']
++    print('ok missing Xvfb and missing Japanese font fail before tests')
++    code, r = run(BACKPLANE_PREBUILT='1', BACKPLANE_EMIT_ONLY='1')
++    assert not code and len(r['steps']) == 10 and r['source'] == r['source_after']
++    for item in r['artifacts']:
++        assert item['sha256'] == hashlib.sha256(Path(item['resolved_path']).read_bytes()).hexdigest()
++    assert len([a for a in r['artifacts'] if a.get('role') == 'renderer_emitted_c']) == 2
++    assert len([a for a in r['consumed'] if a in ['renderer_xpoke', 'renderer_present_observer_fixture', 'renderer_glyph_table_bench', 'renderer_i18n_native_smoke']]) == 4
++    assert not Path(r['steps'][6]['environment']['HOME']).exists(), 'private runtime HOME was retained'
++    assert all('check.sh' not in ' '.join(s['command']) and 'test.sh' not in ' '.join(s['command']) for s in r['steps'])
++    print('ok complete required work binds compiled fixtures/C/logs/source and isolates runtime HOME without repeating proof/units')
++    for mode, index in [('CONTROL_OLD_POLICY', 0), ('CONTROL_OLD_COMPARE', 1), ('CONTROL_NO_READBACK', 4)]:
++        code, r = run(**{mode:'1'})
++        assert code and r['steps'][-1]['exit_code'] == 0 and len(r['steps']) == index+1
++    print('ok old settling/comparison coverage and zero-exit missing X11 readback cannot pass')
++    for kind in ['glyph', 'rglyph', 'i18n']:
++        code, r = run(CONTROL_MISSING_ASSERT=kind)
++        assert code and r['steps'][-1]['exit_code'] == 0 and 'assertions missing' in r['steps'][-1]['reason']
++    print('ok missing RGlyph/fresh-frame or native i18n assertions fail even at exit zero')
++    for mode in ['CONTROL_ERROR', 'CONTROL_SKIP']:
++        code, r = run(**{mode:'1'})
++        assert code and r['steps'][-1]['result'] != 'pass'
++    print('ok Error and skipped required renderer work fail visibly')
++    for mode in ['CONTROL_NO_XPOKE', 'CONTROL_NO_C']:
++        # Prior successful outputs exist: they must be removed before compiling.
++        code, r = run(**{mode:'1'})
++        assert code and r['steps'][-1]['exit_code'] == 0 and r['steps'][-1]['reason']
++    print('ok missing fresh binary or emitted C cannot reuse stale successful outputs')
++    for mode in ['CONTROL_INCOMPLETE_SAMPLES', 'CONTROL_NO_SUMMARY']:
++        code, r = run(**{mode:'1'})
++        assert code and r['provenance']['error']
++    print('ok incomplete 705-sample summary and absent replacement summary fail')
++    for mode, name in [('CONTROL_MUTATE_BINARY', 'renderer_glyph_table_bench'), ('CONTROL_MUTATE_C', 'renderer_glyph_table_bench_emitted_c')]:
++        code, r = run(**{mode:'1'})
++        assert code and 'consumed '+name+' changed' in r['provenance']['error']
++    print('ok compiled fixture or emitted C replacement after execution invalidates evidence')
++    code, r = run(CONTROL_SOURCE_CHANGE='1')
++    assert code and r['source_changed_during_run']
++    print('ok changing renderer source during the lane invalidates otherwise passing steps')
 diff --git a/test/tools/viewers_far_e2e.ts b/test/tools/viewers_far_e2e.ts
 index d7080cc979f4ee3dbf4c8c5f3d28aa44a87e2994..defc6181bac55d9af17b6154f0d107eab83e4f31 100644
 --- a/test/tools/viewers_far_e2e.ts
