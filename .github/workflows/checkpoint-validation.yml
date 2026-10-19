@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SOURCE_REV: 83cb014a3eaae3c80f105d789eb2b87cf327eec3
+  SOURCE_REV: a87025a20bceb526f795c62c6043820dc9c68cba
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 
 jobs:
@@ -73,7 +73,7 @@ jobs:
           set -euo pipefail
           build/checkpoint_ignored_test | tee build/checkpoint-ignored.log
           ! grep -q '^FAIL ' build/checkpoint-ignored.log
-          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 46
+          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 53
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -149,7 +149,7 @@ jobs:
               'snapshot leaves real flags and index bytes unchanged',
           ]:
               assert 'ok ' + label in lines, label
-          assert sum(line.startswith(('ok ', 'FAIL ')) for line in lines) == 46
+          assert sum(line.startswith(('ok ', 'FAIL ')) for line in lines) == 53
           assert not any(line.startswith('Error:') for line in lines)
           print('Confirmed ignored tracked checkpoint loss with healthy setup and real-index controls.')
           CHECK
@@ -278,7 +278,7 @@ jobs:
           scripts/build-app.sh test/native/checkpoint_ignored_test.bend build/checkpoint_ignored_test
           build/checkpoint_ignored_test | tee build/checkpoint-ignored.log
           ! grep -q '^FAIL ' build/checkpoint-ignored.log
-          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 46
+          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 53
       - name: Object cache
         # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
         # unchanged unit is not compiled again. Never holds the Google client
