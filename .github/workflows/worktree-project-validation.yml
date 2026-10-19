@@ -1,0 +1,120 @@
+name: Worktree project validation
+
+on:
+  push:
+    branches: [ci/worktree-project-base]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: worktree-project-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: 2d54165824fc5f27244802af9cf28f9ecfec62b9
+  BASELINE_REV: 91f3cd8123b2de3c42021273f30b08580b9b744e
+  BEND_NO_TELEMETRY: "1"
+  BACKPLANE_GOOGLE_BAKE: "0"
+
+jobs:
+  baseline-and-fix:
+    name: Linux baseline and fixed regression
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BACKPLANE_LOW_MEM: "1"
+      BACKPLANE_JOBS: "1"
+      BUN_JSC_forceRAMSize: "4294967296"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - name: Install clang 19
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Compile the new regression tests against the old Git code
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          git show "$BASELINE_REV:src/server/git.bend" > src/server/git.bend
+          scripts/build-app.sh test/native/git_test.bend build/git_baseline
+      - name: Require the original bug to fail at runtime
+        run: |
+          set +e
+          build/git_baseline > build/git-baseline.log 2>&1
+          status=$?
+          set -e
+          cat build/git-baseline.log
+          test "$status" -ne 0
+          grep -Fq 'FAIL feature-only project directory exists:' build/git-baseline.log
+          grep -Fq 'FAIL feature-only project files:' build/git-baseline.log
+          grep -Fq 'FAIL feature-only project starts at HEAD:' build/git-baseline.log
+          grep -Fq 'FAIL uncommitted-only project has a useful error:' build/git-baseline.log
+          grep -Fq 'FAIL missing project does not create a worktree:' build/git-baseline.log
+          grep -Fq 'FAIL missing project does not create a branch:' build/git-baseline.log
+      - name: Compile and run the same tests against the fixed Git code
+        run: |
+          git show "$SOURCE_REV:src/server/git.bend" > src/server/git.bend
+          git diff --exit-code -- src/server/git.bend test/native/git_test.bend
+          scripts/build-app.sh test/native/git_test.bend build/git_fixed
+          build/git_fixed 2>&1 | tee build/git-fixed.log
+          grep -qx 'all ok' build/git-fixed.log
+          ! grep -q '^FAIL ' build/git-fixed.log
+
+  macos:
+    name: macOS project-prefix regression
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      BUN_JSC_forceRAMSize: "2147483648"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - name: Compile the project-prefix tests with the platform compiler
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 65532
+          mkdir -p build
+          cat > build/worktree_prefix_ci.bend <<'BEND'
+          import Base
+          import ../test/native/git_test.bend as GT
+          import ../src/server/proc.bend as P
+
+          def path(r: P.Ran) -> IO(String):
+            match r:
+              case P.Ran{0, out}:
+                IO.pure(String, String.trim(out))
+              case _:
+                IO.die(String, 1, "could not prepare a temporary test directory")
+
+          def main() -> IO(Unit):
+            do IO<Unit>:
+              +raw : String <- IO.bind(P.Ran, String, P.Proc.run("mktemp", ["-d", "/tmp/bp-prefix-ci.XXXXXX"], ""), path)
+              +root : String <- IO.bind(P.Ran, String, P.Proc.run("sh", ["-c", "cd \"$1\" && pwd -P", "sh", raw], ""), path)
+              ok : Bool <- GT.thread_prefix_checks(root)
+              cleaned : P.Ran <- P.Proc.run("rm", ["-rf", root], "")
+              GT.finish(Bool.and(ok, String.eq(GT.code(cleaned), "0")))
+          BEND
+          bend build/worktree_prefix_ci.bend -o build/git_test
+      - name: Run the 22 project-prefix assertions
+        run: |
+          ulimit -s 65532
+          build/git_test 2>&1 | tee build/git-macos.log
+          test "$(grep -c '^ok ' build/git-macos.log)" -eq 22
+          grep -qx 'all ok' build/git-macos.log
+          ! grep -q '^FAIL ' build/git-macos.log
