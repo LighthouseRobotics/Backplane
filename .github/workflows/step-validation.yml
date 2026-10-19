@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SOURCE_REV: 2d7f965f56771f656744bc7538cc3b04d4246b2c
+  SOURCE_REV: e4e8b8d85216568eb688fc651c47f96e0d1919a4
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 
 jobs:
@@ -148,6 +148,68 @@ jobs:
           if-no-files-found: warn
           retention-days: 1
 
+  cli:
+    name: Model conversion CLI preflight
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BACKPLANE_CPUS: ""
+      BACKPLANE_JOBS: "2"
+      BACKPLANE_CFLAGS: "-O2"
+      BACKPLANE_EMIT_CACHE: "0"
+      BACKPLANE_OBJ_CACHE: "0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify source and create a narrow native CLI entry
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          cat > test/native/model_cache_cli_probe.bend <<'BEND'
+          import Base
+          import ../../src/server/argv.bend as A
+          import ../../src/server/plot.bend as V
+          import ../../src/server/host.bend as H
+          import ../../src/app/render.bend as R
+
+          def render(args: List<String>) -> IO(Unit):
+            R.Render.main(V.Pv.args.copy(args))
+
+          def main() -> IO(Unit):
+            do IO<Unit>:
+              frame : List<&2, U32> <- H.Json.cbor_frame("null", "", "")
+              args : List<String> <- A.Argv.args()
+              V.Pv.main(args, render)
+          BEND
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Build the actual plot and native rendering paths
+        run: scripts/build-app.sh test/native/model_cache_cli_probe.bend build/model_cache_cli_probe
+      - name: Require all CLI cache and concurrency regressions before full app builds
+        run: |
+          set -euo pipefail
+          bun test/tools/model_cache_e2e.ts build/model_cache_cli_probe | tee build/model-cache-cli-preflight.log
+          if grep -q '^FAIL ' build/model-cache-cli-preflight.log; then exit 1; fi
+          test "$(grep -c '^ok ' build/model-cache-cli-preflight.log)" -eq 64
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-cache-cli-preflight
+          path: |
+            build/model-cache-cli-preflight.log
+            build/model_cache_cli_probe
+          if-no-files-found: warn
+          retention-days: 1
+
   check:
     if: github.repository == 'LighthouseRobotics/Backplane'
     name: Type-check
@@ -210,7 +272,7 @@ jobs:
       - run: TEST_JOBS=$(nproc) scripts/test.sh
 
   build:
-    needs: [focused, baseline]
+    needs: [focused, baseline, cli]
     if: github.repository == 'LighthouseRobotics/Backplane'
     name: Build ${{ matrix.target }}
     # runs beside "laws" (which checks every file); nothing is published here
