@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 env:
-  SOURCE_REV: dbfdc7ee51aea2d1e02daa0acd7523153515ea91
+  SOURCE_REV: 63392d9ff333fb7def177e6e958373e90865deae
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 
 jobs:
