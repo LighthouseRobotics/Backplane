@@ -1,0 +1,70 @@
+name: Reconnect state native preflight
+
+on:
+  push:
+    branches: [ci/outbox-c-validation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: outbox-c-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: 884e603eb4ab4d3f001ef990dc31741c5ab101c2
+
+jobs:
+  native:
+    name: Native and JS reconnect state
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BACKPLANE_CFLAGS: "-O2"
+      BACKPLANE_JOBS: "2"
+      BACKPLANE_CPUS: ""
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BUN_JSC_forceRAMSize: "4294967296"
+      BUN_JSC_maxPerThreadStackUsage: "536870912"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Check the pinned source and JS regression
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 1048576
+          mkdir -p build
+          bend test/outbox_test.bend | tee build/outbox-js.log
+          ! grep -q '^FAIL' build/outbox-js.log
+          test "$(grep -c '^ok ' build/outbox-js.log)" -eq 42
+      - name: Build and run the native regression
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 1048576
+          clang --version
+          scripts/build-app.sh test/outbox_test.bend build/outbox_test
+          build/outbox_test | tee build/outbox-native.log
+          ! grep -q '^FAIL' build/outbox-native.log
+          test "$(grep -c '^ok ' build/outbox-native.log)" -eq 42
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: outbox-c-preflight-logs
+          path: |
+            build/outbox-js.log
+            build/outbox-native.log
+            build/cc/outbox_test/stages.txt
+          if-no-files-found: error
+          retention-days: 1
