@@ -1,0 +1,190 @@
+name: Event log supplemental validation
+
+# Fork-only validation. Application and test sources are pinned separately
+# from this workflow branch; nothing is published or deployed.
+on:
+  push:
+    branches: [ci/logread-validation]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: logread-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: c38f92e44696fd7d2acce4976f4b237ab45d7272
+  BASELINE_REV: 6aed93384c569f8edd313d0acd0aa0e745ceb796
+  BASELINE_REFERENCE: 30884966ef59c383581bcd1b7653f8f739cf009e
+  BASELINE_RUN: "39199428099"
+
+jobs:
+  baseline:
+    name: Existing Linux binary reproduces unreadable-history startup
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BACKPLANE_CPUS: ""
+      BACKPLANE_JOBS: "1"
+      BACKPLANE_UNITS: "1"
+      BACKPLANE_OBJ_CACHE: "0"
+      BACKPLANE_EMIT_CACHE: "0"
+      BUN_JSC_forceRAMSize: "1073741824"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19 for the small reader fixture
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Build the test wire and strict reader fixture
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          bend test/wire/index.html -o build/wire
+          BACKPLANE_SKIP_CHECK=1 scripts/build-app.sh test/native/log_read.bend build/log_read
+      - name: Verify the successful baseline and unchanged history reader
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_RUN" --jq .head_sha)" = "$BASELINE_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_RUN" --jq .conclusion)" = success
+          git fetch --no-tags --depth=1 origin "$BASELINE_REV" "$BASELINE_REFERENCE"
+          git diff --exit-code "$BASELINE_REFERENCE" "$BASELINE_REV" -- \
+            src/core/store.bend src/core/utf8.bend src/core/codec.bend \
+            src/core/model.bend .github/actions/setup-bend/action.yml test/wire
+          python3 - <<'PY'
+          import os
+          import re
+          import subprocess
+
+          def source(rev):
+              return subprocess.check_output(["git", "show", rev + ":src/server/server.bend"], text=True)
+
+          def definition(text, name):
+              match = re.search(r"(?ms)^def " + re.escape(name) + r"\(.*?(?=^def |\Z)", text)
+              if match is None:
+                  raise SystemExit("missing baseline definition: " + name)
+              # Comments between definitions do not change the reader.
+              return "\n".join(line for line in match.group().splitlines() if line and not line.startswith("#"))
+
+          reference = source(os.environ["BASELINE_REFERENCE"])
+          baseline = source(os.environ["BASELINE_REV"])
+          names = ["Files.read.done", "Files.read.sized", "Files.read.opened", "Files.read", "Main.boot"]
+          for name in names:
+              if definition(reference, name) != definition(baseline, name):
+                  raise SystemExit("baseline history reader changed: " + name)
+          print("Baseline and reference have identical history reader definitions")
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          repository: ${{ github.repository }}
+          run-id: "39199428099"
+          github-token: ${{ github.token }}
+          name: backplane-linux-x64
+          path: build/baseline-dist
+      - name: Require both original entry names to serve unreadable logs
+        run: |
+          chmod +x build/baseline-dist/backplane
+          set +e
+          bun test/tools/logread_e2e.ts build/baseline-dist/backplane build/wire build/log_read > logread-baseline.log 2>&1
+          status=$?
+          set -e
+          cat logread-baseline.log
+          test "$status" -ne 0
+          for entry in backplane backplane-serve; do
+            grep -Fq "ok $entry valid history starts and serves hub metadata" logread-baseline.log
+            grep -Fq "ok $entry valid history replays both original non-ASCII messages once and in order" logread-baseline.log
+            grep -Fq "ok $entry permission fixture actually denies reads" logread-baseline.log
+            grep -F "FAIL $entry write-only log exits nonzero before serving:" logread-baseline.log | grep -Fq '"bound":true'
+            grep -F "FAIL $entry oversized log exits nonzero before serving:" logread-baseline.log | grep -Fq '"bound":true'
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logread-baseline-results
+          path: logread-baseline.log
+          if-no-files-found: warn
+          retention-days: 1
+
+  emit-mac:
+    name: Emit the macOS server and reader on Linux
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BACKPLANE_SKIP_CHECK: "1"
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BUN_JSC_forceRAMSize: "4294967296"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Emit server C, reader C, web client, and test wire
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          scripts/build.sh emit
+          BACKPLANE_EMIT_ONLY=1 scripts/build-app.sh test/native/log_read.bend build/log_read
+          test -s build/cc/backplane-serve/all.c
+          test -s build/cc/log_read/all.c
+          test -f dist/web/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: logread-darwin-emitted
+          path: |
+            build/cc/backplane-serve/all.c
+            build/cc/log_read/all.c
+            dist/web
+            build/wire
+          if-no-files-found: error
+          retention-days: 1
+
+  mac-server:
+    name: macOS event log startup and recovery
+    needs: emit-mac
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: logread-darwin-emitted
+          path: .
+      - name: Compile the emitted C with native Apple clang
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          clang --version
+          python3 scripts/cc-split.py build/cc/backplane-serve/all.c build/logread-mac-cc 16
+          for unit in build/logread-mac-cc/u*.c; do
+            clang -std=c11 -O3 -w -c "$unit" -o "${unit%.c}.o"
+          done
+          clang -O3 build/logread-mac-cc/u*.o -o dist/backplane -lpthread -lm
+          clang -std=c11 -O2 -w build/cc/log_read/all.c -o build/log_read -lpthread -lm
+          chmod +x dist/backplane build/log_read
+      - name: Exercise both entry names, strict reads, and history recovery
+        run: |
+          set -o pipefail
+          bun test/tools/logread_e2e.ts dist/backplane build/wire build/log_read | tee logread-macos.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logread-macos-results
+          path: logread-macos.log
+          if-no-files-found: warn
+          retention-days: 1
