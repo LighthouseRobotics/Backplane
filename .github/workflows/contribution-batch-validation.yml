@@ -1,0 +1,71 @@
+name: Contribution batch compatibility
+on:
+  push:
+    branches: [ci/contribution-batch-validation]
+permissions:
+  contents: read
+concurrency:
+  group: contribution-batch-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  laws:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - run: scripts/check.sh all
+  clients:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BUN_JSC_maxPerThreadStackUsage: "536870912"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify the combined source and focused client behaviors
+        run: |
+          set -o pipefail
+          ulimit -s 1048576
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          for source in \
+            6656464b95d88d5eec3526403a13f7709fa236e5 \
+            2b9b46b94021e6c96e176663898d27d34d40e765 \
+            82aba1f555d38b7249e00499fd2d37977b5a703c \
+            5f7839a573371262c164d4843b54d94316fb4529; do
+            git fetch --no-tags --depth=1 origin "$source"
+            git merge-base --is-ancestor "$source" HEAD
+          done
+          mkdir -p build/batch-results
+          for spec in outbox:42 nui_recv:14 files_state:38 files_native:14 files:13; do
+            name=${spec%:*}; count=${spec#*:}
+            bend "test/${name}_test.bend" | tee "build/batch-results/$name.log"
+            test "$(grep -c '^ok ' "build/batch-results/$name.log")" -eq "$count"
+            if grep -q '^FAIL' "build/batch-results/$name.log"; then exit 1; fi
+          done
+      - name: Build and exercise the combined phone bridge
+        run: |
+          set -o pipefail
+          ulimit -s 1048576
+          scripts/build-mobile.sh --js
+          bend test/fixtures/outbox/index.html -o build/outbox-client
+          bend test/wire/index.html -o build/wire
+          bun test/tools/outbox_e2e.ts --client-only build/outbox-client mobile/build/assets/bridge.js | tee build/batch-results/outbox-phone.log
+          bun test/tools/files_phone.ts mobile/build/assets/bridge.js build/wire | tee build/batch-results/files-phone.log
+          grep -Fq '18 assertions, 0 failures' build/batch-results/outbox-phone.log
+          grep -Fq '20 assertions, 0 failures' build/batch-results/files-phone.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contribution-batch-client-results
+          path: build/batch-results/*.log
+          if-no-files-found: warn
+          retention-days: 1
