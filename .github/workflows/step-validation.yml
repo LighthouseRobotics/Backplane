@@ -1,0 +1,293 @@
+name: Model conversion cache validation
+
+# Fork-only validation. Every application checkout is the same frozen source.
+on:
+  push:
+    branches: [ci/step-validation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: step-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: 7cc3bad1b233f21221e12433a35ed285440590e1
+  BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+
+jobs:
+  focused:
+    name: Native model cache regression (${{ matrix.target }})
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64, os: ubuntu-24.04 }
+          - { target: linux-arm64, os: ubuntu-24.04-arm }
+          - { target: darwin-arm64, os: macos-15 }
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BACKPLANE_CPUS: ""
+      BACKPLANE_JOBS: "2"
+      BACKPLANE_CFLAGS: "-O2"
+      BACKPLANE_EMIT_CACHE: "0"
+      BACKPLANE_OBJ_CACHE: "0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Build native regression on Linux
+        if: runner.os == 'Linux'
+        run: scripts/build-app.sh test/native/model_cache_test.bend build/model_cache_test
+      - name: Build native regression on macOS
+        if: runner.os == 'macOS'
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+        run: |
+          set -euo pipefail
+          mkdir -p build/mac-model-cache
+          bend test/native/model_cache_test.bend -o build/mac-model-cache/all.c
+          python3 scripts/cc-split.py build/mac-model-cache/all.c build/mac-model-cache 8
+          for unit in build/mac-model-cache/u*.c; do
+            clang -std=c11 -O2 -w -c "$unit" -o "${unit%.c}.o"
+          done
+          clang build/mac-model-cache/u*.o -o build/model_cache_test -lpthread -lm
+      - name: Run actual cache publication effects
+        run: |
+          set -euo pipefail
+          build/model_cache_test | tee build/model-cache.log
+          ! grep -q '^FAIL ' build/model-cache.log
+          test "$(grep -c '^ok ' build/model-cache.log)" -eq 27
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-cache-native-${{ matrix.target }}
+          path: |
+            build/model-cache.log
+            build/model_cache_test
+          if-no-files-found: warn
+          retention-days: 1
+
+  baseline:
+    name: Reproduce failed and concurrent conversion cache poisoning
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Fetch a verified previous native application
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          gh api repos/LighthouseRobotics/Backplane/actions/runs/39213185003 --jq '.head_sha + " " + .conclusion' > baseline-source.txt
+          test "$(cat baseline-source.txt)" = '2b9b46b94021e6c96e176663898d27d34d40e765 success'
+          gh run download 39213185003 --repo LighthouseRobotics/Backplane --name backplane-linux-x64 --dir build/baseline
+          chmod +x build/baseline/backplane
+      - name: Require named regressions and healthy converter controls
+        run: |
+          set -euo pipefail
+          set +e
+          bun test/tools/model_cache_e2e.ts build/baseline/backplane > model-cache-baseline.log 2>&1
+          baseline_status=$?
+          set -e
+          cat model-cache-baseline.log
+          test "$baseline_status" -eq 1
+          python3 - <<'CHECK'
+          from pathlib import Path
+          lines = Path('model-cache-baseline.log').read_text().splitlines()
+          for label in [
+              'backplane failed plot attempt 1 publishes no cache entry',
+              'backplane failed plot attempt 2 calls converter again',
+              'backplane native failure attempt 1 publishes no cache',
+              'backplane native and plot uses different staging paths',
+              'backplane-serve two plot requests uses different staging paths',
+              'backplane-serve two plot requests publishes only complete bytes while second attempt runs',
+              'backplane-serve legacy failed cache is bypassed',
+          ]:
+              assert any(line.startswith('FAIL ' + label + ': ') for line in lines), label
+          for label in [
+              'backplane failed plot attempt 1 reports converter failure',
+              'backplane-serve failed plot attempt 1 reports converter failure',
+              'backplane-serve two plot requests failed attempt reports failure',
+          ]:
+              assert 'ok ' + label in lines, label
+          assert sum(line.startswith(('ok ', 'FAIL ')) for line in lines) == 64
+          assert not any('model cache scenarios complete' in line for line in lines)
+          print('Confirmed failed and overlapping converter attempts poison previous caches.')
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: model-cache-baseline
+          path: model-cache-baseline.log
+          if-no-files-found: warn
+          retention-days: 1
+
+  check:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Type-check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: CHECK_JOBS=$(nproc) scripts/check.sh check
+
+  proof:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Prove laws
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: scripts/check.sh proof
+
+  # Kept as the single gate other jobs depend on; it passes when both
+  # halves above pass, so the check and the proof run in parallel on
+  # separate runners instead of one after the other in one job.
+  laws:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Check and prove
+    needs: [check, proof]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "type-check and proof both passed"
+
+  test:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Tests ${{ matrix.shard }}/4
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TEST_SHARD: ${{ matrix.shard }}
+      TEST_SHARD_COUNT: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: TEST_JOBS=$(nproc) scripts/test.sh
+
+  build:
+    needs: [focused, baseline]
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Build ${{ matrix.target }}
+    # runs beside "laws" (which checks every file); nothing is published here
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64,    os: ubuntu-24.04 }
+          - { target: linux-arm64,  os: ubuntu-24.04-arm }
+          # macOS is on hold; scripts/build.sh builds it as hub + web server
+          # - { target: darwin-arm64, os: macos-15 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Swap for the compile
+        # bend's emit of the app takes 16-22 GB; the Linux runners have 16, so
+        # without swap it can be killed. (The clang compiles no longer need
+        # it: scripts/build-app.sh cuts the C into 16 units of about 2.5 GB.)
+        if: runner.os == 'Linux'
+        # the swap file goes on /mnt when the runner has it, and never takes
+        # more than the free space less 8 GB (a full disk kills the runner)
+        run: |
+          dir=/; [ -d /mnt ] && dir=/mnt
+          df -h / /mnt || true
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -gt 16 ] && size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          else
+            echo "only ${free_gb} GB free on $dir: no swap"
+          fi
+          free -h
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Publish only successful model conversions
+        run: |
+          set -euo pipefail
+          scripts/build-app.sh test/native/model_cache_test.bend build/model_cache_test
+          build/model_cache_test | tee build/model-cache.log
+          ! grep -q '^FAIL ' build/model-cache.log
+          test "$(grep -c '^ok ' build/model-cache.log)" -eq 27
+      - name: Object cache
+        # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
+        # unchanged unit is not compiled again. Never holds the Google client
+        # (a unit that includes it is not cached).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: objs-${{ matrix.target }}-${{ env.SOURCE_REV }}
+          restore-keys: objs-${{ matrix.target }}-
+      - run: clang --version
+      - run: scripts/build.sh
+        env:
+          BACKPLANE_SKIP_CHECK: "1" # the laws job checks every file
+      - run: scripts/smoke.sh
+      - name: Failed, recovered and concurrent conversions through the actual application
+        run: |
+          set -euo pipefail
+          bun test/tools/model_cache_e2e.ts dist/backplane | tee build/model-cache-e2e.log
+          if grep -q '^FAIL ' build/model-cache-e2e.log; then exit 1; fi
+          test "$(grep -c '^ok ' build/model-cache-e2e.log)" -eq 64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backplane-${{ matrix.target }}
+          path: dist/
+          retention-days: 7
