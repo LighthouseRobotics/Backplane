@@ -1,0 +1,196 @@
+name: Portable command deadline validation
+
+on:
+  push:
+    branches: [ci/timeout-validation]
+
+concurrency:
+  group: timeout-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SOURCE_REV: 81a5185bf9f08c51885f5af030f4b7f9de9a4e41
+  BASELINE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+
+jobs:
+  check:
+    name: Type-check
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: CHECK_JOBS=$(nproc) scripts/check.sh check
+
+  proof:
+    name: Prove laws
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: scripts/check.sh proof
+
+  # Kept as the single gate other jobs depend on; it passes when both
+  # halves above pass, so the check and the proof run in parallel on
+  # separate runners instead of one after the other in one job.
+  laws:
+    name: Check and prove
+    needs: [check, proof]
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "type-check and proof both passed"
+
+  port-timeout:
+    name: Command deadlines on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15]
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      DEVELOPER_DIR: ${{ matrix.os == 'macos-15' && '/Applications/Xcode_26.3.app/Contents/Developer' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+      - name: Exercise native and JavaScript shell wrappers
+        run: |
+          mkdir -p build
+          bend test/native/port_timeout.bend -o build/port-timeout.c
+          cc=clang
+          if [ "$RUNNER_OS" = Linux ]; then cc=clang-19; fi
+          "$cc" -O1 -pthread build/port-timeout.c -lm -ldl -o build/port-timeout
+          build/port-timeout > build/port-timeout-native.sh
+          bend test/native/port_timeout.bend -o build/port-timeout.js
+          bun build/port-timeout.js > build/port-timeout-js.sh
+          bun test/tools/port_timeout.ts build/port-timeout-native.sh build/port-timeout-js.sh
+      - name: Reproduce the previous fallback failures
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASELINE_REV"
+          git show "$BASELINE_REV:src/core/port.bend" > src/core/port.bend
+          bend test/native/port_timeout.bend -o build/port-timeout-baseline.js
+          bun build/port-timeout-baseline.js > build/port-timeout-baseline.sh
+          set +e
+          bun test/tools/port_timeout.ts build/port-timeout-baseline.sh > build/port-timeout-baseline.log 2>&1
+          status=$?
+          set -e
+          cat build/port-timeout-baseline.log
+          test "$status" -eq 1
+          grep -Fq 'FAIL 1 port-timeout-baseline.sh: direct timeout reports 124:' build/port-timeout-baseline.log
+          grep -Fq 'FAIL 1 port-timeout-baseline.sh: descendant output pipes close by deadline:' build/port-timeout-baseline.log
+          grep -Fq 'FAIL 1 port-timeout-baseline.sh: exited leader' build/port-timeout-baseline.log
+          grep -Fq 'ok 1 port-timeout-baseline.sh: normal exit code and stdout survive' build/port-timeout-baseline.log
+
+  test:
+    name: Tests ${{ matrix.shard }}/4
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TEST_SHARD: ${{ matrix.shard }}
+      TEST_SHARD_COUNT: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: TEST_JOBS=$(nproc) scripts/test.sh
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: port-timeout
+    # runs beside "laws" (which checks every file); nothing is published here
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64,    os: ubuntu-24.04 }
+          - { target: linux-arm64,  os: ubuntu-24.04-arm }
+          # macOS is on hold; scripts/build.sh builds it as hub + web server
+          # - { target: darwin-arm64, os: macos-15 }
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Swap for the compile
+        # bend's emit of the app takes 16-22 GB; the Linux runners have 16, so
+        # without swap it can be killed. (The clang compiles no longer need
+        # it: scripts/build-app.sh cuts the C into 16 units of about 2.5 GB.)
+        if: runner.os == 'Linux'
+        # the swap file goes on /mnt when the runner has it, and never takes
+        # more than the free space less 8 GB (a full disk kills the runner)
+        run: |
+          dir=/; [ -d /mnt ] && dir=/mnt
+          df -h / /mnt || true
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -gt 16 ] && size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          else
+            echo "only ${free_gb} GB free on $dir: no swap"
+          fi
+          free -h
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Object cache
+        # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
+        # unchanged unit is not compiled again. Never holds the Google client
+        # (a unit that includes it is not cached).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: objs-${{ matrix.target }}-${{ github.sha }}
+          restore-keys: objs-${{ matrix.target }}-
+      - run: clang --version
+      - run: scripts/build.sh
+        env:
+          BACKPLANE_SKIP_CHECK: "1" # the laws job checks every file
+      - run: scripts/smoke.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backplane-${{ matrix.target }}
+          path: dist/
+          retention-days: 7
