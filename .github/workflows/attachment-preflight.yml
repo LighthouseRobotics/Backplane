@@ -1,4 +1,4 @@
-name: Attachment read native preflight
+name: Attachment read validation
 on:
   push:
     branches: [ci/attachment-preflight]
@@ -78,3 +78,94 @@ jobs:
           mkdir -p build
           bend test/native/attachment_copy.bend -o build/attachment-copy
           bun test/tools/attachment_copy.ts build/attachment-copy --expect-broken
+
+  test:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Tests ${{ matrix.shard }}/4
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TEST_SHARD: ${{ matrix.shard }}
+      TEST_SHARD_COUNT: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: TEST_JOBS=$(nproc) scripts/test.sh
+
+  build:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    needs: [check, regression]
+    name: Build ${{ matrix.target }}
+    # runs beside "laws" (which checks every file); nothing is published here
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64,    os: ubuntu-24.04 }
+          - { target: linux-arm64,  os: ubuntu-24.04-arm }
+          # macOS is on hold; scripts/build.sh builds it as hub + web server
+          # - { target: darwin-arm64, os: macos-15 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Swap for the compile
+        # bend's emit of the app takes 16-22 GB; the Linux runners have 16, so
+        # without swap it can be killed. (The clang compiles no longer need
+        # it: scripts/build-app.sh cuts the C into 16 units of about 2.5 GB.)
+        if: runner.os == 'Linux'
+        # the swap file goes on /mnt when the runner has it, and never takes
+        # more than the free space less 8 GB (a full disk kills the runner)
+        run: |
+          dir=/; [ -d /mnt ] && dir=/mnt
+          df -h / /mnt || true
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -gt 16 ] && size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          else
+            echo "only ${free_gb} GB free on $dir: no swap"
+          fi
+          free -h
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Object cache
+        # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
+        # unchanged unit is not compiled again. Never holds the Google client
+        # (a unit that includes it is not cached).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: objs-${{ matrix.target }}-${{ github.sha }}
+          restore-keys: objs-${{ matrix.target }}-
+      - run: clang --version
+      - run: scripts/build.sh
+        env:
+          BACKPLANE_SKIP_CHECK: "1" # the laws job checks every file
+      - run: scripts/smoke.sh
+      - run: bun test/tools/attachment_copy.ts dist/backplane --hub
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backplane-${{ matrix.target }}
+          path: dist/
+          retention-days: 7
