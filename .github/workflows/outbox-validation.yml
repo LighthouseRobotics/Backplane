@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SOURCE_REV: 1dc3fe63cb21f9dcce6a16b33b75140b015f185c
+  SOURCE_REV: 6656464b95d88d5eec3526403a13f7709fa236e5
   BASELINE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
   BUN_JSC_forceRAMSize: "4294967296"
   BUN_JSC_maxPerThreadStackUsage: "536870912"
