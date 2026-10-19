@@ -4,7 +4,7 @@ import argparse, hashlib, json, os, pathlib, subprocess, tempfile
 
 BASE = '30884966ef59c383581bcd1b7653f8f739cf009e'
 SOURCES = {'release':'repo','lifecycle':'lifecycle','kicad':'kicad','history':'viewers',
-           'orientation':'orientation','native':'native-latency','ios':'ios-lifecycle','browser':'browser-takeover',
+           'orientation':'orientation','native':'native-plan-only','ios':'ios-lifecycle','browser':'browser-takeover',
            'combined':'combined'}
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('scopes', nargs='+', choices=SOURCES)
