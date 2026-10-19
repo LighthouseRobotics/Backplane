@@ -8,7 +8,7 @@ concurrency:
   group: attachment-preflight-${{ github.ref }}
   cancel-in-progress: true
 env:
-  SOURCE_REV: 83eba8c4b48e24b0e0e40b004f0e4a5641b728b0
+  SOURCE_REV: 6a5f36ca32b91f6239fe542d4e6786c6015efd87
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 jobs:
   check:
@@ -57,7 +57,7 @@ jobs:
         run: |
           set -o pipefail
           test "$(git rev-parse HEAD)" = "$SOURCE_REV"
-          ulimit -s 1048576
+          ulimit -s 1048576 || true
           bend test/file_bytes_test.bend | tee "$RUNNER_TEMP/file-bytes.log"
           if grep -q '^FAIL ' "$RUNNER_TEMP/file-bytes.log"; then exit 1; fi
           mkdir -p build
