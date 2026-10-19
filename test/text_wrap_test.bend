@@ -2,6 +2,7 @@ import Base
 import ./check.bend as C
 import ../src/core/i18n.bend as I
 import ../src/gfx/text.bend as X
+import ../src/gfx/raster.bend as R
 import ../src/app/bots.bend as BV
 import ../src/app/layout.bend as L
 import ../src/core/bot.bend as BT
@@ -219,7 +220,7 @@ def metrics() -> Map<&2, X.TG>:
     X.Text.key(0, 128512), X.TG.blank(1280)), X.Text.key(0, 8205), X.TG.blank(0))
 
 def ty(+f: X.Face) -> L.Ty:
-  L.Ty{Map.new(&2, X.TG), f, f, f, f, f, I.En{}}
+  L.Ty{Map.new(&2, X.TG), R.TNil{}, f, f, f, f, f, I.En{}}
 
 def post(+id: String, +text: String) -> List<&2, BT.Post>:
   [BT.Post{id, "", "you", text, 0n, 1n}]

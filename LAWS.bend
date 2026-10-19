@@ -2,6 +2,7 @@ import Base
 import ./src/core/auth.bend as AUTH
 import ./src/core/http.bend as HTTPAUTH
 import ./src/core/pcb2d.bend as PCB2 # PCB viewer text
+import ./src/mobile/session.bend as IOSSESSION
 import ./src/app/side_rows.bend as SR
 import ./src/app/side_row_types.bend as SRT
 import ./src/server/botnet.bend as MPLOG # mail perf runtime count
@@ -105,6 +106,7 @@ import ./src/web/dom.bend as DM
 import ./src/core/client.bend as U
 import ./src/mobile/screen.bend as MSC
 import ./src/core/gh.bend as GH
+import ./src/core/kicadcli.bend as KCL
 import ./src/gfx/text.bend as X
 import ./src/core/fold.bend as FO
 import ./src/core/subs.bend as SB
@@ -127,6 +129,7 @@ import ./src/core/hier.bend as HI
 
 import ./src/core/boot.bend as BT
 import ./src/core/store.bend as ST
+import ./src/server/logread.bend as LOGREAD
 import ./src/core/sign.bend as SG
 import ./src/core/ring.bend as RG
 import ./src/core/cron.bend as CR
@@ -143,6 +146,7 @@ import ./src/core/desk.bend as DK
 import ./src/core/emb.bend as EMB
 import ./src/core/outbox.bend as OB
 import ./src/core/live.bend as LV
+import ./src/core/rpcout.bend as RPO
 import ./src/core/farlive.bend as FLV
 import ./src/core/qr.bend as QR
 import ./src/core/layers.bend as LY
@@ -1215,6 +1219,7 @@ law tailnet_link_token:
 # exactly the tile drawn from scratch: an old image is taken only when it
 # drew the same local ops over the same base
 law seek_made:
+  for +tab: R.Tab
   for k: Nat
   for +e: Nat
   for +old: List<&2, R.Op>
@@ -1229,13 +1234,14 @@ law seek_made:
   for +n: U32
   for +l: List<&2, R.Op>
   for +base: Image
-  {T.Tiles.seek(k, T.Tiles.make(k, e, old, b0, mx, my, mn), x, y, rx, ry, n, e, l, base) == T.Tile.draw(e, l, base) : Image}
+  {T.Tiles.seek(k, T.Tiles.make(k, e, tab, old, b0, mx, my, mn), x, y, rx, ry, n, e, tab, l, base) == T.Tile.draw(e, tab, l, base) : Image}
 
 # drawing a frame over the last one's tiles gives exactly the tiles drawn
 # from scratch: a kept tile is never stale, whatever changed (ops, base),
 # and neither is one taken from where a scroll moved it (any past tiles,
 # any shift)
 law tiles_again_exact:
+  for +tab: R.Tab
   for k: Nat
   for +e: Nat
   for +ops: List<&2, R.Op>
@@ -1253,25 +1259,29 @@ law tiles_again_exact:
   for +pn: U32
   for +qn: U32
   for +dy: U32
-  {T.Tiles.again(k, e, ops, base1, T.Tiles.make(k, e, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n) == T.Tiles.make(k, e, ops, base1, rx, ry, n) : T.Tiles}
+  {T.Tiles.again(k, e, tab, ops, base1, T.Tiles.make(k, e, tab, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n) == T.Tiles.make(k, e, tab, ops, base1, rx, ry, n) : T.Tiles}
 
 # a tile whose ops and base are unchanged is kept as it is, whatever image
 # it holds: it is not drawn again
 law tile_keep:
+  for +tab: R.Tab
   for +e: Nat
   for +ops: List<&2, R.Op>
   for +l: List<&2, R.Op>
   for +base: Image
   for +img: Image
+  for +keys: T.KeySet
   for +p: T.Past
   for +rx: U32
   for +ry: U32
   for +n: U32
-  {T.Tile.again(e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}
+  {T.Tile.again(e, tab, ops, base, T.Tile{ops, l, base, img, keys}, p, rx, ry, n) == T.Tile{ops, l, base, img, keys} : T.Tile}
 
 # the same for a whole frame as the window draws it, even when the window
-# was resized in between, for any scroll hint
+# was resized in between or the glyph table changed, for any scroll hint
 law frame_again_exact:
+  for +tab: R.Tab
+  for +tab0: R.Tab
   for +w0: U32
   for +h0: U32
   for +w: U32
@@ -1281,21 +1291,23 @@ law frame_again_exact:
   for +base0: Image
   for +base: Image
   for +dy: U32
-  {T.Frame.again(w, h, ops, base, T.FSome{w0, h0, T.Frame.make(w0, h0, old, base0)}, dy) == T.Frame.make(w, h, ops, base) : T.Tiles}
+  {T.Frame.again(w, h, ops, base, tab, T.FSome{w0, h0, tab0, T.Frame.make(w0, h0, old, base0, tab0)}, dy) == T.Frame.make(w, h, ops, base, tab) : T.Tiles}
 
 # a tile's image taken from what the parallel jobs drew is the tile drawn
 # here, wherever its path leads in whatever jobs ran
 law drawn_get_run:
+  for +tab: R.Tab
   for t: T.Jobs
   for path: List<&2, Bool>
   for +e: Nat
   for +l: List<&2, R.Op>
   for +base: Image
-  {T.Drawn.get(T.Jobs.run(t, e), path, e, l, base) == T.Tile.draw(e, l, base) : Image}
+  {T.Drawn.get(T.Jobs.run(t, e, tab), path, e, tab, l, base) == T.Tile.draw(e, tab, l, base) : Image}
 
 # a plan filled from any jobs drawn in parallel is exactly the tiles
 # Tiles.again gives, over any last tiles, with any scroll
 law plan_fill_again:
+  for +tab: R.Tab
   for k: Nat
   for +e: Nat
   for +ops: List<&2, R.Op>
@@ -1307,18 +1319,19 @@ law plan_fill_again:
   for +n: U32
   for +off: Nat
   for +t: T.Jobs
-  {T.Plan.fill(T.Tiles.plan(k, e, ops, base, prev, p, rx, ry, n), e, off, T.Jobs.run(t, e)) == T.Tiles.again(k, e, ops, base, prev, p, rx, ry, n) : T.Tiles}
+  {T.Plan.fill(T.Tiles.plan(k, e, ops, base, prev, p, rx, ry, n), e, tab, off, T.Jobs.run(t, e, tab)) == T.Tiles.again(k, e, tab, ops, base, prev, p, rx, ry, n) : T.Tiles}
 
 # the window's frame drawn in parallel is exactly Frame.again's (and so,
 # by frame_again_exact, the frame drawn from scratch)
 law frame_par_exact:
+  for +tab: R.Tab
   for +w: U32
   for +h: U32
   for +ops: List<&2, R.Op>
   for +base: Image
   for prev: T.Frames
   for +dy: U32
-  {T.Frame.par(w, h, ops, base, prev, dy) == T.Frame.again(w, h, ops, base, prev, dy) : T.Tiles}
+  {T.Frame.par(w, h, ops, base, tab, prev, dy) == T.Frame.again(w, h, ops, base, tab, prev, dy) : T.Tiles}
 
 # the timeline's memo brought up to date is exactly the memo made from
 # scratch, for any earlier entries
@@ -2304,6 +2317,18 @@ law reset_asks_card_again:
 
 law reset_drops_results:
   {U.Ui.info(U.Ui.reset(U.Ui.info_set(U.Ui.reset(U.Ui.init(0n), U.Reset.demo("O")), "fm.list:t1", "x"), U.Reset.demo("O")), "fm.list:t1") == "" : String}
+
+# Kept requests replay in numeric request order, with their original bytes.
+# Empty entries from older saved clients are not requests.
+law client_outbox_numeric_order:
+  {RPO.RpcOut.values(Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.new(&2, String), "100", "fourth"), "9", "first"), "99", "third"), "10", "second")) == ["first", "second", "third", "fourth"] : List<&2, String>}
+
+law client_outbox_legacy_empty:
+  {RPO.RpcOut.values(Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.new(&2, String), "9", "first"), "10", ""), "100", "second"), "unknown", "")) == ["first", "second"] : List<&2, String>}
+
+law client_outbox_payload_exact:
+  for +request: String
+  {RPO.RpcOut.values(Map.set(&2, String, Map.new(&2, String), "9", request)) == Bool.pick(List<&2, String>, String.is_empty(request), [], [request]) : List<&2, String>}
 
 # a page's lines are those after since, oldest first; the walk stops at
 # the first line at or below it
@@ -5102,6 +5127,16 @@ law store_torn_tail_newline:
 
 law store_fail_names_repair:
   {ST.Store.fail.msg("disk full", True{}) ++ "|" ++ ST.Store.fail.msg("disk full", False{}) == "disk full|disk full; the log's tail could not be repaired" : String}
+
+# An existing history must not be replayed as empty after an IO failure.
+law log_read_missing_only:
+  {[LOGREAD.LogRead.missing(2), LOGREAD.LogRead.missing(0), LOGREAD.LogRead.missing(5), LOGREAD.LogRead.missing(13)] == [True{}, False{}, False{}, False{}] : List<&2, Bool>}
+
+law log_read_complete_only:
+  {[LOGREAD.LogRead.complete(0, 0n), LOGREAD.LogRead.complete(3, 3n), LOGREAD.LogRead.complete(3, 2n), LOGREAD.LogRead.complete(3, 4n)] == [True{}, True{}, False{}, False{}] : List<&2, Bool>}
+
+law log_read_native_capacity:
+  {[LOGREAD.LogRead.supported(0), LOGREAD.LogRead.supported(2147483647), LOGREAD.LogRead.supported(2147483648), LOGREAD.LogRead.supported(4294967295)] == [True{}, True{}, False{}, False{}] : List<&2, Bool>}
 
 # torn before the task's state: the child's turn ended, so its task ends
 law task_repair_finishes_ended_child:
@@ -8111,6 +8146,7 @@ law caret_fresh:
 # a frame's tiles blinked in place are exactly the tiles drawn from scratch
 # from its ops with the carets so: a blink never leaves a stale tile
 law tiles_blink_exact:
+  for +tab: R.Tab
   for k: Nat
   for +e: Nat
   for +ops: List<&2, R.Op>
@@ -8119,7 +8155,7 @@ law tiles_blink_exact:
   for +ry: U32
   for +n: U32
   for +on: Bool
-  {T.Tiles.blink(T.Tiles.make(k, e, ops, base, rx, ry, n), e, on) == T.Tiles.make(k, e, T.Caret.set(ops, on), base, rx, ry, n) : T.Tiles}
+  {T.Tiles.blink(T.Tiles.make(k, e, tab, ops, base, rx, ry, n), e, tab, on) == T.Tiles.make(k, e, tab, T.Caret.set(ops, on), base, rx, ry, n) : T.Tiles}
 # ---- end win-lean-frame caret blink ----
 
 # ---- perf-lead: phone-lean (src/mobile) ----
@@ -8328,6 +8364,7 @@ law ops_after_cat:
 # exactly the frame drawn from scratch with the new cats: a cat frame
 # never leaves a stale tile
 law tiles_recat_exact:
+  for +tab: R.Tab
   for k: Nat
   for +e: Nat
   for +cs: List<&2, R.Op>
@@ -8337,7 +8374,7 @@ law tiles_recat_exact:
   for +rx: U32
   for +ry: U32
   for +n: U32
-  {T.Tiles.recat(k, e, cs, cs2, T.Tiles.make(k, e, T.Ops.cat(cs, rest), base, rx, ry, n), rx, ry, n) == T.Tiles.make(k, e, T.Ops.cat(cs2, rest), base, rx, ry, n) : T.Tiles}
+  {T.Tiles.recat(k, e, tab, cs, cs2, T.Tiles.make(k, e, tab, T.Ops.cat(cs, rest), base, rx, ry, n), rx, ry, n) == T.Tiles.make(k, e, tab, T.Ops.cat(cs2, rest), base, rx, ry, n) : T.Tiles}
 # ---- end win-lean-frame cat frames ----
 # ---- gfx-runs: tile plans that build only changed nodes' ops ----
 # comparing a child's ops as they reach it, straight from its parent's, is
@@ -10676,3 +10713,136 @@ law pcb2_hidden_text_draws_nothing:
   for +sig: U32
   for +ctx: String
   {PCB2.Text.visible.k(True{}, at, angle, x, text, up, key, sig, ctx) == Nil{} : List<&2, B.Item>}
+
+# A phone usage view never scans thread usage while hidden, and machine
+# identity survives duplicate names/offline readings.
+law ios_usage_hidden_empty:
+  for +lc: I18.Loc
+  for +u: U.Ui
+  {Hb.Hubs.usage.rows(lc, False{}, u) == Nil{} : List<&2, J.Json>}
+
+law ios_usage_machine_identity:
+  for +k: String
+  for +name: String
+  for +j: J.Json
+  {J.Json.get_str(Hb.Hubs.usage.machine(k, name, j), "key", "") == k : String}
+
+law ios_session_keeps_cursor:
+  for +u: U.Ui
+  for +o: J.Json
+  {U.Ui.seq(IOSSESSION.Session.adopt(u, o)) == U.Ui.seq(u) : Nat}
+
+# An ordinary thread targets its own browser page.
+law browser_input_thread_target:
+  for +page: String
+  {U.Teach.target.of("", page) == page : String}
+
+# KiCad's CLI
+# -----------
+
+# Known fork platform layouts; publication is a separate pinned decision.
+law kicad_cli_asset_linux_x64:
+  {KCL.Cli.asset("Linux x86_64\n") == "linux-x86_64" : String}
+
+law kicad_cli_asset_mac:
+  {KCL.Cli.asset("Darwin arm64") == "macos-arm64" : String}
+
+law kicad_cli_no_fork_intel_mac:
+  {KCL.Cli.fork_runs("Darwin x86_64") == False{} : Bool}
+
+law kicad_cli_no_fork_arm_linux:
+  {KCL.Cli.fork_runs("Linux aarch64") == False{} : Bool}
+
+# each build has its own folder: a Mac never picks the Linux one (and Linux
+# keeps the folder its installs have always used)
+law kicad_cli_dir_linux:
+  for +data: String
+  for +ver: String
+  {KCL.Cli.dir(data, ver, "linux-x86_64") == data ++ "/kicad/" ++ ver : String}
+
+law kicad_cli_dir_mac:
+  {KCL.Cli.dir("/u/.backplane-bend", "10.0.6", "macos-arm64") == "/u/.backplane-bend/kicad/10.0.6-macos-arm64" : String}
+
+# a Mac tries the fork (its own build), then KiCad.app, then the system's
+law kicad_cli_mac_order:
+  {KCL.Cli.candidates("Darwin arm64\n", "/opt/bp", "/u/.backplane-bend", "10.0.6", "/u") == ["/opt/bp/kicad/bin/kicad-cli", "/u/.backplane-bend/kicad/10.0.6-macos-arm64/bin/kicad-cli", "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/u/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
+
+# an Intel Mac has no fork: KiCad.app, then the system's
+law kicad_cli_intel_mac_app:
+  {KCL.Cli.candidates("Darwin x86_64", "/opt/bp", "/u/.backplane-bend", "10.0.6", "/u") == ["/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/u/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
+
+# Linux x86-64 is unchanged: the fork, then the system's
+law kicad_cli_linux_order:
+  {KCL.Cli.candidates("Linux x86_64", "/opt/bp", "/h/.backplane-bend", "10.0.6", "/h") == ["/opt/bp/kicad/bin/kicad-cli", "/h/.backplane-bend/kicad/10.0.6/bin/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
+
+law kicad_cli_mac_not_published:
+  {KCL.Cli.published("Darwin arm64") == False{} : Bool}
+
+law kicad_cli_legacy_incompatible_on_mac:
+  {KCL.Cli.compatible("Darwin arm64", "") == False{} : Bool}
+
+law kicad_cli_linux_rejects_mac:
+  {KCL.Cli.compatible("Linux x86_64", "macos-arm64") == False{} : Bool}
+
+
+law kicad_cli_api_number:
+  {KCL.Cli.api(J.Num{"2"}) == True{} : Bool}
+
+law kicad_cli_api_string_rejected:
+  {KCL.Cli.api(J.Str{"2"}) == False{} : Bool}
+
+# A successful export has no failure, even when the tool prints a diagnostic.
+law release_command_success:
+  for label: String
+  for output: String
+  {REL.Release.command_error(label, 0, output) == "" : String}
+
+law release_command_failure:
+  {REL.Release.command_error("Gerbers (gerbers)", 23, " export failed\n") == "Gerbers (gerbers) failed (exit 23): export failed" : String}
+
+# A syntactically valid JSON object without the expected report schema is
+# not evidence that ERC or DRC ran successfully.
+law checks_report_missing_erc:
+  {CHK.Checks.report_valid("erc", "{}") == False{} : Bool}
+
+law checks_report_missing_drc:
+  {CHK.Checks.report_valid("drc", "{}") == False{} : Bool}
+
+law checks_execution_keeps_identity:
+  for +kind: String
+  for +why: String
+  {CHK.Checks.execution([CHK.Checks.finding("execution", "error", kind, why, "")]) == kind ++ ": " ++ why ++ "\n" : String}
+
+# ---- glyph table extension: unchanged resolutions keep exact old tiles ----
+# Compatibility covers every used glyph, including a formerly missing key.
+law glyph_table_agreement:
+  for +old: R.Tab
+  for +new: R.Tab
+  for +ops: List<&2, R.Op>
+  for h: {T.Table.agrees(ops, old, new) == True{} : Bool}
+  {R.Res.ops(ops, old) == R.Res.ops(ops, new) : List<&2, R.Op>}
+
+# A table extension (or any change agreeing on all used keys) preserves
+# the complete old tiles, not only their displayed pixels.
+law tiles_table_extension_exact:
+  for k: Nat
+  for +e: Nat
+  for +old: R.Tab
+  for +new: R.Tab
+  for +ops: List<&2, R.Op>
+  for +base: Image
+  for +rx: U32
+  for +ry: U32
+  for +n: U32
+  for +h: {T.Tiles.agrees(T.Tiles.make(k, e, old, ops, base, rx, ry, n), old, new) == True{} : Bool}
+  {T.Tiles.make(k, e, new, ops, base, rx, ry, n) == T.Tiles.make(k, e, old, ops, base, rx, ry, n) : T.Tiles}
+# ---- end glyph table extension ----
+
+# ---- glyph delta fast guard ----
+law glyph_delta_agreement:
+  for +old: R.Tab
+  for +new: R.Tab
+  for +ops: List<&2, R.Op>
+  for hc: {T.Keys.clear(T.Delta.of(old, new), T.Keys.ops(ops, T.KNil{})) == True{} : Bool}
+  {T.Table.agrees(ops, old, new) == True{} : Bool}
+# ---- end glyph delta fast guard ----

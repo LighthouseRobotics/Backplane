@@ -14,14 +14,15 @@
 // stand-in `claude` first on PATH, and only the PIDs started here are
 // stopped.
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, openSync, readSync, closeSync, statSync } from "node:fs";
-import { homedir, tmpdir } from "node:os";
+import { homedir, tmpdir, hostname, arch, platform, release, cpus } from "node:os";
+import { awaitDisplay, displayPixels } from "./native_display";
 import { standinScript as claude } from "./perf_standin";
 import { completeOpens, FixtureBots, streamWindow } from "./perf_guard";
 import { dirname, join, resolve } from "node:path";
 
 const argv = process.argv.slice(2);
 if (argv.includes("--help")) {
-  console.log("bun test/tools/perf_load.ts --bin BUILD --log SNAPSHOT [--agents 10] [--secs 20] [--phases normal,idle,bg,fg,type,open,plane,mail] [--out results.json] [--shots DIR] [--fail-on-target] [--keep]");
+  console.log("bun test/tools/perf_load.ts --bin BUILD --log SNAPSHOT [--agents 10] [--secs 20] [--phases normal,idle,bg,fg,type,open,plane,mail] [--out results.json] [--shots DIR] [--fail-on-target] [--pixel-opens] [--pixel-inputs] [--keep]");
   process.exit(0);
 }
 const opt = (name: string, d: string) => {
@@ -42,6 +43,8 @@ const nAgents = Number(opt("agents", "10"));
 const secs = Number(opt("secs", "20"));
 const outPath = opt("out", "");
 const keep = argv.includes("--keep");
+const pixelOpens = argv.includes("--pixel-opens");
+const pixelInputs = argv.includes("--pixel-inputs");
 const failOnTarget = argv.includes("--fail-on-target");
 const shots = opt("shots", ""); // a folder: a screenshot at the end of each phase (ImageMagick's import)
 const phasesWanted = opt("phases", "normal,idle,bg,fg,type,open,plane").split(",");
@@ -54,8 +57,9 @@ const say = (s: string) => console.error(`[perf_load] ${s}`);
 if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error("--port must be 1024..65535");
 if (!Number.isInteger(nAgents) || nAgents < 1 || nAgents > 26) throw new Error("--agents must be 1..26");
 if (!Number.isFinite(secs) || secs <= 0) throw new Error("--secs must be positive");
-const knownPhases = ["normal", "idle", "bg", "fg", "type", "open", "plane", "mail"];
+const knownPhases = ["normal", "idle", "bg", "fg", "type", "input-display", "open", "plane", "mail"];
 if (phasesWanted.some((p) => !knownPhases.includes(p))) throw new Error("unknown --phases value");
+if (phasesWanted.includes("input-display") && !pixelInputs) throw new Error("input-display requires --pixel-inputs");
 if (port === 3787) throw new Error("3787 is the live hub's port");
 if (!existsSync(bin)) throw new Error(`no binary at ${bin}`);
 if (realpathSync(bin).startsWith(join(homedir(), ".local/share/backplane"))) throw new Error("refusing to run the installed binary");
@@ -458,6 +462,88 @@ const W = 1400, H = 900;
 const MAINX = 264 + (W - 264) / 2, MIDY = H / 2;
 // a thread by its (unique) title: ctrl+k, the title, Return. Answers the
 // trace window of the Return alone (the open).
+const displayTargets = new Map<string, string>();
+type DisplayDemand = { expected_pixel_sha256: string; dispatch_started_ms: number; kind: "open" | "input"; phase: string; revision: number; title?: string; thread?: string; draft?: string; key?: string; boundary: string; region: number[]; elapsed_ms: number; samples: number; pixel_sha256: string };
+const displayDemands: DisplayDemand[] = [];
+const displayDemandLog = join(root,"display-demands.jsonl");
+let displayRevision = 0;
+let activePhase = "setup";
+let calibratingDisplay = false;
+let displayReady = false;
+async function observeDisplay(
+  metadata: Pick<DisplayDemand,"kind" | "phase" | "region"> & Partial<Pick<DisplayDemand,"thread" | "title" | "draft" | "key">>,
+  expected: string,
+  before: string,
+  read: () => Promise<string>,
+  dispatch: () => Promise<void>,
+): Promise<DisplayDemand> {
+  const demand = { ...metadata, revision:++displayRevision, boundary:"xserver-readback", expected_pixel_sha256:expected };
+  // Persist independent demand before sending input, including demands for
+  // which no app frame ever arrives. Cleanup retains this file on failure.
+  writeFileSync(displayDemandLog,JSON.stringify({event:"demand",...demand})+"\n",{flag:"a"});
+  const dispatch_started_ms = performance.now();
+  try {
+    await dispatch();
+    const observed = await awaitDisplay(expected,before,read,() => performance.now(),sleep,dispatch_started_ms);
+    const completed = {...demand,dispatch_started_ms,...observed};
+    displayDemands.push(completed);
+    writeFileSync(displayDemandLog,JSON.stringify({event:"observed",...completed})+"\n",{flag:"a"});
+    return completed;
+  } catch(error) {
+    writeFileSync(displayDemandLog,JSON.stringify({event:"failed",...demand,dispatch_started_ms,error:String(error)})+"\n",{flag:"a"});
+    throw error;
+  }
+}
+async function regionPixels(region: number[], maskCaret = false): Promise<string> {
+  const [x,y,width,height] = region;
+  const p = Bun.spawn([xpoke, "pixels", ...region.map(String)], { env: { DISPLAY: display }, stdout: "pipe", stderr: "pipe" });
+  const bytes = new Uint8Array(await new Response(p.stdout).arrayBuffer());
+  if (await p.exited !== 0) throw new Error("native region readback failed");
+  return new Bun.CryptoHasher("sha256").update(displayPixels(bytes,width,height,maskCaret)).digest("hex");
+}
+const headerRegion = [312,12,180,30];
+const headerPixels = () => regionPixels(headerRegion);
+const composerRegion = opt("composer-roi", "444,788,600,32").split(",").map(Number);
+if (composerRegion.length !== 4 || composerRegion.some(n => !Number.isInteger(n) || n < 0) || !composerRegion[2] || !composerRegion[3]) throw new Error("--composer-roi needs X,Y,W,H");
+const composerPixels = () => regionPixels(composerRegion, true);
+const inputProbe = "Backplane42";
+const inputRepeats = 6; // 66 additions and 66 independent Backspace demands
+const inputTargets = new Map<string,string>();
+async function calibratedComposer() {
+  await composer();
+  const capture = async (draft:string) => {
+    await sleep(100);
+    const first = await composerPixels();
+    await sleep(80);
+    if (first !== await composerPixels()) throw new Error(`unstable composer glyph pixels for ${JSON.stringify(draft)}`);
+    inputTargets.set(draft, first);
+  };
+  // These runs start with a generated empty draft. Avoid sending Return:
+  // this phase never starts a turn from the measured text.
+  await capture("");
+  let draft = "";
+  for (const key of inputProbe) { await poke("type",key); draft += key; await capture(draft); }
+  if (new Set(inputTargets.values()).size !== inputTargets.size) throw new Error("composer region does not distinguish every input prefix after caret normalization");
+  for (let i=0;i<inputProbe.length;i++) await poke("key","BackSpace");
+  await sleep(200);
+  if (await composerPixels() !== inputTargets.get("")) throw new Error("composer calibration did not return to its empty glyph state");
+}
+async function displayedInputs() {
+  let draft = "", before = await composerPixels();
+  const demand = async (key:string, next:string) => {
+    const expected = inputTargets.get(next);
+    if (!expected) throw new Error(`missing calibrated composer prefix ${JSON.stringify(next)}`);
+    const started = performance.now();
+    const observed = await observeDisplay({kind:"input",phase:activePhase,thread:ours.find((t:any) => t.title === "zqruna stream")?.id,draft:next,key,region:composerRegion},expected,before,composerPixels,
+      () => key === "BackSpace" ? poke("key",key) : poke("type",key));
+    before = observed.pixel_sha256; draft = next;
+    await sleep(Math.max(0,125-(performance.now()-started)));
+  };
+  for (let repeat=0;repeat<inputRepeats;repeat++) {
+    for (const key of inputProbe) await demand(key,draft+key);
+    for (let i=0;i<inputProbe.length;i++) await demand("BackSpace",draft.slice(0,-1));
+  }
+}
 async function openByTitle(title: string): Promise<[number, number]> {
   const expected = title === "zqlong" ? longT.id
     : /^zqopen[a-j]$/.test(title) ? openTs[title.charCodeAt(title.length - 1) - 97]?.id
@@ -467,8 +553,13 @@ async function openByTitle(title: string): Promise<[number, number]> {
   await sleep(250);
   await poke("type", title);
   await sleep(600);
+  const before = pixelOpens && displayReady && !calibratingDisplay ? await headerPixels() : "";
   const a = await upMs();
-  await poke("key", "Return");
+  if (pixelOpens && displayReady && !calibratingDisplay) {
+    const target = displayTargets.get(title);
+    if (!target) throw new Error(`missing calibrated native header for ${title}`);
+    await observeDisplay({kind:"open",phase:activePhase,title,thread:expected,region:headerRegion},target,before,headerPixels,() => poke("key","Return"));
+  } else await poke("key","Return");
   await sleep(700);
   const b = await upMs();
   // The native client reports its selection through the existing desk.look
@@ -505,7 +596,9 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
   say(`phase ${name}: ${what}`);
   rssMax = 0;
   const p: Phase = { name, what, a: await reading(), b: null as any, rssMax: 0, trafficBefore: traffic(), trafficAfter: {}, streamStart: performance.now(), streamEnd: 0, marks: [], notes: [] };
+  activePhase = name;
   await body(p);
+  activePhase = "setup";
   p.b = await reading();
   p.trafficAfter = traffic();
   p.streamEnd = performance.now();
@@ -598,6 +691,26 @@ await phase("type", "streaming; 60 keys typed into the streaming thread's compos
   await sleep(1000);
 });
 
+if (pixelInputs && phasesWanted.includes("input-display")) await calibratedComposer();
+await phase("input-display", "streaming; 66 ASCII additions and 66 Backspaces, exact independent composer glyph-region observations at 8/s", displayedInputs);
+
+// Opt-in displayed-content acceptance calibrates exact stable header pixels
+// from actual selected threads. This warms caches, so these opens are explicitly
+// warm; omit --pixel-opens to retain the original cold processing measurement.
+if (pixelOpens && phasesWanted.includes("open")) {
+  calibratingDisplay = true;
+  for (const title of ["zqlong", ...openTs.map((_,i) => `zqopen${String.fromCharCode(97+i)}`), ...ours.map((t:any) => t.title.split(" ")[0])]) {
+    await openByTitle(title);
+    const first = await headerPixels();
+    await sleep(80);
+    if (first !== await headerPixels()) throw new Error(`unstable native title pixels for ${title}`);
+    displayTargets.set(title, first);
+  }
+  if (new Set(displayTargets.values()).size !== displayTargets.size) throw new Error("native header region does not distinguish every target");
+  await openByTitle("zqlong");
+  calibratingDisplay = false;
+  displayReady = true;
+}
 await phase("open", "streaming; 10 real threads opened one after another (ctrl+k, title, Return)", async (p) => {
   for (let i = 0; i < 10; i++) p.marks!.push(await openByTitle(`zqopen${String.fromCharCode(97 + i)}`));
 });
@@ -711,8 +824,11 @@ const stat = (es: Ev[], name: string | RegExp): Sum => {
   return { n: d.length, p50: pctOf(d, 50), p99: pctOf(d, 99), max: d.length ? Math.max(...d) : NaN, sum: d.reduce((a, b) => a + b, 0), over8: d.filter((x) => x > 8).length, over16: d.filter((x) => x > 16).length };
 };
 const f1 = (x: number) => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "-");
-const results: any = { bin, mail_reuse_home: mailReuseHome || null, log: logSrc, log_sha256: logSha256, log_bytes: Buffer.byteLength(raw), port, agents: nAgents, secs, rooms: botRooms.length, home: keep ? home : "", phases: [] as any[] };
-const order = ["normal", "idle", "bg", "fg", "type", "open", "plane", "mail"];
+const hashFile = (path:string) => new Bun.CryptoHasher("sha256").update(readFileSync(path)).digest("hex");
+const processors = cpus();
+const machine = {hostname:hostname(),arch:arch(),platform:platform(),release:release(),cpu_model:processors[0]?.model ?? "unknown",cpu_count:processors.length};
+const results: any = { bin, machine, binary_sha256: hashFile(bin), xpoke_sha256: hashFile(xpoke), harness_sha256: hashFile(import.meta.path), observer_sha256: hashFile(join(here,"test/tools/native_display.ts")), source_sha_declared: opt("source-sha","unspecified"), build_flags_declared: opt("build-flags","unspecified"), mail_reuse_home: mailReuseHome || null, log: logSrc, log_sha256: logSha256, log_bytes: Buffer.byteLength(raw), port, agents: nAgents, secs, rooms: botRooms.length, home: keep ? home : "", phases: [] as any[] };
+const order = ["normal", "idle", "bg", "fg", "type", "input-display", "open", "plane", "mail"];
 const rows: string[] = [];
 const verdicts: string[] = [];
 for (const name of order) {
@@ -752,7 +868,11 @@ for (const name of order) {
   const key = { n: keys.length, p50: pctOf(keys, 50), p99: pctOf(keys, 99), max: keys.length ? Math.max(...keys) : NaN };
   const streamingCounts = Object.fromEntries(ours.map((t: any) => [t.id, (p.trafficAfter[t.id] ?? 0) - (p.trafficBefore[t.id] ?? 0)]));
   const streamWindows = Object.fromEntries(ours.map((t: any) => [t.id, streamWindow(deltaTimes.get(t.id) ?? [], p.streamStart, p.streamEnd)]));
+  const displayedOpens = displayDemands.filter(d => d.kind === "open" && d.phase === name).map(d => d.elapsed_ms);
+  const displayedInput = displayDemands.filter(d => d.kind === "input" && d.phase === name).map(d => d.elapsed_ms);
   const checks: [string, boolean | null][] = [
+    ...(name === "input-display" ? [["all displayed input events observed", completeOpens(displayedInput,inputProbe.length*inputRepeats*2)], ["displayed input p99<=16ms", completeOpens(displayedInput,inputProbe.length*inputRepeats*2) && pctOf(displayedInput,99) <= 16]] as [string,boolean | null][] : []),
+    ...(name === "open" && pixelOpens ? [["all ten displayed opens observed", completeOpens(displayedOpens, 10)], ["displayed open<=50ms", completeOpens(displayedOpens, 10) && Math.max(...displayedOpens) <= 50]] as [string, boolean | null][] : []),
     ...(name !== "idle" ? [["all agents streaming", Object.values(streamWindows).every((w) => w.sustained)] as [string, boolean | null]] : []),
     ...(["open", "mail"].includes(name) ? [["all ten opens sampled", completeOpens(opens, 10)] as [string, boolean | null]] : []),
     ...(name === "mail" ? [["Mailroom and ten conversation selections visually verified", null] as [string, boolean | null]] : []),
@@ -781,7 +901,7 @@ for (const name of order) {
   const mailHitBefore = p.a.rows.get("ui.mail.body.hit");
   const mailHitAfter = p.b.rows.get("ui.mail.body.hit");
   const mailBodyCache = { frames: (mailHitAfter?.n ?? 0) - (mailHitBefore?.n ?? 0), hits: (mailHitAfter?.sum ?? 0) - (mailHitBefore?.sum ?? 0) };
-  results.phases.push({ name, mail_body_cache: mailBodyCache, mail_seed: p.mailSeed, mail_read_rpc_ms: p.mailReads, mail_streamed: p.mailTraffic, what: p.what, wall_s: wallS, cpu_pct: cpu, rss_max_mb: p.rssMax / 1024, hub_busy_pct: hubBusy, opens_ms: opens, key_to_frame: key, notes: p.notes, streaming_deltas: streamingCounts, stream_windows: streamWindows, stats: st, top, checks: Object.fromEntries(checks), perf_json_before: Object.fromEntries(p.a.rows), perf_json_after: Object.fromEntries(p.b.rows) });
+  results.phases.push({ name, displayed_open_ms: displayedOpens, displayed_input_ms: displayedInput, mail_body_cache: mailBodyCache, mail_seed: p.mailSeed, mail_read_rpc_ms: p.mailReads, mail_streamed: p.mailTraffic, what: p.what, wall_s: wallS, cpu_pct: cpu, rss_max_mb: p.rssMax / 1024, hub_busy_pct: hubBusy, opens_ms: opens, key_to_frame: key, notes: p.notes, streaming_deltas: streamingCounts, stream_windows: streamWindows, stats: st, top, checks: Object.fromEntries(checks), perf_json_before: Object.fromEntries(p.a.rows), perf_json_after: Object.fromEntries(p.b.rows) });
 }
 console.log(`\nperf_load: ${bin}\n  log ${logSrc} (${kept.length} lines; sha256 ${logSha256}), ${nAgents} agents, ${botRooms.length} bot rooms, ${secs} s phases, port ${port}, display ${display}`);
 console.log(`  ms; frame = ui.frame n p50/p99/max >8/>16; input = ui.input; key>frame = ui.msg.win + ui.input; open = the slowest thread open, Return to frame; line = hub.agent_line n p50/p99/max; hub% = hub.* span time / wall; cpu% = whole app process`);
@@ -789,6 +909,14 @@ console.log(`phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 rast
 for (const r of rows) console.log(r);
 console.log("\ntargets: frame p99<=8, no frame>16 from streaming (idle/bg), typing input p99<=16, thread open<=50, agent_line p99<=2");
 for (const v of verdicts) console.log(v);
+if (pixelOpens) {
+  const ms = displayDemands.filter(d => d.kind === "open" && d.phase === "open").map(d => d.elapsed_ms);
+  console.log(`warm displayed opens: n=${ms.length} p50=${f1(pctOf(ms,50))}ms p99=${f1(pctOf(ms,99))}ms max=${ms.length ? f1(Math.max(...ms)) : "-"}ms (X-server readback; includes observer overhead)`);
+}
+if (pixelInputs) {
+  const ms = displayDemands.filter(d => d.kind === "input").map(d => d.elapsed_ms);
+  console.log(`warm displayed input: n=${ms.length} p50=${f1(pctOf(ms,50))}ms p99=${f1(pctOf(ms,99))}ms max=${ms.length ? f1(Math.max(...ms)) : "-"}ms (X-server composer glyph readback; caret colors normalized; includes observer overhead)`);
+}
 for (const p of results.phases) {
   console.log(`\n${p.name}: heaviest spans (total ms in phase, n, mean, max)`);
   for (const t of p.top.slice(0, 8)) console.log(`  ${t.name.padEnd(28)} ${String(t.sum_ms).padStart(9)} ${String(t.n).padStart(6)} ${String(t.mean_ms).padStart(8)} ${String(t.max_ms).padStart(8)}`);
@@ -806,6 +934,7 @@ results.open_selections = openEvidence;
 results.stray_agents = strays;
 results.agentsLog = readFileSync(fakeLog, "utf8").split("\n").filter((l) => l.startsWith("TURN")).length;
 results.appErrTail = appLogTail;
+Object.assign(results, { native_display: { schema_version:1, opens_enabled:pixelOpens, input_probe:inputProbe, input_repeats:inputRepeats, composer_region:composerRegion, header_region:headerRegion, enabled: pixelOpens || pixelInputs, demands_log: keep ? displayDemandLog : "", inputs_enabled: pixelInputs, input_cache: pixelInputs ? "warm-calibrated" : "uncalibrated", input_targets: Object.fromEntries(inputTargets), caret_normalization: pixelInputs ? "exact solid dark/light theme caret colors replaced with corresponding panel colors" : null, open_cache: pixelOpens ? "warm-calibrated" : "uncalibrated", boundary: "xserver-readback", physical_scanout_verified: false, targets: Object.fromEntries(displayTargets), demands: displayDemands } });
 if (outPath) { writeFileSync(outPath, JSON.stringify(results, null, 1)); console.log(`\nraw JSON: ${outPath}`); }
 if (!keep) rmSync(root, { recursive: true, force: true });
 else console.log(`kept ${root}`);

@@ -1,6 +1,8 @@
 name: Contribution acceptance
 
 on:
+  push:
+    branches: [validation/contributions-20261019]
   pull_request:
     paths:
       - 'src/**'
@@ -33,6 +35,8 @@ jobs:
       BACKPLANE_SKIP_CHECK: '1'
       BACKPLANE_LOW_MEM: '1'
       BACKPLANE_JOBS: '2'
+      BACKPLANE_GOOGLE_BAKE: '0'
+      BUN_JSC_forceRAMSize: '4294967296'
       BACKPLANE_TEST_BROWSERS: chromium
       BACKPLANE_CHROME: /usr/bin/google-chrome
     steps:
@@ -56,6 +60,18 @@ jobs:
         with:
           name: contribution-bridge
           path: mobile/build/assets
+      - name: Bounded temporary swap for Bend emission
+        run: |
+          dir="$RUNNER_TEMP"
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -le 16 ] || size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          fi
+          free -h
       - name: Build exact candidate
         run: scripts/validate-contribution.sh build
       - run: scripts/build-wire.sh
@@ -83,12 +99,26 @@ jobs:
     env:
       BACKPLANE_SKIP_CHECK: '1'
       BACKPLANE_LOW_MEM: '1'
+      BACKPLANE_GOOGLE_BAKE: '0'
+      BUN_JSC_forceRAMSize: '4294967296'
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup-bend
       - uses: oven-sh/setup-bun@v2
+      - name: Bounded temporary swap for Bend emission
+        run: |
+          dir="$RUNNER_TEMP"
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -le 16 ] || size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          fi
+          free -h
       - run: scripts/validate-contribution.sh emit
       - uses: actions/upload-artifact@v4
         with:
