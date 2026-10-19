@@ -113,7 +113,23 @@ int main(int argc, char** argv) {
   const char* pick = getenv("XPOKE_WIN");
   Window w = pick && *pick ? (Window)strtoul(pick, NULL, 0) : find(d, DefaultRootWindow(d), "Backplane");
   if (!w) { fprintf(stderr, "no Backplane window\n"); return 1; }
-  if (!strcmp(argv[1], "click") && argc == 4) {
+  if (!strcmp(argv[1], "pixels") && argc == 6) {
+    // Test-only independent X-server readback. PPM bytes are hashed by the
+    // driver; this observes the server framebuffer, not physical scanout.
+    int x = atoi(argv[2]), y = atoi(argv[3]), width = atoi(argv[4]), height = atoi(argv[5]);
+    XWindowAttributes attrs;
+    if (x < 0 || y < 0 || width < 1 || height < 1 || width > 16384 || height > 16384
+        || !XGetWindowAttributes(d, w, &attrs) || x > attrs.width - width || y > attrs.height - height) return 2;
+    XImage* image = XGetImage(d, w, x, y, (unsigned)width, (unsigned)height, AllPlanes, ZPixmap);
+    if (!image || image->red_mask != 0xff0000 || image->green_mask != 0xff00 || image->blue_mask != 0xff) return 1;
+    printf("P6\n%d %d\n255\n", width, height);
+    for (int yy = 0; yy < height; yy++) for (int xx = 0; xx < width; xx++) {
+      unsigned long pixel = XGetPixel(image, xx, yy);
+      unsigned char rgb[3] = {(pixel >> 16) & 255, (pixel >> 8) & 255, pixel & 255};
+      if (fwrite(rgb, 1, 3, stdout) != 3) return 1;
+    }
+    XDestroyImage(image);
+  } else if (!strcmp(argv[1], "click") && argc == 4) {
     button(d, w, atoi(argv[2]), atoi(argv[3]), 1);
   } else if (!strcmp(argv[1], "rclick") && argc == 4) {
     button(d, w, atoi(argv[2]), atoi(argv[3]), 3);

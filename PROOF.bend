@@ -2,6 +2,7 @@ import Base
 import ./src/core/auth.bend as AUTH
 import ./src/core/http.bend as HTTPAUTH
 import ./src/core/pcb2d.bend as PCB2 # PCB viewer text
+import ./src/mobile/session.bend as IOSSESSION
 import ./src/app/side_rows.bend as SR
 import ./src/app/side_row_types.bend as SRT
 import ./src/gfx/draw.bend as D
@@ -62,6 +63,7 @@ import ./src/gfx/font.bend as F
 import ./src/app/layout.bend as L
 import ./src/core/eq.bend as Q
 import ./src/core/gh.bend as GH
+import ./src/core/kicadcli.bend as KCL
 import ./src/core/fold.bend as FO
 import ./src/core/subs.bend as SB
 import ./src/core/plot.bend as PL
@@ -77,11 +79,13 @@ import ./src/mobile/hubs.bend as Hb
 import ./src/mobile/bots.bend as MBN
 import ./src/core/space.bend as SPC
 import ./src/core/client.bend as U
+import ./src/core/rpcout.bend as RPO
 import ./src/core/menu.bend as MN
 import ./src/core/hier.bend as HI
 
 import ./src/core/boot.bend as BT
 import ./src/core/store.bend as ST
+import ./src/server/logread.bend as LOGREAD
 import ./src/core/sign.bend as SG
 import ./src/core/cron.bend as CR
 import ./src/core/google.bend as GO
@@ -4510,6 +4514,19 @@ def Laws.reset_new_origin_drops_viewer():
 def Laws.reset_drops_results():
   {==}
 
+def Laws.client_outbox_numeric_order():
+  {==}
+
+def Laws.client_outbox_legacy_empty():
+  {==}
+
+def Laws.client_outbox_payload_exact(request):
+  match request:
+    case SNil{}:
+      {==}
+    case SCon{c, t}:
+      {==}
+
 def Laws.far_feed_after_stops():
   {==}
 
@@ -7148,6 +7165,15 @@ def Laws.store_torn_tail_newline():
   {==}
 
 def Laws.store_fail_names_repair():
+  {==}
+
+def Laws.log_read_missing_only():
+  {==}
+
+def Laws.log_read_complete_only():
+  {==}
+
+def Laws.log_read_native_capacity():
   {==}
 
 def Laws.task_repair_finishes_ended_child():
@@ -10080,6 +10106,66 @@ def keep_step(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, rest, ys):
     case False{}:
       {==}
 
+law keep_step_k_exact:
+  for k: Bool
+  for +x0: U32
+  for +y0: U32
+  for +x1: U32
+  for +y1: U32
+  for +c: U32
+  for +a: U32
+  for +s: R.Shape
+  for +ys: List<&2, R.Op>
+  {T.Keep.step.k(k, x0, y0, x1, y1, c, a, s, ys) == T.KStep{T.Keep.ys.k(k, ys), T.Keep.ok.k(k, x0, y0, x1, y1, c, a, s, ys)} : T.KeepStep}
+
+def keep_step_k_exact(k, x0, y0, x1, y1, c, a, s, ys):
+  match k:
+    case True{}: {==}
+    case False{}: {==}
+
+law keep_step_h_exact:
+  for hit: Bool
+  for +x0: U32
+  for +y0: U32
+  for +x1: U32
+  for +y1: U32
+  for +c: U32
+  for +a: U32
+  for +s: R.Shape
+  for +px: U32
+  for +py: U32
+  for +rx: U32
+  for +ry: U32
+  for +n: U32
+  for +ys: List<&2, R.Op>
+  {T.Keep.step.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys.h(hit, s, px, py, rx, ry, n, ys), T.Keep.ok.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)} : T.KeepStep}
+
+def keep_step_h_exact(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys):
+  match hit:
+    case True{}:
+      keep_step_k_exact(Bool.not(R.Region.empty(R.Region.move(s, px, py, rx, ry, n))), x0, y0, x1, y1, c, a, R.Region.move(s, px, py, rx, ry, n), ys)
+    case False{}: {==}
+
+def Laws.keep_step_exact(o, px, py, rx, ry, n, ys):
+  match o:
+    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
+      keep_step_h_exact(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
+
+law keep_eq_cons:
+  for +o: R.Op
+  for +t: List<&2, R.Op>
+  for +px: U32
+  for +py: U32
+  for +rx: U32
+  for +ry: U32
+  for +n: U32
+  for +ys: List<&2, R.Op>
+  {T.Keep.eq(o <> t, px, py, rx, ry, n, ys, True{}) == T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)) : Bool}
+
+def keep_eq_cons(o, t, px, py, rx, ry, n, ys):
+  Equal.cong(T.KeepStep, Bool, +p => T.Keep.eq(t, px, py, rx, ry, n, T.Keep.step.ys(p), T.Keep.step.same(p)),
+    T.Keep.step(o, px, py, rx, ry, n, ys), T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)}, Laws.keep_step_exact(o, px, py, rx, ry, n, ys))
+
 def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
   match ops ok:
     case Nil{} False{}:
@@ -10089,6 +10175,9 @@ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
     case Nil{} True{}:
       {==}
     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s} <> +t True{}:
+      %Equal.sym(Bool, T.Keep.eq(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n, ys, True{}),
+        T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+        keep_eq_cons(R.Op{x0, y0, x1, y1, c, a, s}, t, px, py, rx, ry, n, ys)) : {_ == T.Eq.ops.go(R.Region.keep(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n), ys, True{}) : Bool}
       Equal.trans(Bool, T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
         T.Eq.ops.go(R.Region.keep(t, px, py, rx, ry, n), T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
         T.Eq.ops.go(R.Region.keep.op(R.Region.hits(x0, y0, x1, y1, rx, ry, n), R.Op{x0, y0, x1, y1, c, a, s}, px, py, rx, ry, n, R.Region.keep(t, px, py, rx, ry, n)), ys, True{}),
@@ -12356,4 +12445,76 @@ def Laws.auth_cookie_prefix_denied():
 
 # ---- PCB viewer text ----
 def Laws.pcb2_hidden_text_draws_nothing(at, angle, x, text, up, key, sig, ctx):
+  {==}
+
+def Laws.ios_usage_hidden_empty(lc, u):
+  {==}
+
+def Laws.ios_usage_machine_identity(k, name, j):
+  {==}
+
+def Laws.ios_session_keeps_cursor(u, o):
+  match u:
+    case U.Ui{_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _}: {==}
+
+
+def Laws.browser_input_thread_target(page):
+  {==}
+
+def Laws.kicad_cli_asset_linux_x64():
+  {==}
+
+def Laws.kicad_cli_asset_mac():
+  {==}
+
+def Laws.kicad_cli_no_fork_intel_mac():
+  {==}
+
+def Laws.kicad_cli_no_fork_arm_linux():
+  {==}
+
+def Laws.kicad_cli_dir_linux(data, ver):
+  {==}
+
+def Laws.kicad_cli_dir_mac():
+  {==}
+
+def Laws.kicad_cli_mac_order():
+  {==}
+
+def Laws.kicad_cli_intel_mac_app():
+  {==}
+
+def Laws.kicad_cli_linux_order():
+  {==}
+
+def Laws.kicad_cli_mac_not_published():
+  {==}
+
+def Laws.kicad_cli_legacy_incompatible_on_mac():
+  {==}
+
+def Laws.kicad_cli_linux_rejects_mac():
+  {==}
+
+
+def Laws.kicad_cli_api_number():
+  {==}
+
+def Laws.kicad_cli_api_string_rejected():
+  {==}
+
+def Laws.release_command_success(label, output):
+  {==}
+
+def Laws.release_command_failure():
+  {==}
+
+def Laws.checks_report_missing_erc():
+  {==}
+
+def Laws.checks_report_missing_drc():
+  {==}
+
+def Laws.checks_execution_keeps_identity(kind, why):
   {==}

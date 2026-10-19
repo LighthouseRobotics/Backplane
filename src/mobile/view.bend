@@ -1,4 +1,5 @@
 import Base
+import ./bots.bend as MB
 import ../core/i18n.bend as I
 import ../core/msgs.bend as MSG
 import ../core/json.bend as J
@@ -745,20 +746,39 @@ def Hist.rows(rs: List<&2, U.HRow>) -> List<&2, J.Json>:
     case U.HRow{+l, +sub, +v} <> t:
       J.Json.obj([J.KV{"label", J.Str{l}}, J.KV{"sub", J.Str{sub}}, J.KV{"value", J.Str{v}}]) <> Hist.rows(t)
 
-def Hist.menu(+lc: I.Loc, +side: String, +u: U.Ui) -> J.Json:
-  Bool.pick(J.Json, String.is_empty(side), J.Null{}, J.Json.arr(Hist.rows(U.Hs.menu.loc(lc, u, side))))
+def Hist.menu.k(+lc: I.Loc, empty: Bool, +side: String, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
+  match empty:
+    case True{}:
+      J.Null{}
+    case False{}:
+      J.Json.arr(Hist.rows(U.Hs.menu.track.loc(lc, ss, u, side)))
 
-def Hist.json.k(+lc: I.Loc, b: U.HBar, +u: U.Ui) -> J.Json:
+def Hist.menu(+lc: I.Loc, +side: String, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
+  Hist.menu.k(lc, String.is_empty(side), side, ss, u)
+
+def Hist.json.k(+lc: I.Loc, b: U.HBar, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
   match b:
     case U.HBar{_, +n, +at, +title, +entry, +label, +said, +pl, +df, +cmp, +a, +bb, +menu}:
       J.Json.obj([J.KV{"n", J.Num{Nat.show(n)}}, J.KV{"at", J.Num{Nat.show(at)}}, J.KV{"title", J.Str{title}}, J.KV{"entry", J.Str{entry}},
         J.KV{"said", J.Str{Bool.pick(String, Nat.is_eq(at, 0n), U.Hs.live.said.loc(lc, n), Bool.pick(String, String.is_empty(said), label, said))}},
         J.KV{"playing", J.Json.bool(pl)}, J.KV{"diff", J.Json.bool(df)}, J.KV{"cmp", J.Json.bool(cmp)}, J.KV{"a", J.Str{a}}, J.KV{"b", J.Str{bb}}, J.KV{"side", J.Str{menu}}, J.KV{"as", J.Str{U.Rv.showing(u)}},
-        J.KV{"ticks", J.Json.arr(Hist.ticks(U.Hs.track(u), 0n, at))}, J.KV{"menu", Hist.menu(lc, menu, u)},
+        J.KV{"ticks", J.Json.arr(Hist.ticks(ss, 0n, at))}, J.KV{"menu", Hist.menu(lc, menu, ss, u)},
         J.KV{"keys", J.Json.arr([J.Num{U32.show(LO.Look.mark.color(False{}, 26))}, J.Num{U32.show(LO.Look.mark.color(False{}, 27))}, J.Num{U32.show(LO.Look.mark.color(False{}, 28))}])}])
 
-def Hist.json(+lc: I.Loc, +b: U.HBar, +u: U.Ui) -> J.Json:
-  Bool.pick(J.Json, U.HBar.on(b), Hist.json.k(lc, b, u), J.Null{})
+def Hist.json.track(+lc: I.Loc, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
+  Hist.json.k(lc, U.Hs.bar.track(lc, ss, u), ss, u)
+
+# A hidden viewer must not parse its history. A visible bar and its ticks
+# use exactly the same track, as on the web.
+def Hist.json.on(+lc: I.Loc, on: Bool, +u: U.Ui) -> J.Json:
+  match on:
+    case True{}:
+      Hist.json.track(lc, U.Hs.track(u), u)
+    case False{}:
+      J.Null{}
+
+def Hist.json(+lc: I.Loc, on: Bool, +u: U.Ui) -> J.Json:
+  Hist.json.on(lc, Bool.and(on, Bool.and(Nat.is_lt(U.Hs.kind(u), 2n), Bool.not(String.is_empty(U.Ui.sel(u))))), u)
 
 # what the phone's viewer needs: the source open ("" closed), its key and
 # the key of the plot it draws layers from, the choices, and how to draw:
@@ -881,21 +901,32 @@ def Rc.open.json(m: Maybe<&2, U.RcOpen>) -> J.Json:
 def Rc.json(+u: U.Ui) -> J.Json:
   J.Json.obj([J.KV{"pins", J.Json.arr(Rc.pins(U.Rc.pins(u)))}, J.KV{"open", Rc.open.json(U.Rc.open(u))}, J.KV{"at", J.Str{U.Rc.at(u)}}])
 
+# The same input/control model as the desktop thread viewer.
+def View.browser(on: Bool, +u: U.Ui) -> J.Json:
+  match on:
+    case False{}:
+      J.Null{}
+    case True{}:
+      J.Json.obj([J.KV{"url", J.Str{"/bots/" ++ U.Ui.page(u) ++ "/screen.jpg"}},
+        J.KV{"n", J.Str{U.Ui.info(u, "shot." ++ U.Ui.page(u))}}, J.KV{"input", J.Flag{U.Teach.input(u, U.Ui.page(u))}},
+        J.KV{"bburl", J.Str{U.Bots.field(u, "bburl")}},
+        J.KV{"btns", J.Json.arr(MB.MBots.tbtns([U.TBtn{U.Teach.control.label(u, U.Ui.page(u)), U.Teach.control.action(u, U.Ui.page(u)), "", True{}}]))}])
+
 def View.json(+lc: I.Loc, +u: U.Ui, +rb: J.Json) -> J.Json:
-  J.Json.obj([J.KV{"open", J.Str{Bool.pick(String, Bool.or(Bool.or(Bool.or(Bool.not(String.is_empty(View.want(u))), View.mech(u)), View.fm(u)), String.eq(View.kind(u), "review")), View.kind(u), "")}}, J.KV{"key", J.Str{View.want(u)}},
-    J.KV{"comments", Rc.json(u)},
+  J.Json.obj([J.KV{"open", J.Str{Bool.pick(String, Bool.or(Bool.or(Bool.or(Bool.not(String.is_empty(View.want(u))), View.mech(u)), View.fm(u)), Bool.or(String.eq(View.kind(u), "review"), String.eq(View.kind(u), "browser"))), View.kind(u), "")}}, J.KV{"key", J.Str{View.want(u)}},
+    J.KV{"comments", Rc.json(u)}, J.KV{"browser", View.browser(String.eq(View.kind(u), "browser"), u)},
     J.KV{"review", Rv.json(lc, String.eq(View.kind(u), "review"), u, rb)},
     J.KV{"files", Files.json(lc, String.eq(View.kind(u), "files"), u)}, J.KV{"file", File.json(Bool.or(String.eq(View.kind(u), "image"), String.eq(View.kind(u), "pdf")), u)},
     J.KV{"layers", J.Str{Bool.pick(String, View.mech(u), "", View.layers.at(View.kind(u), U.Ui.root(u), View.src(u)))}},
-    J.KV{"hist", Hist.json(lc, U.Hs.bar.for.loc(lc, View.as_client(u), Nat.is_lt(View.hist.num(View.kind(u)), 2n)), View.as_client(u))},
+    J.KV{"hist", Hist.json(lc, Nat.is_lt(View.hist.num(View.kind(u)), 2n), View.as_client(u))},
     J.KV{"mech", Mech.json(lc, View.mech(u), u)},
     J.KV{"sheets", J.Json.arr(List.append(&2, J.Json, View.board.list(u), View.sheet.list(u)))}, J.KV{"layerList", J.Json.arr(View.layer.list(u))},
     J.KV{"off", J.Num{U32.show(LY.Masks.off(View.masks(u)))}}, J.KV{"dim", J.Num{U32.show(LY.Masks.dim(View.masks(u)))}}, J.KV{"lift", J.Num{U32.show(LY.Lyr.top(View.focus(u)))}},
     J.KV{"layerMode", J.Num{U32.show(View.lmode(u))}}, J.KV{"layerModes", J.Flag{String.eq(View.kind(u), "board")}}, J.KV{"layerHead", J.Str{View.lhead.loc(lc, u)}},
     J.KV{"parts", J.Flag{Bool.not(View.bare(u))}}, J.KV{"note", J.Str{View.note(u)}},
-    J.KV{"choices", J.Json.arr(Bool.pick(List<&2, J.Json>, String.is_empty(U.Ui.root(u)), Nil{},
+    J.KV{"choices", J.Json.arr(Bool.pick(List<&2, J.Json>, String.is_empty(U.Ui.root(u)), [View.choice(MSG.T.bots.tab.browser(lc), "browser", View.kind(u))],
       [View.choice(MSG.T.viewer.board(lc), "board", View.kind(u)), View.choice(MSG.T.viewer.schematic(lc), "schematic", View.kind(u)), View.choice("3D", "3d", View.kind(u)), View.choice(MSG.T.viewer.mech(lc), "mech", Bool.pick(String, View.mech(u), "mech", "")),
-       View.choice(MSG.T.viewer.files(lc), "files", Bool.pick(String, View.fm(u), "files", "")), View.choice(MSG.T.viewer.review(lc), "review", View.kind(u))]))},
+       View.choice(MSG.T.viewer.files(lc), "files", Bool.pick(String, View.fm(u), "files", "")), View.choice(MSG.T.viewer.review(lc), "review", View.kind(u)), View.choice(MSG.T.bots.tab.browser(lc), "browser", View.kind(u))]))},
     J.KV{"bg", J.Num{U32.show(View.bg(View.kind(u), View.light(u)))}}, J.KV{"light", J.Json.bool(View.light(u))}, J.KV{"look", J.Json.arr(View.look(View.light(u), View.kind(u)))}, J.KV{"fade", J.Num{Nat.show(V.Fade.ms())}}, J.KV{"margin", J.Num{"0.9"}},
     J.KV{"zmin", J.Num{"0.5"}}, J.KV{"zmax", J.Num{"0.5"}}, J.KV{"tap", J.Num{"14"}},
     J.KV{"top", J.Json.arr(View.nums(View.top()))}, J.KV{"bottom", J.Json.arr(View.nums(View.bottom()))},

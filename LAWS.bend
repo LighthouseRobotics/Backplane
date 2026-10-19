@@ -2,6 +2,7 @@ import Base
 import ./src/core/auth.bend as AUTH
 import ./src/core/http.bend as HTTPAUTH
 import ./src/core/pcb2d.bend as PCB2 # PCB viewer text
+import ./src/mobile/session.bend as IOSSESSION
 import ./src/app/side_rows.bend as SR
 import ./src/app/side_row_types.bend as SRT
 import ./src/server/botnet.bend as MPLOG # mail perf runtime count
@@ -105,6 +106,7 @@ import ./src/web/dom.bend as DM
 import ./src/core/client.bend as U
 import ./src/mobile/screen.bend as MSC
 import ./src/core/gh.bend as GH
+import ./src/core/kicadcli.bend as KCL
 import ./src/gfx/text.bend as X
 import ./src/core/fold.bend as FO
 import ./src/core/subs.bend as SB
@@ -127,6 +129,7 @@ import ./src/core/hier.bend as HI
 
 import ./src/core/boot.bend as BT
 import ./src/core/store.bend as ST
+import ./src/server/logread.bend as LOGREAD
 import ./src/core/sign.bend as SG
 import ./src/core/ring.bend as RG
 import ./src/core/cron.bend as CR
@@ -143,6 +146,7 @@ import ./src/core/desk.bend as DK
 import ./src/core/emb.bend as EMB
 import ./src/core/outbox.bend as OB
 import ./src/core/live.bend as LV
+import ./src/core/rpcout.bend as RPO
 import ./src/core/farlive.bend as FLV
 import ./src/core/qr.bend as QR
 import ./src/core/layers.bend as LY
@@ -1270,7 +1274,7 @@ law tile_keep:
   {T.Tile.again(e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}
 
 # the same for a whole frame as the window draws it, even when the window
-# was resized in between, for any scroll hint
+# was resized in between or the glyph table changed, for any scroll hint
 law frame_again_exact:
   for +w0: U32
   for +h0: U32
@@ -2304,6 +2308,18 @@ law reset_asks_card_again:
 
 law reset_drops_results:
   {U.Ui.info(U.Ui.reset(U.Ui.info_set(U.Ui.reset(U.Ui.init(0n), U.Reset.demo("O")), "fm.list:t1", "x"), U.Reset.demo("O")), "fm.list:t1") == "" : String}
+
+# Kept requests replay in numeric request order, with their original bytes.
+# Empty entries from older saved clients are not requests.
+law client_outbox_numeric_order:
+  {RPO.RpcOut.values(Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.new(&2, String), "100", "fourth"), "9", "first"), "99", "third"), "10", "second")) == ["first", "second", "third", "fourth"] : List<&2, String>}
+
+law client_outbox_legacy_empty:
+  {RPO.RpcOut.values(Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.new(&2, String), "9", "first"), "10", ""), "100", "second"), "unknown", "")) == ["first", "second"] : List<&2, String>}
+
+law client_outbox_payload_exact:
+  for +request: String
+  {RPO.RpcOut.values(Map.set(&2, String, Map.new(&2, String), "9", request)) == Bool.pick(List<&2, String>, String.is_empty(request), [], [request]) : List<&2, String>}
 
 # a page's lines are those after since, oldest first; the walk stops at
 # the first line at or below it
@@ -5102,6 +5118,16 @@ law store_torn_tail_newline:
 
 law store_fail_names_repair:
   {ST.Store.fail.msg("disk full", True{}) ++ "|" ++ ST.Store.fail.msg("disk full", False{}) == "disk full|disk full; the log's tail could not be repaired" : String}
+
+# An existing history must not be replayed as empty after an IO failure.
+law log_read_missing_only:
+  {[LOGREAD.LogRead.missing(2), LOGREAD.LogRead.missing(0), LOGREAD.LogRead.missing(5), LOGREAD.LogRead.missing(13)] == [True{}, False{}, False{}, False{}] : List<&2, Bool>}
+
+law log_read_complete_only:
+  {[LOGREAD.LogRead.complete(0, 0n), LOGREAD.LogRead.complete(3, 3n), LOGREAD.LogRead.complete(3, 2n), LOGREAD.LogRead.complete(3, 4n)] == [True{}, True{}, False{}, False{}] : List<&2, Bool>}
+
+law log_read_native_capacity:
+  {[LOGREAD.LogRead.supported(0), LOGREAD.LogRead.supported(2147483647), LOGREAD.LogRead.supported(2147483648), LOGREAD.LogRead.supported(4294967295)] == [True{}, True{}, False{}, False{}] : List<&2, Bool>}
 
 # torn before the task's state: the child's turn ended, so its task ends
 law task_repair_finishes_ended_child:
@@ -8342,6 +8368,16 @@ law tiles_recat_exact:
 # ---- gfx-runs: tile plans that build only changed nodes' ops ----
 # comparing a child's ops as they reach it, straight from its parent's, is
 # exactly comparing the list Region.keep would build
+law keep_step_exact:
+  for +o: R.Op
+  for +px: U32
+  for +py: U32
+  for +rx: U32
+  for +ry: U32
+  for +n: U32
+  for +ys: List<&2, R.Op>
+  {T.Keep.step(o, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)} : T.KeepStep}
+
 law keep_eq:
   for ops: List<&2, R.Op>
   for +px: U32
@@ -10676,3 +10712,102 @@ law pcb2_hidden_text_draws_nothing:
   for +sig: U32
   for +ctx: String
   {PCB2.Text.visible.k(True{}, at, angle, x, text, up, key, sig, ctx) == Nil{} : List<&2, B.Item>}
+
+# A phone usage view never scans thread usage while hidden, and machine
+# identity survives duplicate names/offline readings.
+law ios_usage_hidden_empty:
+  for +lc: I18.Loc
+  for +u: U.Ui
+  {Hb.Hubs.usage.rows(lc, False{}, u) == Nil{} : List<&2, J.Json>}
+
+law ios_usage_machine_identity:
+  for +k: String
+  for +name: String
+  for +j: J.Json
+  {J.Json.get_str(Hb.Hubs.usage.machine(k, name, j), "key", "") == k : String}
+
+law ios_session_keeps_cursor:
+  for +u: U.Ui
+  for +o: J.Json
+  {U.Ui.seq(IOSSESSION.Session.adopt(u, o)) == U.Ui.seq(u) : Nat}
+
+# An ordinary thread targets its own browser page.
+law browser_input_thread_target:
+  for +page: String
+  {U.Teach.target.of("", page) == page : String}
+
+# KiCad's CLI
+# -----------
+
+# Known fork platform layouts; publication is a separate pinned decision.
+law kicad_cli_asset_linux_x64:
+  {KCL.Cli.asset("Linux x86_64\n") == "linux-x86_64" : String}
+
+law kicad_cli_asset_mac:
+  {KCL.Cli.asset("Darwin arm64") == "macos-arm64" : String}
+
+law kicad_cli_no_fork_intel_mac:
+  {KCL.Cli.fork_runs("Darwin x86_64") == False{} : Bool}
+
+law kicad_cli_no_fork_arm_linux:
+  {KCL.Cli.fork_runs("Linux aarch64") == False{} : Bool}
+
+# each build has its own folder: a Mac never picks the Linux one (and Linux
+# keeps the folder its installs have always used)
+law kicad_cli_dir_linux:
+  for +data: String
+  for +ver: String
+  {KCL.Cli.dir(data, ver, "linux-x86_64") == data ++ "/kicad/" ++ ver : String}
+
+law kicad_cli_dir_mac:
+  {KCL.Cli.dir("/u/.backplane-bend", "10.0.6", "macos-arm64") == "/u/.backplane-bend/kicad/10.0.6-macos-arm64" : String}
+
+# a Mac tries the fork (its own build), then KiCad.app, then the system's
+law kicad_cli_mac_order:
+  {KCL.Cli.candidates("Darwin arm64\n", "/opt/bp", "/u/.backplane-bend", "10.0.6", "/u") == ["/opt/bp/kicad/bin/kicad-cli", "/u/.backplane-bend/kicad/10.0.6-macos-arm64/bin/kicad-cli", "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/u/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
+
+# an Intel Mac has no fork: KiCad.app, then the system's
+law kicad_cli_intel_mac_app:
+  {KCL.Cli.candidates("Darwin x86_64", "/opt/bp", "/u/.backplane-bend", "10.0.6", "/u") == ["/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/u/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
+
+# Linux x86-64 is unchanged: the fork, then the system's
+law kicad_cli_linux_order:
+  {KCL.Cli.candidates("Linux x86_64", "/opt/bp", "/h/.backplane-bend", "10.0.6", "/h") == ["/opt/bp/kicad/bin/kicad-cli", "/h/.backplane-bend/kicad/10.0.6/bin/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
+
+law kicad_cli_mac_not_published:
+  {KCL.Cli.published("Darwin arm64") == False{} : Bool}
+
+law kicad_cli_legacy_incompatible_on_mac:
+  {KCL.Cli.compatible("Darwin arm64", "") == False{} : Bool}
+
+law kicad_cli_linux_rejects_mac:
+  {KCL.Cli.compatible("Linux x86_64", "macos-arm64") == False{} : Bool}
+
+
+law kicad_cli_api_number:
+  {KCL.Cli.api(J.Num{"2"}) == True{} : Bool}
+
+law kicad_cli_api_string_rejected:
+  {KCL.Cli.api(J.Str{"2"}) == False{} : Bool}
+
+# A successful export has no failure, even when the tool prints a diagnostic.
+law release_command_success:
+  for label: String
+  for output: String
+  {REL.Release.command_error(label, 0, output) == "" : String}
+
+law release_command_failure:
+  {REL.Release.command_error("Gerbers (gerbers)", 23, " export failed\n") == "Gerbers (gerbers) failed (exit 23): export failed" : String}
+
+# A syntactically valid JSON object without the expected report schema is
+# not evidence that ERC or DRC ran successfully.
+law checks_report_missing_erc:
+  {CHK.Checks.report_valid("erc", "{}") == False{} : Bool}
+
+law checks_report_missing_drc:
+  {CHK.Checks.report_valid("drc", "{}") == False{} : Bool}
+
+law checks_execution_keeps_identity:
+  for +kind: String
+  for +why: String
+  {CHK.Checks.execution([CHK.Checks.finding("execution", "error", kind, why, "")]) == kind ++ ": " ++ why ++ "\n" : String}

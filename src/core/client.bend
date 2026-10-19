@@ -7,11 +7,13 @@ import ./ref.bend as R
 import ./refview.bend as RE
 import ./i18n.bend as I
 import ./msgs.bend as MSG
+import ./winnote.bend as NT
 import ./kihealth.bend as KH
 import ./kserve.bend as KSV
 import ./kexport.bend as KEX
 import ./deploy.bend as DP
 import ./live.bend as LV
+import ./rpcout.bend as RPO
 import ./json.bend as J
 import ./model.bend as M
 import ./usage.bend as UZ
@@ -584,10 +586,11 @@ def Ui.reply.err.std(+o: J.Json) -> String:
 def Ui.reply.err(+o: J.Json) -> String:
   Bool.pick(String, String.is_empty(J.Json.get_str(J.Json.get_obj(o, "result"), "kicad", "")), Ui.reply.err.std(o), "")
 
+# Replies to ordinary RPCs must not add empty entries to the kept queue.
 def Ui.reply.k(u: Ui, +o: J.Json) -> Ui:
   match u:
     case Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, _, note, nf, ob, tr}:
-      Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, Ui.reply.err(o), note, nf, Map.set(&2, String, ob, J.Json.as_raw(J.Json.get(o, "id"), ""), ""), tr}
+      Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, Ui.reply.err(o), note, nf, Map.del(&2, String, ob, J.Json.as_raw(J.Json.get(o, "id"), "")), tr}
 
 # The viewer belongs to a thread: what it shows for thread t is kept as
 # "view.kind:t" and "view.path:t" (a file an agent asked for, else the
@@ -890,10 +893,14 @@ def Out.resend(xs: List<&2, String>) -> List<&2, Cmd>:
 def Ui.outbox(u: Ui) -> List<&2, Cmd>:
   match u:
     case Ui{_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, ob, tr}:
-      Out.resend(Map.values(&2, String, ob))
+      Out.resend(RPO.RpcOut.values(ob))
 
 def Ui.recv_act.k(connected: Bool, +u: Ui) -> Act:
-  Act{u, Bool.pick(List<&2, Cmd>, connected, Ui.outbox(u), Nil{})}
+  match connected:
+    case True{}:
+      Act{u, Ui.outbox(u)}
+    case False{}:
+      Act{u, Nil{}}
 
 # the client's own id (a host sets it once at start)
 def Ui.set_cid(u: Ui, +cid: String) -> Ui:
@@ -928,7 +935,7 @@ def Pending.go(xs: List<&2, String>, +thread: String, +es: List<&2, M.Entry>) ->
 def Ui.pending(u: Ui, +thread: String) -> List<&2, String>:
   match u:
     case Ui{st, _, _, _, _, _, _, _, _, _, _, _, _, _, _, ob, tr}:
-      Pending.go(Map.values(&2, String, ob), thread, M.State.mine(st, thread))
+      Pending.go(RPO.RpcOut.values(ob), thread, M.State.mine(st, thread))
 
 # (a new connection has answered nothing: what the Mechanical page and a
 # part in 3D asked for is asked again)
@@ -5460,6 +5467,9 @@ def Mpage.note.loc(+l: I.Loc, +u: Ui) -> String:
 def Mpage.note(+u: Ui) -> String:
   Mpage.note.loc(Lang.loc(u), u)
 
+def Ui.error.shown(l: I.Loc, e: String) -> String:
+  NT.Notice.shown(l, e)
+
 def Ui.error_set(u: Ui, e: String) -> Ui:
   match u:
     case Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, _, note, nf, ob, tr}:
@@ -5468,7 +5478,7 @@ def Ui.error_set(u: Ui, e: String) -> Ui:
 def Ui.attach.k(big: Bool, first: Bool, +u: Ui, +o: J.Json) -> Act:
   match big first:
     case True{} True{}:
-      Act{Ui.error_set(u, "attachments are limited to " ++ Nat.show(Nat.div(AT.Att.cap(), 1048576n)) ++ " MB"), Nil{}}
+      Act{Ui.error_set(u, NT.Notice.make("upload.cap", Nat.show(Nat.div(AT.Att.cap(), 1048576n)))), Nil{}}
     case True{} False{}:
       Act{u, Nil{}}
     case False{} _:
@@ -6997,10 +7007,14 @@ def Voice.fixed(+u: Ui) -> Act:
 # hub (server.bend's Upload); the answer comes back here as "attach-end":
 # the path joins the thread's attachments, or the failure shows
 
+def Upload.error(+o: J.Json) -> String:
+  NT.Notice.upload(J.Json.get_str(o, "uiError", ""), J.Json.get_str(o, "uiDetail", ""),
+    J.Json.get_str(o, "text", NT.Notice.make("upload.failed", "")))
+
 def Upload.fail(failed: Bool, +o: J.Json, u: Ui) -> Ui:
   match failed:
     case True{}:
-      Ui.error_set(u, J.Json.get_str(o, "text", "the upload failed"))
+      Ui.error_set(u, Upload.error(o))
     case False{}:
       u
 
@@ -7010,15 +7024,24 @@ def Upload.end.k(+o: J.Json, +u: Ui) -> Act:
 def Upload.start.k(big: Bool, +u: Ui, +name: String) -> Act:
   match big:
     case True{}:
-      Act{Ui.error_set(u, "attachments are limited to " ++ Nat.show(Nat.div(AT.Att.cap(), 1048576n)) ++ " MB"), Nil{}}
+      Act{Ui.error_set(u, NT.Notice.make("upload.cap", Nat.show(Nat.div(AT.Att.cap(), 1048576n)))), Nil{}}
     case False{}:
       Act{Ui.up_set(u, Ui.sel(u), name), Nil{}}
 
 def Upload.start(+u: Ui, +o: J.Json) -> Act:
   Upload.start.k(Nat.is_gt(J.Json.get_nat(o, "size", 0n), AT.Att.cap()), u, J.Json.get_str(o, "name", "file"))
 
+# A JSON primitive is not an upload reply. The parser may recover one even
+# from malformed input, so require the expected object before inspecting flags.
+def Upload.end.value(o: J.Json, +u: Ui) -> Act:
+  match o:
+    case J.Obj{fs}:
+      Upload.end.k(J.Obj{fs}, u)
+    case _:
+      Upload.end.k(J.Json.obj([J.KV{"uiError", J.Str{"upload.failed"}}, J.KV{"thread", J.Str{Ui.sel(u)}}, J.KV{"upload", J.Flag{True{}}}]), u)
+
 def Upload.end(+u: Ui, +v: String) -> Act:
-  Upload.end.k(Maybe.default(&2, J.Json, J.Json.parse(v), J.Json.obj([J.KV{"text", J.Str{"the upload failed"}}, J.KV{"thread", J.Str{Ui.sel(u)}}, J.KV{"upload", J.Flag{True{}}}])), u)
+  Upload.end.value(Maybe.default(&2, J.Json, J.Json.parse(v), J.Null{}), u)
 
 # Design history
 # --------------
@@ -7328,12 +7351,15 @@ def Hs.menu.steps() -> Nat:
   8n
 
 # the menu's rows for a side ("a" the old version, "b" the new)
-def Hs.menu.loc(+l: I.Loc, +u: Ui, +side: String) -> List<&2, HRow>:
+def Hs.menu.track.loc(+l: I.Loc, +ss: List<&2, HI.Step>, +u: Ui, +side: String) -> List<&2, HRow>:
   +r = Hs.refs(u)
   +es = M.State.mine(Ui.state(u), Ui.sel(u))
   List.append(&2, HRow, [HRow{MSG.T.history.workingcopy(l), MSG.T.history.workingcopy.note(l), Hs.row.value(side, "", "Working copy", "", "")}],
-    List.append(&2, HRow, List.take(&2, HRow, Hs.row.steps(Hs.track(u), l, side, es, 1n, Nil{}), Hs.menu.steps()),
+    List.append(&2, HRow, List.take(&2, HRow, Hs.row.steps(ss, l, side, es, 1n, Nil{}), Hs.menu.steps()),
       Hs.row.refs(HI.Hist.refs(J.Json.get_str(r, "refs", "")), l, side, J.Json.get_str(r, "git", ""), J.Json.get_str(r, "top", ""))))
+
+def Hs.menu.loc(+l: I.Loc, +u: Ui, +side: String) -> List<&2, HRow>:
+  Hs.menu.track.loc(l, Hs.track(u), u, side)
 
 def Hs.menu(+u: Ui, side: String) -> List<&2, HRow>:
   Hs.menu.loc(Lang.loc(u), u, side)
@@ -8000,12 +8026,29 @@ def HBar.h(+b: HBar) -> U32:
 def Hs.fade() -> Nat:
   220n
 
+# the bar and its position from one parse of the thread's steps
+def Hs.bar.at(+l: I.Loc, +ss: List<&2, HI.Step>, +at: Nat, +u: Ui) -> HBar:
+  Hs.bar.k(l, HI.Hist.nth(ss, at), u, Hs.n(ss), at, M.State.mine(Ui.state(u), Ui.sel(u)))
+
+def Hs.bar.track(+l: I.Loc, +ss: List<&2, HI.Step>, +u: Ui) -> HBar:
+  Hs.bar.at(l, ss, Hs.at(u, ss), u)
+
+def Hs.bar.off() -> HBar:
+  HBar{False{}, 0n, 0n, "", "", "", "", False{}, False{}, False{}, "", "", ""}
+
 def Hs.bar.on(+l: I.Loc, on: Bool, +u: Ui) -> HBar:
   match on:
     case True{}:
-      Hs.bar.k(l, HI.Hist.nth(Hs.track(u), Hs.at(u, Hs.track(u))), u, Hs.n(Hs.track(u)), Hs.at(u, Hs.track(u)), M.State.mine(Ui.state(u), Ui.sel(u)))
+      Hs.bar.track(l, Hs.track(u), u)
     case False{}:
-      HBar{False{}, 0n, 0n, "", "", "", "", False{}, False{}, False{}, "", "", ""}
+      Hs.bar.off()
+
+def Hs.bar.on.with(+l: I.Loc, on: Bool, +ss: List<&2, HI.Step>, +u: Ui) -> HBar:
+  match on:
+    case True{}:
+      Hs.bar.track(l, ss, u)
+    case False{}:
+      Hs.bar.off()
 
 # the bar for the selected thread's viewer when it shows (on): off unless
 # a board or a schematic shows
@@ -8021,6 +8064,11 @@ def Hs.bar.loc(+l: I.Loc, +u: Ui) -> HBar:
 
 def Hs.bar(+u: Ui) -> HBar:
   Hs.bar.loc(Lang.loc(u), u)
+
+# Hs.bar for a track already read (the web's viewer reads it once a render,
+# for the bar and its ticks)
+def Hs.bar.with(+l: I.Loc, +ss: List<&2, HI.Step>, +u: Ui) -> HBar:
+  Hs.bar.on.with(l, Bool.and(Ui.panel(u), Bool.and(Nat.is_lt(Hs.kind(u), 2n), Bool.not(String.is_empty(Ui.sel(u))))), ss, u)
 
 # Actions (Ui.actions from "hist-go")
 def Hs.act(i: Nat, +u: Ui, +value: String) -> Act:
@@ -10093,6 +10141,19 @@ def Teach.driving(+d: String) -> Bool:
 def Teach.input(+u: Ui, +bot: String) -> Bool:
   Teach.driving(Teach.drive(u, bot))
 
+# The visible browser belongs to the bot tab, or to the selected thread.
+def Teach.target.of(+bot: String, page: String) -> String:
+  Bool.pick(String, String.is_empty(bot), page, bot)
+
+def Teach.owner(+u: Ui) -> String:
+  Teach.target.of(Bots.cur(u), Ui.page(u))
+
+def Teach.control.label(+u: Ui, +page: String) -> String:
+  Bool.pick(String, Teach.input(u, page), "Return control", "Take control")
+
+def Teach.control.action(+u: Ui, +page: String) -> String:
+  Bool.pick(String, Teach.input(u, page), "tk-handback", "tk-takeover")
+
 def Teach.part(+t: String, +i: Nat) -> String:
   Maybe.default(&2, String, List.get(&2, String, String.split(t, ' '), i), "")
 
@@ -10620,7 +10681,7 @@ def Teach.target(+i: Nat, +cur: String, +value: String) -> String:
 
 # the tk- and bb- actions act on the bot whose tab is open
 def Teach.act(+u: Ui, +action: String, +value: String) -> Act:
-  Teach.act.k(C.Codec.pos(Teach.actions(), action), u, Teach.target(C.Codec.pos(Teach.actions(), action), Bots.cur(u), value), value)
+  Teach.act.k(C.Codec.pos(Teach.actions(), action), u, Teach.target(C.Codec.pos(Teach.actions(), action), Teach.owner(u), value), value)
 
 # a user action with its value
 def Ui.act.m(menu: Bool, +i: Nat, +u: Ui, +action: String, +value: String) -> Act:
