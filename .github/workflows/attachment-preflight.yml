@@ -1,0 +1,80 @@
+name: Attachment read native preflight
+on:
+  push:
+    branches: [ci/attachment-preflight]
+permissions:
+  contents: read
+concurrency:
+  group: attachment-preflight-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  SOURCE_REV: 83eba8c4b48e24b0e0e40b004f0e4a5641b728b0
+  BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+jobs:
+  check:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - run: CHECK_JOBS=$(nproc) scripts/check.sh check
+      - run: scripts/check.sh proof
+  regression:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64, os: ubuntu-24.04 }
+          - { target: linux-arm64, os: ubuntu-24.04-arm }
+          - { target: darwin-arm64, os: macos-15 }
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BUN_JSC_maxPerThreadStackUsage: "536870912"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Select Xcode 26.3
+        if: runner.os == 'macOS'
+        run: echo "DEVELOPER_DIR=/Applications/Xcode_26.3.app/Contents/Developer" >> "$GITHUB_ENV"
+      - name: Pure tests and real checked file effects
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 1048576
+          bend test/file_bytes_test.bend | tee "$RUNNER_TEMP/file-bytes.log"
+          if grep -q '^FAIL ' "$RUNNER_TEMP/file-bytes.log"; then exit 1; fi
+          mkdir -p build
+          bend test/native/file_bytes.bend -o build/file-bytes
+          bun test/tools/file_bytes.ts build/file-bytes
+      - name: Test actual attachment copy path
+        run: |
+          bend test/native/attachment_copy.bend -o build/attachment-copy
+          bun test/tools/attachment_copy.ts build/attachment-copy
+      - name: Reproduce original failure in the same native fixture
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REV"
+          git worktree add --detach "$RUNNER_TEMP/attachment-baseline" "$BASE_REV"
+          cp test/native/attachment_copy.bend "$RUNNER_TEMP/attachment-baseline/test/native/attachment_copy.bend"
+          cp test/tools/attachment_copy.ts "$RUNNER_TEMP/attachment-baseline/test/tools/attachment_copy.ts"
+          cd "$RUNNER_TEMP/attachment-baseline"
+          test "$(git rev-parse HEAD)" = "$BASE_REV"
+          mkdir -p build
+          bend test/native/attachment_copy.bend -o build/attachment-copy
+          bun test/tools/attachment_copy.ts build/attachment-copy --expect-broken
