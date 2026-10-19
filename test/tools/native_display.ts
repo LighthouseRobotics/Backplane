@@ -39,3 +39,24 @@ export async function awaitDisplay(
   }
   throw new Error("display demand timed out: expected content never reached the X-server region");
 }
+
+// Calibration is outside measured demand latency. A dispatched key is queued,
+// so two early reads can straddle its first frame. Require changed content (or
+// a known pristine empty target) to remain exactly stable for a bounded period.
+export async function calibrateDisplay(
+  read: () => Promise<string>,
+  options: { before?: string; expected?: string; stableMs?: number; timeoutMs?: number } = {},
+  now: () => number = () => performance.now(),
+  pause: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms)),
+): Promise<string> {
+  const started=now(),stableMs=options.stableMs ?? 300,timeoutMs=options.timeoutMs ?? 5000;
+  let value="",since=started,samples=0;
+  while(now()-started<=timeoutMs) {
+    const actual=await read(),at=now();
+    const allowed=actual && actual!==options.before && (!options.expected || actual===options.expected);
+    if(!allowed || actual!==value){value=allowed?actual:"";since=at;samples=0;}
+    if(allowed && value===actual && ++samples>=3 && at-since>=stableMs && at-started<=timeoutMs)return actual;
+    await pause(40);
+  }
+  throw new Error("calibration timed out: changed/expected pixels never became stable");
+}
