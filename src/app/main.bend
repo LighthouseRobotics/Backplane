@@ -2260,12 +2260,12 @@ def Shell.spot(r: Window & Image & Image, +hs: List<&2, N.Hit>) -> IO(Window & I
 def Caret.lay(+n: N.Nui) -> N.Nui:
   N.Nui.with_ui(n, U.Ui.info_set(U.Ui.info_set(N.Nui.ui(n), "caret.real", U.Ui.info(N.Nui.ui(n), "caret.on")), "caret.on", "1"))
 
-def Caret.show(on: Bool, +t: TI.Tiles, +e: Nat) -> TI.Tiles:
+def Caret.show(on: Bool, +t: TI.Tiles, +e: Nat, +tab: R.Tab) -> TI.Tiles:
   match on:
     case True{}:
       t
     case False{}:
-      TI.Tiles.blink(t, e, False{})
+      TI.Tiles.blink(t, e, tab, False{})
 
 # The embedded browser (core/cef.bend, layout.bend's Page.cef)
 # ------------------------------------------------------------
@@ -2375,7 +2375,7 @@ def Shell.present(+pl: TI.Plan, o: L.Out, +n: N.Nui, w: Window, +q: Chan(ShellMs
         PS.Perf.add("ui.drawn", U32.from_nat(k))
         +d : TI.Drawn = TI.Plan.drawn(pl, TI.Frame.edge(N.Nui.width(n), N.Nui.height(n)), L.Ty.tab(Aux.ty(wa)))
         tb : U32 <- PS.Perf.lap("ui.draw", ta)
-        +tiles : TI.Tiles = Caret.show(String.eq(U.Ui.info(N.Nui.ui(n), "caret.real"), "1"), TI.Plan.fill(pl, TI.Frame.edge(N.Nui.width(n), N.Nui.height(n)), L.Ty.tab(Aux.ty(wa)), 0n, d), TI.Frame.edge(N.Nui.width(n), N.Nui.height(n)))
+        +tiles : TI.Tiles = Caret.show(String.eq(U.Ui.info(N.Nui.ui(n), "caret.real"), "1"), TI.Plan.fill(pl, TI.Frame.edge(N.Nui.width(n), N.Nui.height(n)), L.Ty.tab(Aux.ty(wa)), 0n, d), TI.Frame.edge(N.Nui.width(n), N.Nui.height(n)), L.Ty.tab(Aux.ty(wa)))
         tc : U32 <- PS.Perf.lap("ui.fill", tb)
         t3 : U32 <- PS.Perf.lap("ui.raster", t2)
         r : Window & Image & Image <- W.Win.show(w, TI.Tiles.image(tiles), Frames.image(Aux.frames(wa)))

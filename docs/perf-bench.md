@@ -146,3 +146,83 @@ identifies the bot's thread but does not expose its tab or open mail.
 The Mailroom pane reuses PW with `Mm.mail` as its key. Bot panes bypass
 MainM, so the existing `ui.layout.mm.hit` metric does not measure that
 pane cache; do not claim Mailroom cache hit coverage from that metric.
+
+## Native displayed-content observations
+
+`--pixel-opens` adds independent X-server title-region readback through
+`xpoke pixels X Y W H`. The driver records a demand before dispatching Return
+and polls the exact expected SHA-256 of the title pixels. A stale or different
+thread header cannot complete that demand. The region must distinguish all
+calibrated target threads and remain stable during calibration. Raw reports
+include each demand revision, expected thread, region, observed digest,
+sample count and elapsed dispatch-to-readback time. This includes input queue
+waiting and observer overhead, unlike `ui.input` processing spans.
+
+Calibration visits every target before timing. These are explicitly **warm
+opens** (`native_display.open_cache = warm-calibrated`); use a separate run
+without this option for cold-cache processing measurements. The title region
+establishes the shown thread title only. It does not certify all timeline
+content, compositor presentation, scanout, Status-tab coverage, or physical
+input latency. These observations do not enable the unfinished #232 release
+or deployment gates. `bun test/tools/native_display_test.ts` checks accepted
+changes plus stale, wrong-target, and indistinguishable-content controls.
+
+
+`--phases input-display --pixel-inputs` adds a separate 132-event input
+workload while the same ten stand-in agents stream. It calibrates the exact
+composer glyph pixels for every prefix of `Backplane42` and the empty draft,
+then types and erases the probe six times at eight events per second. Each
+independent demand starts before its X event is dispatched and completes only
+when its exact expected prefix reaches the X-server composer region. Prefixes
+must have stable, pairwise-distinct digests after caret normalization; a region
+that misses the text cannot pass calibration. The default region at 1400x900
+is `444,788,600,32`; `--composer-roi X,Y,W,H` makes any explicit adjustment
+visible in every demand. This phase keeps the original 60-key `type` workload
+and its processing measurements separately available.
+
+Only the two solid theme caret colors are replaced with their corresponding
+panel colors before hashing the ASCII probe. All glyph pixels remain compared,
+so blinking alone cannot satisfy a missing letter. The observer test preserves
+both themes' glyph pixels, rejects missing/corrupt glyph pixels and wrong PPM
+shape, and checks stale/wrong/late demands. Raw reports retain each expected
+draft, key, region, digest, sample count and dispatch-to-readback duration;
+`displayed_input_ms` applies the unchanged 16 ms p99 target and requires all
+132 events. Calibration warms glyphs. These measurements include driver process
+startup and independent readback overhead, and establish only this composer
+region's content at the X server. They do not establish physical keyboard,
+window compositor, full timeline or scanout latency.
+
+
+Compare independently captured baseline/candidate pixel references before
+accepting the displayed latency results:
+
+```sh
+bun test/tools/native_display_compare.ts baseline-input.json candidate-input.json --out input-pixels.json
+bun test/tools/native_display_compare.ts baseline-warm-opens.json candidate-warm-opens.json --out open-pixels.json
+bun test/tools/native_display_compare_test.ts
+```
+
+Both runs must supply `--source-sha FULL_40_CHARACTER_COMMIT` and the same
+explicit `--build-flags 'LLVM19 -O3 LOW_MEM=1 JOBS=1'` label, matching the actual
+builds. Reports include detected machine identity, observer schema, probe,
+repeat count, ROIs, normalization and SHA-256 hashes of the fixture, driver,
+observer, xpoke and binary. The comparison requires exact reference digests
+and identical experiment metadata, complete ordered demands, and correct
+observed digests. A candidate cannot pass by learning its own consistently
+wrong glyph or title pixels. Separate reports may cover input and opens;
+each enabled surface must be complete. This compares with the independent
+baseline, and does not replace direct fresh-render correctness checks or any
+latency target. The comparator's 29 controls exercise healthy comparisons,
+self-consistent wrong content, invalid/missing observations and changed
+experiment identities.
+
+`BP_NATIVE_VALIDATE_LOCKED=1 scripts/validate-native-glyph.sh ABSOLUTE_LOG_DIR`
+is the candidate's centralized validation entry point when the caller holds
+`/tmp/bp-wt-build.lock`; otherwise omit that variable and the script acquires
+the lock. Run it inside the parent's bounded-memory queue. It runs full
+check/proof, every original unit test, independent X-server readback, the real
+native glyph benchmark and native localization smoke tests. The glyph benchmark
+must contain all 705 uniquely indexed samples; raw microseconds and summaries
+are retained. Set `BACKPLANE_X11` and `BACKPLANE_TEST_XVFB` when using an extracted
+X11 toolchain. It does not build or run the whole app; whole-app baseline and
+candidate runs remain separately required.
