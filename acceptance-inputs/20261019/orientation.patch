@@ -1,0 +1,332 @@
+diff --git a/docs/solid-orientation.md b/docs/solid-orientation.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..9a1733da590af176a9043c8e801e7052f3b554fa
+--- /dev/null
++++ b/docs/solid-orientation.md
+@@ -0,0 +1,75 @@
++# 3D coordinate orientation regression
++
++Cameron Basham's PR [#57](https://github.com/i2cjak/Backplane/pull/57) rotates
++standard glTF Y-up coordinates into the plot protocol's Z-up coordinates:
++`(x, y, z) → (x, -z, y)`. This is a proper rotation with determinant +1, so
++triangle winding and the normals computed from it retain their handedness.
++The earlier axis swap had determinant -1. Bounds use the same transformed
++coordinates as vertices.
++
++The native renderer consumes Y-up triangles directly. STEP conversion starts
++with Z-up millimetres; `Mech.metres` and `Mech.upright` normalize it before the
++shared plot encoder. The encoder's rotation therefore restores the original
++STEP axes and converts to the wire's 10 micrometre units.
++
++Run from the repository root:
++
++```sh
++bend test/plot_test.bend
++bend test/solid_orientation_test.bend
++mkdir -p build/orientation
++bend test/tools/solid_roundtrip.bend -o build/solid-roundtrip.mjs
++node test/tools/solid_roundtrip.mjs build/solid-roundtrip.mjs build/orientation
++PLAYWRIGHT_MODULE=/absolute/path/to/playwright-core/index.mjs \
++  CHROME=/absolute/path/to/chrome \
++  node test/tools/solid_browser.mjs build/orientation
++scripts/check.sh
++```
++
++The generated fixture is original synthetic geometry and needs no CAD library
++or external file. Its GLB names three unequal, colored landmarks:
++`FRONT_RED_F.Cu`, `BACK_BLUE_B.Cu` and `RIGHT_GREEN`. The first sits above the
++board plane, the second below with a downward normal and signed coordinates,
++and the third faces +X. Board/glTF input uses metres and Y up; the second
++fixture emulates STEP converter output in millimetres and Z up.
++
++The test exercises `Glb.parse`, `Mesh.tris`, the STEP normalization where
++appropriate, `Solid.thin`, `Solid.of`, `Plot.msg.solid`, and the actual
++`src/web/solid.js` CBOR/mesh decoder. It checks explicit expected coordinates,
++signed bounds, unit conversion, labels, normals, winding and the inverse native
++rotation. Production `Solid.thin` deliberately moves planar vertices to cell
++centres at 1/1000 of the model diagonal. The fixture's expected planar tolerance
++is calculated independently as half that cell plus half a wire rounding unit
++(under 1.493 wire units, or 0.015 mm). Heights stay exact, and encoder bounds
++must exactly equal the bounds of decoded vertices. This preserves coverage for
++mirroring while accommodating the production simplifier. The browser check uses the production WebGL view and captures top,
++bottom and oblique frames while checking colored landmarks and screen direction.
++The fixtures are labeled geometry; they do not claim to be a KiCad export.
++
++Run the same JS runner against a baseline module compiled from main at
++`30884966ef59c383581bcd1b7653f8f739cf009e` using the identical Bend wrapper. It must
++fail on a board-position assertion, providing a negative control for the
++mirroring defect.
++
++Web, iOS and Android share the encoded mesh. Their decoders recompute normals
++from the same ordered vertices. Linux tests exercise the browser decoder and
++rendering; they do not certify Swift/Metal, Kotlin/GLES, physical devices or a
++native window. The generated `.cbor` fixtures can be reused in those acceptance
++lanes without CAD dependencies.
++
++On Linux Node 22.23.3 and Chrome 155.0.8059.84 with SwiftShader, both production
++round trips passed and all six browser views passed their landmark assertions.
++The screenshots were visually inspected. Both inputs produced signed bounds
++`[-399,-300,-100,1100,899,400]` in wire units, including the documented planar
++snapping. The identical baseline wrapper on main failed its first Y coordinate
++(`-300` instead of `300`), the expected reflection negative control. The original
++PR's exact unthinned-coordinate regression tests remain in place.
++
++A separate Linux acceptance lane exported the pinned official ecc83 fixture
++using the verified KiCad 10.99.0-bp.4 CLI, then decoded and rendered that real
++export through the candidate production GLB parser/encoder and web renderer.
++It produced 48,486 vertices, 488 pixel colors and the PCB/copper/pad/silkscreen
++groups, with an inspected screenshot. The Node GLB wrapper overflowed its
++default stack in `Bytes.take`; a 192 MiB test stack completed. This is evidence
++for that export and web view, and does not establish native rendering, phone
++stack limits or physical-device acceptance.
+diff --git a/src/core/plot.bend b/src/core/plot.bend
+index f5b2ca4217163f2a0f9b5b63dcb66036722468a7..056e4abe9374c6b7cb9ec3cf926c8bde25da614b 100644
+--- a/src/core/plot.bend
++++ b/src/core/plot.bend
+@@ -594,11 +594,12 @@ def SE.box(+x: U32, +y: U32, +z: U32, b: List<&2, U32>) -> List<&2, U32>:
+ def SE.u(+m: F32) -> U32:
+   Num.um(F32.mul(m, 100.0))
+ 
+-# one vertex: x and y as board axes (glTF x and z), z up (glTF y)
++# Rotate glTF Y-up to Z-up: (x, -z, y). Swapping y and z without
++# negating z reflects the model and reverses its triangle winding.
+ def SE.v(+gx: F32, +gy: F32, +gz: F32, st: SE) -> SE:
+   match st:
+     case SE{e, +pz, c, n, b}:
+-      SE{Enc.num(Num.zig((SE.u(gy) - pz : U32)), Enc.pt(SE.u(gx), SE.u(gz), e)), SE.u(gy), c, n, SE.box(SE.u(gx), SE.u(gz), SE.u(gy), b)}
++      SE{Enc.num(Num.zig((SE.u(gy) - pz : U32)), Enc.pt(SE.u(gx), SE.u(F32.neg(gz)), e)), SE.u(gy), c, n, SE.box(SE.u(gx), SE.u(F32.neg(gz)), SE.u(gy), b)}
+ 
+ def SE.tri.k(t: G.Tri3, st: SE) -> SE:
+   match t:
+diff --git a/test/plot_test.bend b/test/plot_test.bend
+index 608edcf797b6ff759b416aa2ac2b2cf7dfaf8a27..13b1e34bd9ff9621ca1d16bf008de9fa6a0652ff 100644
+--- a/test/plot_test.bend
++++ b/test/plot_test.bend
+@@ -118,8 +118,8 @@ def main() -> IO(Unit):
+     C.Check.str("edge", box(P.Plot.edge(pl)), "0,0,40000,40000")
+     C.Check.str("lines keep the edge", box(P.Plot.edge(back)), box(P.Plot.edge(pl)))
+     C.Check.str("a schematic has no edge", box(P.Plot.edge(P.Plot.of(items(B.Board.items(U.Utf8.encode(board("20 10")))), 1))), box(P.Box.empty()))
+-    # a model's triangles: board axes (glTF z is the board's y, glTF y is
++    # a model's triangles: board axes (negative glTF z is board y, glTF y is
+     # up), 10 micrometre units; colour XOR then zigzag deltas
+     +so : P.Solid = P.Solid.of([G.Tri3{0.001, 0.0016, 0.002, 0.003, 0.0016, 0.002, 0.001, 0.0016, 0.004, 255}])
+-    C.Check.str("solid", solid(so), "1 [100,200,160,300,400,160] 255,200,400,320,400,0,0,399,400,0")
++    C.Check.str("solid", solid(so), "1 [100,4294966896,160,300,4294967096,160] 255,200,399,320,400,0,0,399,399,0")
+     C.Check.str("solid lines round trip", solid(P.Plot.solid(P.Scan.plot(P.Line.plot(P.Plot.of.solid(so))))), solid(so))
+diff --git a/test/solid_orientation_test.bend b/test/solid_orientation_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..51b42e0bec9fee5671b2c44f591f2721a278e517
+--- /dev/null
++++ b/test/solid_orientation_test.bend
+@@ -0,0 +1,67 @@
++import Base
++import ./check.bend as C
++import ../src/core/plot.bend as P
++import ../src/core/glb.bend as G
++
++# Decode the actual mesh sent to the web and phone viewers. The source
++# triangle faces glTF +Y; rotating it to Z-up must leave it facing +Z.
++type Pt is Data:
++  Pt{x: U32, y: U32, z: U32}
++
++def signed(+n: U32) -> String:
++  Bool.pick(String, P.Box.lt(n, 0), "-" ++ U32.show(U32.sub(0, n)), U32.show(n))
++
++def point(p: Pt) -> String:
++  match p:
++    case Pt{x, y, z}:
++      signed(x) ++ "," ++ signed(y) ++ "," ++ signed(z)
++
++def points(ps: List<&2, Pt>) -> List<&2, String>:
++  match ps:
++    case Nil{}:
++      Nil{}
++    case p <> rest:
++      point(p) <> points(rest)
++
++def decode(ns: List<&2, U32>, +x: U32, +y: U32, +z: U32) -> List<&2, Pt>:
++  match ns:
++    case dx <> dy <> dz <> rest:
++      +nx = U32.add(x, P.Num.unzig(dx))
++      +ny = U32.add(y, P.Num.unzig(dy))
++      +nz = U32.add(z, P.Num.unzig(dz))
++      Pt{nx, ny, nz} <> decode(rest, nx, ny, nz)
++    case _:
++      Nil{}
++
++def vertices(s: P.Solid) -> List<&2, Pt>:
++  match s:
++    case P.Solid{_, _, data}:
++      decode(List.drop(&2, U32, P.Dec.nums(String.reverse(data)), 1n), 0, 0, 0)
++
++def facing_up(ps: List<&2, Pt>) -> Bool:
++  match ps:
++    case Pt{+ax, +ay, _} <> Pt{bx, by, _} <> Pt{cx, cy, _} <> _:
++      P.Box.lt(0, U32.sub(U32.mul(U32.sub(bx, ax), U32.sub(cy, ay)), U32.mul(U32.sub(by, ay), U32.sub(cx, ax))))
++    case _:
++      False{}
++
++def numbers(xs: List<&2, U32>) -> List<&2, String>:
++  match xs:
++    case Nil{}:
++      Nil{}
++    case x <> rest:
++      signed(x) <> numbers(rest)
++
++def bounds(s: P.Solid) -> String:
++  match s:
++    case P.Solid{_, b, _}:
++      String.join(numbers(b), ",")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    +s : P.Solid = P.Solid.of([G.Tri3{0.002, 0.0016, F32.neg(0.003), 0.007, 0.0016, F32.neg(0.003), 0.002, 0.0016, F32.neg(0.009), 255}])
++    C.Check.str("Z-up mesh preserves asymmetric landmark positions", String.join(points(vertices(s)), ";"), "200,300,160;700,300,160;200,900,160")
++    C.Check.str("front-face winding survives Y-up to Z-up rotation", Bool.show(facing_up(vertices(s))), "True")
++    C.Check.str("mesh bounds follow the rotated vertices", bounds(s), "200,300,160,700,900,160")
++    +negative : P.Solid = P.Solid.of([G.Tri3{0.001, F32.neg(0.0016), 0.002, 0.003, F32.neg(0.0016), 0.002, 0.001, F32.neg(0.0016), 0.004, 255}])
++    C.Check.str("rotation retains signed bounds and underside height", bounds(negative), "100,-400,-160,300,-200,-160")
+diff --git a/test/tools/solid_browser.mjs b/test/tools/solid_browser.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..e4bd7e1f428190e7f3976b53b12d95758938bc21
+--- /dev/null
++++ b/test/tools/solid_browser.mjs
+@@ -0,0 +1,37 @@
++// After solid_roundtrip.mjs has written its CBOR fixtures:
++// PLAYWRIGHT_MODULE=/path/to/playwright-core/index.mjs CHROME=/path/to/chrome \
++//   node test/tools/solid_browser.mjs FIXTURE_DIRECTORY
++import {readFileSync,writeFileSync} from 'node:fs';
++import {resolve} from 'node:path';
++import {pathToFileURL} from 'node:url';
++import assert from 'node:assert/strict';
++const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE));
++const dir=resolve(process.argv[2]);
++const source=readFileSync(new URL('../../src/web/solid.js',import.meta.url),'utf8').replace('import App from "./app.bend";','const App = {};')+'\nexport {View, mesh};';
++const browser=await chromium.launch({executablePath:process.env.CHROME,headless:true,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
++const reports=[];
++try {
++ const page=await browser.newPage({viewport:{width:800,height:600},deviceScaleFactor:1});
++ await page.setContent('<style>body{margin:0;background:#181a1c}canvas{width:800px;height:600px}</style><canvas id="solid"></canvas>');
++ await page.evaluate(async url=>{window.S=await import(url);window.v=new S.View(document.querySelector('canvas'));if(!v.gl)throw new Error('WebGL unavailable');},'data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
++ for(const fixture of ['board','step']) {
++   const bytes=[...readFileSync(resolve(dir,fixture+'-orientation.cbor'))];
++   for(const [name,pitch] of [['top',Math.PI/2-0.00001],['bottom',-Math.PI/2+0.00001],['oblique',0.5]]) {
++     const result=await page.evaluate(({bytes,pitch})=>{
++       v.show(S.mesh(S.cbor(Uint8Array.from(bytes))));v.cam.aim(0,pitch);v.draw();
++       const gl=v.gl, pixels=new Uint8Array(800*600*4);gl.readPixels(0,0,800,600,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
++       const sums={red:[0,0,0],blue:[0,0,0],green:[0,0,0]};
++       for(let i=0;i<pixels.length;i+=4){const [r,g,b,a]=pixels.subarray(i,i+4);const c=r>100&&g<20&&b<20?'red':b>100&&r<20&&g<20?'blue':g>100&&r<20&&b<20?'green':null;if(c&&a){sums[c][0]+=i/4%800;sums[c][1]+=599-Math.floor(i/4/800);sums[c][2]++;}}
++       return Object.fromEntries(Object.entries(sums).map(([k,[x,y,n]])=>[k,{x:x/n,y:y/n,pixels:n}]));
++     },{bytes,pitch});
++     assert.ok(result.red.pixels>100 && result.blue.pixels>100,fixture+'/'+name+' landmarks visible');
++     if(name==='top'){assert.ok(result.red.x>result.blue.x,'+X points right');assert.ok(result.red.y<result.blue.y,'+Y points up from top');}
++     if(name==='bottom')assert.ok(result.red.y>result.blue.y,'bottom camera reverses screen Y');
++     if(name==='oblique')assert.ok(result.green.pixels>100,'side landmark visible');
++     reports.push({fixture,view:name,landmarks:result});
++     await page.screenshot({path:resolve(dir,fixture+'-'+name+'.png')});
++   }
++ }
++ const report={browser:await browser.version(),renderer:'production src/web/solid.js WebGL, SwiftShader',reports};
++ writeFileSync(resolve(dir,'solid-browser.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report,null,2));
++} finally {await browser.close();}
+diff --git a/test/tools/solid_roundtrip.bend b/test/tools/solid_roundtrip.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..aaa2acf7e2db35891fd7fb3a54d2b86c6cdd0807
+--- /dev/null
++++ b/test/tools/solid_roundtrip.bend
+@@ -0,0 +1,19 @@
++import Base
++import ../../src/core/glb.bend as G
++import ../../src/core/plot.bend as P
++import ../../src/core/mech.bend as M
++
++# The pure production stages used by server/plot.bend, including STEP's
++# millimetre conversion and upright rotation before the shared encoder.
++def triangles(bs: List<&2, U32>, step: Bool) -> List<&2, G.Tri3>:
++  match step:
++    case True{}:
++      M.Mech.upright(M.Mech.metres(G.Mesh.tris(G.Glb.parse(bs))))
++    case False{}:
++      G.Mesh.tris(G.Glb.parse(bs))
++
++def packet(bs: List<&2, U32>, step: Bool) -> List<&2, U32>:
++  P.Plot.msg.solid("2|fixture|orientation.glb", P.Solid.of(P.Solid.thin(triangles(bs, step))))
++
++def parts(bs: List<&2, U32>) -> G.Mesh:
++  G.Glb.parse(bs)
+diff --git a/test/tools/solid_roundtrip.mjs b/test/tools/solid_roundtrip.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..f0039aaa01fc1eac1eaf0445013adcdbba9d6e6b
+--- /dev/null
++++ b/test/tools/solid_roundtrip.mjs
+@@ -0,0 +1,70 @@
++// bend test/tools/solid_roundtrip.bend -o build/solid-roundtrip.mjs
++// node test/tools/solid_roundtrip.mjs build/solid-roundtrip.mjs [output directory]
++// No CAD installation or downloaded fixture: labeled asymmetric triangles
++// become a real GLB, then pass through the hub encoder and browser decoder.
++import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
++import { resolve } from 'node:path';
++import { pathToFileURL } from 'node:url';
++import assert from 'node:assert/strict';
++const {default:B}=await import(pathToFileURL(resolve(process.argv[2])));
++const source=readFileSync(new URL('../../src/web/solid.js',import.meta.url),'utf8')
++  .replace('import App from "./app.bend";', 'const App = {};')+'\nexport {mesh};';
++const {cbor,mesh,isPlot}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
++const list=xs=>xs.reduceRight((tail,head)=>({$: 'Con',head,tail}),{$:'Nil'});
++const array=xs=>{const out=[];for(;xs.$!=='Nil';xs=xs.tail)out.push(xs.head);return out;};
++const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
++const normal=p=>{const n=cross(p[1].map((x,i)=>x-p[0][i]),p[2].map((x,i)=>x-p[0][i]));const d=Math.hypot(...n);return n.map(x=>x/d);};
++const near=(a,b,why,eps=1e-5)=>{assert.equal(a.length,b.length,why);a.forEach((x,i)=>assert.ok(Math.abs(x-b[i])<eps,`${why}[${i}]: ${x} != ${b[i]}`));};
++// Board coordinates in millimetres, Z up. Top +Z, underside -Z, side +X;
++// unequal legs and signed coordinates expose mirrored geometry and bounds.
++const landmarks=[
++ {name:'FRONT_RED_F.Cu',rgb:0xff0000,p:[[2,3,1.6],[7,3,1.6],[2,9,1.6]]},
++ {name:'BACK_BLUE_B.Cu',rgb:0x0000ff,p:[[-4,-2,-1],[-4,4,-1],[1,-2,-1]]},
++ {name:'RIGHT_GREEN',rgb:0x00ff00,p:[[11,-3,0],[11,5,0],[11,-3,4]]},
++];
++function fixture(step) {
++ const chunks=[];const nodes=[];const meshes=[];const accessors=[];const bufferViews=[];const materials=[];let offset=0;
++ for(const [i,t] of landmarks.entries()) {
++   const pts=t.p.map(p=>step?p:p.map((_,a)=>[p[0]/1000,p[2]/1000,-p[1]/1000][a]));
++   const buf=Buffer.alloc(36);pts.flat().forEach((x,j)=>buf.writeFloatLE(x,j*4));chunks.push(buf);
++   bufferViews.push({buffer:0,byteOffset:offset,byteLength:36});offset+=36;
++   accessors.push({bufferView:i,componentType:5126,count:3,type:'VEC3'});
++   materials.push({name:t.name,pbrMetallicRoughness:{baseColorFactor:[(t.rgb>>16)/255,((t.rgb>>8)&255)/255,(t.rgb&255)/255,1]}});
++   meshes.push({name:t.name,primitives:[{attributes:{POSITION:i},material:i,mode:4}]});
++   nodes.push({name:t.name,mesh:i});
++ }
++ const doc={asset:{version:'2.0',generator:'Backplane synthetic orientation regression'},scene:0,scenes:[{nodes:nodes.map((_,i)=>i)}],nodes,meshes,accessors,bufferViews,materials,buffers:[{byteLength:offset}]};
++ let json=Buffer.from(JSON.stringify(doc));json=Buffer.concat([json,Buffer.alloc((4-json.length%4)%4,32)]);
++ const bin=Buffer.concat(chunks);const head=Buffer.alloc(20);head.writeUInt32LE(0x46546c67,0);head.writeUInt32LE(2,4);head.writeUInt32LE(28+json.length+bin.length,8);head.writeUInt32LE(json.length,12);head.writeUInt32LE(0x4e4f534a,16);
++ const bh=Buffer.alloc(8);bh.writeUInt32LE(bin.length,0);bh.writeUInt32LE(0x004e4942,4);return Buffer.concat([head,json,bh,bin]);
++}
++// Production Solid.thin snaps X/Z to cell centres at 1/1000 of the
++// model diagonal; wire encoding then rounds to 10 micrometres. Up/height
++// stays unchanged. Bound the expected planar movement independently from
++// the fixture dimensions, without allowing a reflected landmark.
++const planarTolerance=Math.hypot(15,12,5)/1000*100/2+0.50001;
++const reports=[];
++for(const step of [false,true]) {
++ const bytes=fixture(step);const input=list([...bytes]);
++ const parts=array(B.parts(input).parts);assert.deepEqual(parts.map(p=>p.name).sort(),landmarks.map(p=>p.name).sort());
++ const triangles=array(B.triangles(input,step));assert.equal(triangles.length,3);
++ const packet=Uint8Array.from(array(B.packet(input,step)));
++ assert.ok(isPlot(packet));const o=cbor(packet);assert.equal(o.key,'2|fixture|orientation.glb');assert.equal(o.n,3);
++ const decoded=mesh(o);assert.equal(decoded.count,9);
++ for(const [i,t] of triangles.entries()) {
++   const rgb=t.color>>>0;const target=landmarks.find(p=>p.rgb===rgb);assert.ok(target,`unknown color ${rgb}`);
++   const p=Array.from(decoded.pos.slice(i*9,i*9+9));near(p,target.p.flat().map(x=>x*100),target.name+' board position',planarTolerance);
++   near(p.filter((_,j)=>j%3===2),target.p.map(q=>q[2]*100),target.name+' exact layer height');
++   near(Array.from(decoded.nrm.slice(i*9,i*9+3)),normal(target.p),target.name+' face normal');
++   const native=[[t.ax,t.ay,t.az],[t.bx,t.by,t.bz],[t.cx,t.cy,t.cz]];
++   near(native.flatMap(([x,y,z])=>[x*100000,-z*100000,y*100000]),p,target.name+' native/source rotation',planarTolerance);
++   const sourceN=normal(native);near([sourceN[0],-sourceN[2],sourceN[1]],normal(target.p),target.name+' determinant and winding');
++ }
++ const expected=[-400,-300,-100,1100,900,400];near(decoded.box,expected,'decoder signed bounds',planarTolerance);near(o.box3,decoded.box,'encoder/decoder exact signed bounds');
++ // Top and bottom positions align with board XY and stay on their own sides.
++ assert.equal(normal(landmarks[0].p)[2],1);assert.equal(normal(landmarks[1].p)[2],-1);
++ assert.ok(landmarks[0].p[0][2]>0 && landmarks[1].p[0][2]<0);
++ reports.push({source:step?'STEP converter millimetres, upright':'KiCad/glTF metres, Y up',labels:parts.map(p=>p.name),triangles:o.n,box:decoded.box,positionNormalWinding:'pass',planarToleranceWireUnits:planarTolerance,layerHeights:'exact'});
++ if(process.argv[3]) {mkdirSync(process.argv[3],{recursive:true});writeFileSync(resolve(process.argv[3],step?'step-orientation.glb':'board-orientation.glb'),bytes);writeFileSync(resolve(process.argv[3],step?'step-orientation.cbor':'board-orientation.cbor'),packet);}
++}
++console.log(JSON.stringify({runtime:process.version,productionDecoder:'src/web/solid.js mesh/cbor',reports},null,2));

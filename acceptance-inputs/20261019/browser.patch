@@ -1,0 +1,1128 @@
+diff --git a/.github/workflows/browser-input.yml b/.github/workflows/browser-input.yml
+new file mode 100644
+index 0000000000000000000000000000000000000000..8767ac6476f4dff50c575f717e8b7862695b3d6e
+--- /dev/null
++++ b/.github/workflows/browser-input.yml
+@@ -0,0 +1,29 @@
++name: Browser input compatibility
++on:
++  push:
++    branches: [main]
++    paths:
++      - 'src/web/**'
++      - 'tools/browser/**'
++      - '.github/workflows/browser-input.yml'
++  pull_request:
++    paths:
++      - 'src/web/**'
++      - 'tools/browser/**'
++      - '.github/workflows/browser-input.yml'
++  workflow_dispatch:
++permissions:
++  contents: read
++jobs:
++  input:
++    strategy:
++      fail-fast: false
++      matrix:
++        os: [ubuntu-24.04, macos-latest, windows-latest]
++    runs-on: ${{ matrix.os }}
++    steps:
++      - uses: actions/checkout@v4
++      - uses: oven-sh/setup-bun@v2
++      - run: bun install --cwd tools/browser --frozen-lockfile
++      - run: bun tools/browser/node_modules/playwright-core/cli.js install --with-deps chromium firefox webkit
++      - run: bun tools/browser/test/input.ts
+diff --git a/LAWS.bend b/LAWS.bend
+index d7539d32921b69ba91b7c1f98212214a8ff7cb50..6e3a8785129fa213ac879412e94e9cfc9b1f578f 100644
+--- a/LAWS.bend
++++ b/LAWS.bend
+@@ -10676,3 +10676,7 @@ law pcb2_hidden_text_draws_nothing:
+   for +sig: U32
+   for +ctx: String
+   {PCB2.Text.visible.k(True{}, at, angle, x, text, up, key, sig, ctx) == Nil{} : List<&2, B.Item>}
++# An ordinary thread targets its own browser page.
++law browser_input_thread_target:
++  for +page: String
++  {U.Teach.target.of("", page) == page : String}
+diff --git a/PROOF.bend b/PROOF.bend
+index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..6e59a84b5e3f51608b45339c08ded923a6c37c8d 100644
+--- a/PROOF.bend
++++ b/PROOF.bend
+@@ -12357,3 +12357,6 @@ def Laws.auth_cookie_prefix_denied():
+ # ---- PCB viewer text ----
+ def Laws.pcb2_hidden_text_draws_nothing(at, angle, x, text, up, key, sig, ctx):
+   {==}
++
++def Laws.browser_input_thread_target(page):
++  {==}
+diff --git a/mobile/android/app/src/main/java/dev/backplane/mobile/Screen.kt b/mobile/android/app/src/main/java/dev/backplane/mobile/Screen.kt
+index 1b7fe85e6dd314f44b880d0a047b1c47bd41bc0f..59a7ac6269c0cee51bbfc00b764788e175bb8838 100644
+--- a/mobile/android/app/src/main/java/dev/backplane/mobile/Screen.kt
++++ b/mobile/android/app/src/main/java/dev/backplane/mobile/Screen.kt
+@@ -221,6 +221,7 @@ data class Viewer(
+     val files: FilesPage? = null, val file: FileView? = null,
+     // the Review tab (open "review")
+     val review: ReviewPage? = null,
++    val browser: BotBrowser? = null,
+     val comments: ReviewComments? = null,
+     // the layer focus (core/layers.bend): the layers drawn dimmed (a bit
+     // each), the one drawn last (255 none), the list's All/Dim/Only (0-2)
+@@ -597,6 +598,7 @@ private fun viewer(o: JSONObject) = Viewer(
+             f.optBoolean("ready"))
+     },
+     file = o.optJSONObject("file")?.let { FileView(it.optString("name"), it.optString("kind"), it.optString("url")) },
++    browser = o.optJSONObject("browser")?.let(::botBrowser),
+     review = o.optJSONObject("review")?.let { r ->
+         ReviewPage(r.optJSONArray("tabs").map { ReviewTab(it.optString("page"), it.optString("label"), it.optBoolean("on")) },
+             r.optString("title"), r.optString("note"), r.optBoolean("busy"), blocks(r.optJSONArray("blocks")),
+diff --git a/mobile/android/app/src/main/java/dev/backplane/mobile/TasksView.kt b/mobile/android/app/src/main/java/dev/backplane/mobile/TasksView.kt
+index 0ba6955b51a73b29e66dba86110fb8a0f5d40fa7..4119c0d100f4e9176808a3155eb64602f8272eb1 100644
+--- a/mobile/android/app/src/main/java/dev/backplane/mobile/TasksView.kt
++++ b/mobile/android/app/src/main/java/dev/backplane/mobile/TasksView.kt
+@@ -1,6 +1,17 @@
+ package dev.backplane.mobile
+ 
+ import android.graphics.BitmapFactory
++import android.view.KeyEvent as AndroidKeyEvent
++import androidx.compose.ui.input.key.onPreviewKeyEvent
++import androidx.compose.foundation.text.BasicTextField
++import androidx.compose.ui.focus.FocusRequester
++import androidx.compose.ui.focus.focusRequester
++import androidx.compose.ui.text.TextRange
++import androidx.compose.ui.text.input.TextFieldValue
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.ui.platform.LocalSoftwareKeyboardController
++import androidx.compose.foundation.layout.size
++import androidx.compose.ui.draw.alpha
+ import androidx.compose.foundation.Image
+ import androidx.compose.foundation.border
+ import androidx.compose.foundation.clickable
+@@ -143,7 +154,7 @@ fun BrowserAsk(m: AppModel, a: Ask) {
+ // drive: a tap is "x y" in thousandths of the image as drawn, a drag is
+ // the page's pixels (about twice the finger's distance)
+ @Composable
+-private fun Frame(m: AppModel, b: BotBrowser, bot: BotView) {
++private fun Frame(m: AppModel, b: BotBrowser, name: String, onTap: () -> Unit) {
+     val lang = LocalBackplaneLanguage.current
+     val img = rememberHubImage(m, b.url + "?n=" + b.n)
+     if (img == null) {
+@@ -161,6 +172,7 @@ private fun Frame(m: AppModel, b: BotBrowser, bot: BotView) {
+                 val x = (p.x / size.width * 1000).toInt().coerceIn(0, 1000)
+                 val y = (p.y / size.height * 1000).toInt().coerceIn(0, 1000)
+                 m.act("bb-click", "$x $y")
++                onTap()
+             }
+         }
+         .pointerInput(b.input) {
+@@ -173,7 +185,7 @@ private fun Frame(m: AppModel, b: BotBrowser, bot: BotView) {
+                 }
+             }
+         }
+-    Image(img, bot.name + "'s browser", live.then(if (b.input) Modifier.border(2.dp, amber, square) else Modifier), contentScale = ContentScale.FillWidth)
++    Image(img, name + "'s browser", live.then(if (b.input) Modifier.border(2.dp, amber, square) else Modifier), contentScale = ContentScale.FillWidth)
+ }
+ 
+ // while the person drives: the address, and the keys the frame cannot send
+@@ -181,7 +193,7 @@ private fun Frame(m: AppModel, b: BotBrowser, bot: BotView) {
+ @Composable
+ private fun Driving(m: AppModel, b: BotBrowser) {
+     val lang = LocalBackplaneLanguage.current
+-    var text by remember { mutableStateOf("") }
++    var text by remember(b.url) { mutableStateOf("") }
+     Column(Modifier.padding(horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+             OutlinedButton(onClick = { m.act("bb-back") }, shape = square) { Text(NativeMessages.tour_back(lang)) }
+@@ -232,13 +244,19 @@ private fun SaveSheet(m: AppModel, b: BotBrowser) {
+ @OptIn(ExperimentalLayoutApi::class)
+ @Composable
+ fun BrowserTab(m: AppModel, bot: BotView) {
++    BrowserPanel(m, bot.browser, bot.name)
++}
++
++@Composable
++fun BrowserPanel(m: AppModel, browser: BotBrowser?, name: String) {
++    val b = browser
+     val lang = LocalBackplaneLanguage.current
+-    val b = bot.browser
+     if (b == null) {
+         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(NativeMessages.native_browser_empty(lang), color = MaterialTheme.colorScheme.outline) }
+         return
+     }
+     if (b.mode == 2) { SaveSheet(m, b); return }
++    var keyboard by remember(b.url) { mutableStateOf(0) }
+     var sent by remember { mutableStateOf(0) }
+     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+         for (a in b.asks) Box(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) { BrowserAsk(m, a) }
+@@ -251,7 +269,11 @@ fun BrowserTab(m: AppModel, bot: BotView) {
+             Btns(m, b.btns)
+         }
+         if (b.input) Driving(m, b)
+-        Frame(m, b, bot)
++        if (b.input) {
++            Button(onClick = { keyboard++ }) { Text("Keyboard") }
++            BrowserTextInput(m, keyboard)
++        }
++        Frame(m, b, name) { keyboard++ }
+         if (b.mode == 1) Row(Modifier.padding(horizontal = 12.dp).padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp),
+             verticalAlignment = Alignment.CenterVertically) {
+             Field(m, "tknote", b.note, NativeMessages.native_task_note(lang), "go", { m.act("tk-note"); sent++ }, Modifier.weight(1f), sent)
+@@ -321,3 +343,44 @@ fun TasksTab(m: AppModel, bot: BotView) {
+         }
+     }
+ }
++
++// Commit only after the IME has finished composing. The sentinel lets software
++// keyboards send Backspace even though remote text is never copied here.
++@Composable
++private fun BrowserTextInput(m: AppModel, request: Int) {
++    val focus = remember { FocusRequester() }
++    val keyboard = LocalSoftwareKeyboardController.current
++    var value by remember { mutableStateOf(TextFieldValue("\u200B", TextRange(1))) }
++    LaunchedEffect(request) { if (request > 0) { focus.requestFocus(); keyboard?.show() } }
++    BasicTextField(value, { next ->
++        value = next
++        if (next.composition == null) {
++            val text = next.text.removePrefix("\u200B")
++            if (next.text.isEmpty()) m.act("bb-key", "Backspace")
++            else if (text == "\n") m.act("bb-key", "Enter")
++            else if (text.isNotEmpty()) m.act("bb-type", text)
++            value = TextFieldValue("\u200B", TextRange(1))
++        }
++    }, Modifier.size(1.dp).alpha(0.01f).focusRequester(focus).onPreviewKeyEvent { event ->
++        val e = event.nativeKeyEvent
++        val name = when (e.keyCode) {
++            AndroidKeyEvent.KEYCODE_DEL -> "Backspace"
++            AndroidKeyEvent.KEYCODE_FORWARD_DEL -> "Delete"
++            AndroidKeyEvent.KEYCODE_ENTER -> "Enter"
++            AndroidKeyEvent.KEYCODE_TAB -> "Tab"
++            AndroidKeyEvent.KEYCODE_ESCAPE -> "Escape"
++            AndroidKeyEvent.KEYCODE_DPAD_LEFT -> "ArrowLeft"
++            AndroidKeyEvent.KEYCODE_DPAD_RIGHT -> "ArrowRight"
++            AndroidKeyEvent.KEYCODE_DPAD_UP -> "ArrowUp"
++            AndroidKeyEvent.KEYCODE_DPAD_DOWN -> "ArrowDown"
++            else -> if ((e.isCtrlPressed || e.isMetaPressed) && e.keyCode in listOf(AndroidKeyEvent.KEYCODE_A, AndroidKeyEvent.KEYCODE_Z, AndroidKeyEvent.KEYCODE_Y))
++                when (e.keyCode) { AndroidKeyEvent.KEYCODE_A -> "a"; AndroidKeyEvent.KEYCODE_Z -> "z"; else -> "y" } else null
++        }
++        if (name == null || value.composition != null) false else {
++            if (e.action == AndroidKeyEvent.ACTION_DOWN) m.act("bb-key",
++                (if (e.isCtrlPressed || e.isMetaPressed) "ControlOrMeta+" else "") + (if (e.isShiftPressed) "Shift+" else "") + name)
++            true
++        }
++    },
++        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false))
++}
+diff --git a/mobile/android/app/src/main/java/dev/backplane/mobile/Ui.kt b/mobile/android/app/src/main/java/dev/backplane/mobile/Ui.kt
+index a6558c9dfae60104aeb7302d5993c43827d49901..0aaeeeaeaf5cc3abd8559acb24609ee4d402f5f7 100644
+--- a/mobile/android/app/src/main/java/dev/backplane/mobile/Ui.kt
++++ b/mobile/android/app/src/main/java/dev/backplane/mobile/Ui.kt
+@@ -221,6 +221,13 @@ fun App(m: AppModel) {
+             BackHandler { m.back() }
+             OpeningDestination(m, s, m.opening!!)
+         }
++        s.thread != null && s.thread.viewer.open == "browser" -> {
++            BackHandler { m.act("view", "") }
++            Column(Modifier.fillMaxSize()) {
++                Button(onClick = { m.act("view", "") }) { Text("Done") }
++                key(s.thread.viewer.browser?.url) { BrowserPanel(m, s.thread.viewer.browser, "This thread") }
++            }
++        }
+         s.thread != null && s.thread.viewer.open == "files" && s.thread.viewer.files != null -> {
+             BackHandler { m.act("view", "") }
+             FilesScreen(m, s.thread.viewer, s.thread.viewer.files)
+diff --git a/mobile/ios/Backplane/Screen.swift b/mobile/ios/Backplane/Screen.swift
+index 2421b186d00ec756c529b9aa90de81573242d2d6..559acf63f8a8ff2e8cfab43cd8e800bfabcd1373 100644
+--- a/mobile/ios/Backplane/Screen.swift
++++ b/mobile/ios/Backplane/Screen.swift
+@@ -283,6 +283,7 @@ struct Viewer: Decodable {
+     let files: FilesPage?
+     let file: FileView?
+     // the Review tab (open "review")
++    let browser: BotBrowser?
+     let review: ReviewPage?
+     // the review comments of the file on show
+     let comments: ReviewComments?
+diff --git a/mobile/ios/Backplane/TasksView.swift b/mobile/ios/Backplane/TasksView.swift
+index 238ec0d0e4d1f5de06507030733fa1edbcce6a8c..4449a7b3a2d9a2c6836d000febbb18ee951d5391 100644
+--- a/mobile/ios/Backplane/TasksView.swift
++++ b/mobile/ios/Backplane/TasksView.swift
+@@ -98,6 +98,7 @@ private struct DrivenFrame: View {
+     let model: AppModel
+     let image: UIImage
+     let input: Bool
++    var onTap: () -> Void = {}
+     @State private var pulled: CGFloat = 0
+ 
+     var body: some View {
+@@ -122,6 +123,7 @@ private struct DrivenFrame: View {
+                     let x = Int(max(0, min(1000, v.location.x / g.size.width * 1000)))
+                     let y = Int(max(0, min(1000, v.location.y / g.size.height * 1000)))
+                     model.act("bb-click", "\(x) \(y)")
++                    onTap()
+                 })
+         }
+         .aspectRatio(image.size.width / max(image.size.height, 1), contentMode: .fit)
+@@ -208,6 +210,7 @@ struct BrowserTab: View {
+     let browser: BotBrowser?
+     let name: String
+     @State private var image: UIImage?
++    @State private var keyboard = false
+ 
+     private var url: URL? {
+         browser.flatMap { model.hubURL($0.url, query: [URLQueryItem(name: "n", value: $0.n)]) }
+@@ -236,9 +239,14 @@ struct BrowserTab: View {
+                     } else if let b = browser {
+                         StripButtons(model: model, buttons: b.btns ?? []).padding(.horizontal, 12)
+                     }
+-                    if let b = browser, b.input == true { DrivingBar(model: model, browser: b) }
++                    if let b = browser, b.input == true {
++                        DrivingBar(model: model, browser: b).id(b.url)
++                        Button(keyboard ? "Hide keyboard" : "Keyboard") { keyboard.toggle() }.padding(.horizontal)
++                        BrowserTextInput(active: $keyboard) { action, value in model.act(action, value) }
++                            .frame(height: 1).id(b.url)
++                    }
+                     if let image {
+-                        DrivenFrame(model: model, image: image, input: browser?.input ?? false)
++                        DrivenFrame(model: model, image: image, input: browser?.input ?? false, onTap: { keyboard = true })
+                     } else {
+                         ContentUnavailableView(NativeMessages.native_browser_empty(lang), systemImage: "globe").frame(maxWidth: .infinity)
+                     }
+@@ -250,6 +258,8 @@ struct BrowserTab: View {
+                     }
+                 }
+             }
++            .onChange(of: browser?.url) { _, _ in keyboard = false; image = nil }
++            .onChange(of: browser?.input) { _, enabled in if enabled != true { keyboard = false } }
+             .task(id: url) {
+                 guard let u = url, let (d, r) = try? await URLSession.shared.data(from: u),
+                       (r as? HTTPURLResponse)?.statusCode == 200, let i = UIImage(data: d) else { return }
+@@ -334,3 +344,83 @@ struct TasksTab: View {
+         }
+     }
+ }
++
++// A native text responder supplies committed IME/dictation/paste text. It never
++// holds the remote field value; the image remains the source of truth.
++private struct BrowserTextInput: UIViewRepresentable {
++    @Binding var active: Bool
++    var send: (String, String) -> Void
++    func makeCoordinator() -> Coordinator { Coordinator(self) }
++    func makeUIView(context: Context) -> UITextView {
++        let view = RemoteTextView()
++        view.send = send
++        view.delegate = context.coordinator
++        view.text = "\u{200B}"
++        view.selectedRange = NSRange(location: 1, length: 0)
++        view.autocorrectionType = .no
++        view.autocapitalizationType = .none
++        view.smartQuotesType = .no
++        view.smartDashesType = .no
++        view.textColor = .clear
++        view.tintColor = .clear
++        view.backgroundColor = .clear
++        view.accessibilityLabel = "Type into the remote browser"
++        return view
++    }
++    func updateUIView(_ view: UITextView, context: Context) {
++        context.coordinator.parent = self
++        (view as? RemoteTextView)?.send = send
++        if active && !view.isFirstResponder { view.becomeFirstResponder() }
++        if !active && view.isFirstResponder { view.resignFirstResponder() }
++    }
++    final class Coordinator: NSObject, UITextViewDelegate {
++        var parent: BrowserTextInput
++        init(_ parent: BrowserTextInput) { self.parent = parent }
++        func reset(_ view: UITextView) {
++            view.text = "\u{200B}"
++            view.selectedRange = NSRange(location: 1, length: 0)
++        }
++        func textView(_ view: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
++            guard parent.active else { return false }
++            if view.markedTextRange != nil { return true }
++            if text == "\n" { parent.send("bb-key", "Enter"); return false }
++            if text.isEmpty && range.length > 0 {
++                parent.send("bb-key", "Backspace"); reset(view); return false
++            }
++            return true
++        }
++        func textViewDidChange(_ view: UITextView) {
++            guard parent.active, view.markedTextRange == nil else { return }
++            let text = view.text.hasPrefix("\u{200B}") ? String(view.text.dropFirst()) : view.text ?? ""
++            if !text.isEmpty { parent.send("bb-type", text) }
++            reset(view)
++        }
++        func textViewDidEndEditing(_ view: UITextView) { reset(view) }
++    }
++}
++
++private final class RemoteTextView: UITextView {
++    var send: (String, String) -> Void = { _, _ in }
++    override var keyCommands: [UIKeyCommand]? {
++        let keys = [UIKeyCommand.inputLeftArrow, UIKeyCommand.inputRightArrow,
++                    UIKeyCommand.inputUpArrow, UIKeyCommand.inputDownArrow, "\t", "\r", UIKeyCommand.inputEscape]
++        let modifiers: [UIKeyModifierFlags] = [[], .shift, .control, .command, [.control, .shift], [.command, .shift]]
++        var commands = modifiers.flatMap { flags in keys.map { key in
++            UIKeyCommand(input: key, modifierFlags: flags, action: #selector(remoteKey(_:)))
++        } }
++        for flags: UIKeyModifierFlags in [.command, .control, [.command, .shift], [.control, .shift]] {
++            for key in ["a", "z", "y"] { commands.append(UIKeyCommand(input: key, modifierFlags: flags, action: #selector(remoteKey(_:)))) }
++        }
++        for command in commands { command.wantsPriorityOverSystemBehavior = true }
++        return commands
++    }
++    @objc private func remoteKey(_ command: UIKeyCommand) {
++        guard let input = command.input else { return }
++        let names = [UIKeyCommand.inputLeftArrow: "ArrowLeft", UIKeyCommand.inputRightArrow: "ArrowRight",
++                     UIKeyCommand.inputUpArrow: "ArrowUp", UIKeyCommand.inputDownArrow: "ArrowDown",
++                     "\t": "Tab", "\r": "Enter", UIKeyCommand.inputEscape: "Escape"]
++        let primary = !command.modifierFlags.intersection([.command, .control]).isEmpty
++        let mods = (primary ? "ControlOrMeta+" : "") + (command.modifierFlags.contains(.shift) ? "Shift+" : "")
++        send("bb-key", mods + (names[input] ?? input))
++    }
++}
+diff --git a/mobile/ios/Backplane/Views.swift b/mobile/ios/Backplane/Views.swift
+index 40c05707da343852c7b5833dc22193ca2a8385aa..b62327e05c3f1331bae433ff121f41b2e16739b9 100644
+--- a/mobile/ios/Backplane/Views.swift
++++ b/mobile/ios/Backplane/Views.swift
+@@ -938,7 +938,13 @@ struct ThreadScreen: View {
+         .onChange(of: fileMenu) { _, m in if m == nil { shutFile = nil } }
+         .fullScreenCover(isPresented: Binding(get: { !thread.viewer.open.isEmpty }, set: { if !$0 { model.act("view", "") } })) {
+             if let v = model.screen?.thread?.viewer {
+-                if v.open == "files", let f = v.files { FilesScreen(model: model, viewer: v, page: f) }
++                if v.open == "browser" {
++                    VStack {
++                        HStack { Button("Done") { model.act("view", "") }; Spacer() }.padding()
++                        BrowserTab(model: model, browser: v.browser, name: "This thread").id(v.browser?.url)
++                    }
++                }
++                else if v.open == "files", let f = v.files { FilesScreen(model: model, viewer: v, page: f) }
+                 else if v.open == "image" || v.open == "pdf", let f = v.file { FileScreen(model: model, viewer: v, file: f) }
+                 else if v.open == "review", let r = v.review { ReviewScreen(model: model, viewer: v, page: r) }
+                 else if v.open == "renders", let p = v.mech { MechScreen(model: model, viewer: v, page: p) } else { PlotScreen(model: model, viewer: v) }
+diff --git a/src/app/layout.bend b/src/app/layout.bend
+index f74281a9b6891ce3bda05c8392958a76c10d4d17..ad0e53ee33c96b58196eb78d61e9650fec652499 100644
+--- a/src/app/layout.bend
++++ b/src/app/layout.bend
+@@ -4797,7 +4797,8 @@ def Lay.page.if(on: Bool, +ty: Ty, +u: U.Ui, +x0: U32, +x1: U32, +h: U32) -> Out
+   match on:
+     case True{}:
+       Out.cat(Page.strip(U.CefUI.strip_on(u, U.Ui.page(u)), ty, u, x0, x1),
+-        Lay.page(ty, u, U.Ui.page(u), MSG.T.viewer.page.empty(Ty.loc(ty)), x0, x1, Bool.pick(U32, U.CefUI.strip_on(u, U.Ui.page(u)), 96, 52), h))
++        Out.cat(Lay.button(ty, D.Clip.all(), (x0 + 24 : U32), Bool.pick(U32, U.CefUI.strip_on(u, U.Ui.page(u)), 100, 58), U.Teach.control.label(u, U.Ui.page(u)), T.Th.soft(), U.Teach.control.action(u, U.Ui.page(u)), ""),
++        Lay.page.in(ty, u, U.Ui.page(u), MSG.T.viewer.page.empty(Ty.loc(ty)), x0, x1, Bool.pick(U32, U.CefUI.strip_on(u, U.Ui.page(u)), 138, 96), h, U.Teach.input(u, U.Ui.page(u)))))
+     case False{}:
+       Out.none()
+ 
+diff --git a/src/app/nui.bend b/src/app/nui.bend
+index d86a193f4c79657f52cbb20f7dbbdd247e15e986..b91c6689dcf0bf73c56e3c446065df506a71f993 100644
+--- a/src/app/nui.bend
++++ b/src/app/nui.bend
+@@ -2431,8 +2431,15 @@ def Nui.paste.e(none: Bool, +key: String, +n: Nui, text: String) -> Step:
+     case False{}:
+       Nui.act.k(U.Ui.emb_keys(Nui.ui(n), key, VT.Vt.paste(U.Ui.term(Nui.ui(n), key), text)), n)
+ 
++def Nui.paste.browser(on: Bool, +n: Nui, text: String) -> Step:
++  match on:
++    case True{}:
++      Nui.act(n, "bb-type", text)
++    case False{}:
++      Nui.paste.e(String.is_empty(EM.Emb.focused(Nui.focus_of(n))), EM.Emb.focused(Nui.focus_of(n)), n, text)
++
+ def Nui.paste(+n: Nui, text: String) -> Step:
+-  Nui.paste.e(String.is_empty(EM.Emb.focused(Nui.focus_of(n))), EM.Emb.focused(Nui.focus_of(n)), n, text)
++  Nui.paste.browser(Bool.and(String.eq(Nui.focus_of(n), "bb-frame"), Bool.and(U.Teach.input(Nui.ui(n), U.Teach.owner(Nui.ui(n))), String.eq(U.Ui.scratch(Nui.ui(n), "@bb.page"), U.Teach.owner(Nui.ui(n))))), n, text)
+ 
+ def Nui.key.view3.k(none: Bool, +n: Nui, +a: U32) -> Step:
+   match none:
+@@ -2718,10 +2725,17 @@ def Bb.keyname(+code: U32) -> String:
+ def Bb.char(+text: U32) -> String:
+   SCon{Chr{text}, SNil{}}
+ 
++def Bb.chord(paste: Bool, +n: Nui, +text: U32) -> Step:
++  match paste:
++    case True{}:
++      Step{n, [NPaste{}], False{}}
++    case False{}:
++      Nui.act(n, "bb-key", "ControlOrMeta+" ++ Bb.char(U32.or(text, 32)))
++
+ def Bb.key.c(chord: Bool, +n: Nui, +text: U32) -> Step:
+   match chord:
+     case True{}:
+-      Nui.act(n, "bb-key", "Control+" ++ Bb.char(U32.or(text, 32)))
++      Bb.chord(String.eq(Bb.char(U32.or(text, 32)), "v"), n, text)
+     case False{}:
+       Step{n, Nil{}, False{}}
+ 
+@@ -2735,7 +2749,7 @@ def Bb.key.t(plain: Bool, +n: Nui, +code: U32, +text: U32, +mods: U32) -> Step:
+ def Bb.key.k(named: Bool, +n: Nui, +name: String, +code: U32, +text: U32, +mods: U32) -> Step:
+   match named:
+     case True{}:
+-      Nui.act(n, "bb-key", Bool.pick(String, Bool.and(Keys.shift(mods), String.eq(name, "Tab")), "Shift+Tab", name))
++      Nui.act(n, "bb-key", Bool.pick(String, Keys.ctrl(mods), "Control+", "") ++ Bool.pick(String, Keys.shift(mods), "Shift+", "") ++ name)
+     case False{}:
+       Bb.key.t(Bool.and(U32.is_ne(text, 0), U32.is_eq(U32.and(mods, 6), 0)), n, code, text, mods)
+ 
+@@ -2744,7 +2758,7 @@ def Bb.key(+n: Nui, +code: U32, +text: U32, +mods: U32) -> Step:
+ 
+ # the frame has the keyboard while the person drives the page
+ def Bb.keys(+n: Nui) -> Bool:
+-  Bool.and(String.eq(Nui.focus_of(n), "bb-frame"), U.Teach.input(Nui.ui(n), U.Bots.cur(Nui.ui(n))))
++  Bool.and(String.eq(Nui.focus_of(n), "bb-frame"), Bool.and(U.Teach.input(Nui.ui(n), U.Teach.owner(Nui.ui(n))), String.eq(U.Ui.scratch(Nui.ui(n), "@bb.page"), U.Teach.owner(Nui.ui(n)))))
+ 
+ def Nui.key.bb(on: Bool, +n: Nui, +code: U32, +text: U32, +mods: U32) -> Step:
+   match on:
+@@ -2900,7 +2914,7 @@ def Bb.at(+v: String, +x: U32, +y: U32) -> String:
+   U32.show(Bb.thou(x, Bb.part(v, 0n), Bb.part(v, 2n))) ++ " " ++ U32.show(Bb.thou(y, Bb.part(v, 1n), Bb.part(v, 3n)))
+ 
+ def Bb.press(+n: Nui, +v: String, +x: U32, +y: U32) -> Step:
+-  Nui.focus.step(Nui.act(n, "bb-click", Bb.at(v, x, y)), "bb-frame")
++  Nui.focus.step(Nui.act(Nui.with_ui(n, U.Ui.scratch_set(Nui.ui(n), "@bb.page", U.Teach.owner(Nui.ui(n)))), "bb-click", Bb.at(v, x, y)), "bb-frame")
+ 
+ def Row.press.b(frame: Bool, +n: Nui, +action: String, +value: String, +x: U32, +y: U32) -> Step:
+   match frame:
+diff --git a/src/core/client.bend b/src/core/client.bend
+index 1212155dbc570373a85c15de03490021ec805043..ad0d2403f611175e6556b7cff8c325e5b90aa17e 100644
+--- a/src/core/client.bend
++++ b/src/core/client.bend
+@@ -10093,6 +10093,19 @@ def Teach.driving(+d: String) -> Bool:
+ def Teach.input(+u: Ui, +bot: String) -> Bool:
+   Teach.driving(Teach.drive(u, bot))
+ 
++# The visible browser belongs to the bot tab, or to the selected thread.
++def Teach.target.of(+bot: String, page: String) -> String:
++  Bool.pick(String, String.is_empty(bot), page, bot)
++
++def Teach.owner(+u: Ui) -> String:
++  Teach.target.of(Bots.cur(u), Ui.page(u))
++
++def Teach.control.label(+u: Ui, +page: String) -> String:
++  Bool.pick(String, Teach.input(u, page), "Return control", "Take control")
++
++def Teach.control.action(+u: Ui, +page: String) -> String:
++  Bool.pick(String, Teach.input(u, page), "tk-handback", "tk-takeover")
++
+ def Teach.part(+t: String, +i: Nat) -> String:
+   Maybe.default(&2, String, List.get(&2, String, String.split(t, ' '), i), "")
+ 
+@@ -10620,7 +10633,7 @@ def Teach.target(+i: Nat, +cur: String, +value: String) -> String:
+ 
+ # the tk- and bb- actions act on the bot whose tab is open
+ def Teach.act(+u: Ui, +action: String, +value: String) -> Act:
+-  Teach.act.k(C.Codec.pos(Teach.actions(), action), u, Teach.target(C.Codec.pos(Teach.actions(), action), Bots.cur(u), value), value)
++  Teach.act.k(C.Codec.pos(Teach.actions(), action), u, Teach.target(C.Codec.pos(Teach.actions(), action), Teach.owner(u), value), value)
+ 
+ # a user action with its value
+ def Ui.act.m(menu: Bool, +i: Nat, +u: Ui, +action: String, +value: String) -> Act:
+diff --git a/src/mobile/view.bend b/src/mobile/view.bend
+index bbef998fb8de91765e30dbeccadd5a2dbb008d26..a9451b42fcb81702d0a9ad3589058960e982fc21 100644
+--- a/src/mobile/view.bend
++++ b/src/mobile/view.bend
+@@ -1,4 +1,5 @@
+ import Base
++import ./bots.bend as MB
+ import ../core/i18n.bend as I
+ import ../core/msgs.bend as MSG
+ import ../core/json.bend as J
+@@ -881,9 +882,20 @@ def Rc.open.json(m: Maybe<&2, U.RcOpen>) -> J.Json:
+ def Rc.json(+u: U.Ui) -> J.Json:
+   J.Json.obj([J.KV{"pins", J.Json.arr(Rc.pins(U.Rc.pins(u)))}, J.KV{"open", Rc.open.json(U.Rc.open(u))}, J.KV{"at", J.Str{U.Rc.at(u)}}])
+ 
++# The same input/control model as the desktop thread viewer.
++def View.browser(on: Bool, +u: U.Ui) -> J.Json:
++  match on:
++    case False{}:
++      J.Null{}
++    case True{}:
++      J.Json.obj([J.KV{"url", J.Str{"/bots/" ++ U.Ui.page(u) ++ "/screen.jpg"}},
++        J.KV{"n", J.Str{U.Ui.info(u, "shot." ++ U.Ui.page(u))}}, J.KV{"input", J.Flag{U.Teach.input(u, U.Ui.page(u))}},
++        J.KV{"bburl", J.Str{U.Bots.field(u, "bburl")}},
++        J.KV{"btns", J.Json.arr(MB.MBots.tbtns([U.TBtn{U.Teach.control.label(u, U.Ui.page(u)), U.Teach.control.action(u, U.Ui.page(u)), "", True{}}]))}])
++
+ def View.json(+lc: I.Loc, +u: U.Ui, +rb: J.Json) -> J.Json:
+-  J.Json.obj([J.KV{"open", J.Str{Bool.pick(String, Bool.or(Bool.or(Bool.or(Bool.not(String.is_empty(View.want(u))), View.mech(u)), View.fm(u)), String.eq(View.kind(u), "review")), View.kind(u), "")}}, J.KV{"key", J.Str{View.want(u)}},
+-    J.KV{"comments", Rc.json(u)},
++  J.Json.obj([J.KV{"open", J.Str{Bool.pick(String, Bool.or(Bool.or(Bool.or(Bool.not(String.is_empty(View.want(u))), View.mech(u)), View.fm(u)), Bool.or(String.eq(View.kind(u), "review"), String.eq(View.kind(u), "browser"))), View.kind(u), "")}}, J.KV{"key", J.Str{View.want(u)}},
++    J.KV{"comments", Rc.json(u)}, J.KV{"browser", View.browser(String.eq(View.kind(u), "browser"), u)},
+     J.KV{"review", Rv.json(lc, String.eq(View.kind(u), "review"), u, rb)},
+     J.KV{"files", Files.json(lc, String.eq(View.kind(u), "files"), u)}, J.KV{"file", File.json(Bool.or(String.eq(View.kind(u), "image"), String.eq(View.kind(u), "pdf")), u)},
+     J.KV{"layers", J.Str{Bool.pick(String, View.mech(u), "", View.layers.at(View.kind(u), U.Ui.root(u), View.src(u)))}},
+@@ -893,9 +905,9 @@ def View.json(+lc: I.Loc, +u: U.Ui, +rb: J.Json) -> J.Json:
+     J.KV{"off", J.Num{U32.show(LY.Masks.off(View.masks(u)))}}, J.KV{"dim", J.Num{U32.show(LY.Masks.dim(View.masks(u)))}}, J.KV{"lift", J.Num{U32.show(LY.Lyr.top(View.focus(u)))}},
+     J.KV{"layerMode", J.Num{U32.show(View.lmode(u))}}, J.KV{"layerModes", J.Flag{String.eq(View.kind(u), "board")}}, J.KV{"layerHead", J.Str{View.lhead.loc(lc, u)}},
+     J.KV{"parts", J.Flag{Bool.not(View.bare(u))}}, J.KV{"note", J.Str{View.note(u)}},
+-    J.KV{"choices", J.Json.arr(Bool.pick(List<&2, J.Json>, String.is_empty(U.Ui.root(u)), Nil{},
++    J.KV{"choices", J.Json.arr(Bool.pick(List<&2, J.Json>, String.is_empty(U.Ui.root(u)), [View.choice(MSG.T.bots.tab.browser(lc), "browser", View.kind(u))],
+       [View.choice(MSG.T.viewer.board(lc), "board", View.kind(u)), View.choice(MSG.T.viewer.schematic(lc), "schematic", View.kind(u)), View.choice("3D", "3d", View.kind(u)), View.choice(MSG.T.viewer.mech(lc), "mech", Bool.pick(String, View.mech(u), "mech", "")),
+-       View.choice(MSG.T.viewer.files(lc), "files", Bool.pick(String, View.fm(u), "files", "")), View.choice(MSG.T.viewer.review(lc), "review", View.kind(u))]))},
++       View.choice(MSG.T.viewer.files(lc), "files", Bool.pick(String, View.fm(u), "files", "")), View.choice(MSG.T.viewer.review(lc), "review", View.kind(u)), View.choice(MSG.T.bots.tab.browser(lc), "browser", View.kind(u))]))},
+     J.KV{"bg", J.Num{U32.show(View.bg(View.kind(u), View.light(u)))}}, J.KV{"light", J.Json.bool(View.light(u))}, J.KV{"look", J.Json.arr(View.look(View.light(u), View.kind(u)))}, J.KV{"fade", J.Num{Nat.show(V.Fade.ms())}}, J.KV{"margin", J.Num{"0.9"}},
+     J.KV{"zmin", J.Num{"0.5"}}, J.KV{"zmax", J.Num{"0.5"}}, J.KV{"tap", J.Num{"14"}},
+     J.KV{"top", J.Json.arr(View.nums(View.top()))}, J.KV{"bottom", J.Json.arr(View.nums(View.bottom()))},
+diff --git a/src/server/server.bend b/src/server/server.bend
+index fcb7a654ec2445910e888a86d976632e0882c7e0..c3def8fb2606608c8cd67e094f0742eb0e0fea77 100644
+--- a/src/server/server.bend
++++ b/src/server/server.bend
+@@ -253,6 +253,7 @@ type Msg is Data:
+   # about a page (a recorder step); the person's answer to a pause handed
+   # the browser back; a task run asks the person (task_pause)
+   TeachReq{client: U32, id: String, m: String, p: String}
++  BrowserInputDone{client: U32, id: String, line: String}
+   BrowserEv{line: String}
+   CefDone{request: String, live: String, err: String}
+   # a websocket from this machine (loopback, not proxied): it may embed
+@@ -9338,12 +9339,42 @@ def Hub.tch.stop(h: Hub, +b: TE.TeachBot) -> IO(Hub):
+         IO.spawn(Unit, Tk.record(Cfg.br(cfg), TE.Teach.bot.id(b), False{}))
+         Hub.tch.put(Hub{st, f, ls, cl, as, inbox, cfg, note}, TE.Teach.stop(b))
+ 
++# Enqueue before leaving the hub turn: click and typing retain arrival order.
++# Waiting for Chromium happens off the hub, and its failure reaches the client.
++def BrowserInput.wait(+reply: Chan(String), +inbox: Chan(Msg), +client: U32, +id: String) -> IO(Unit):
++  do IO<Unit>:
++    line : Maybe<&1, String> <- Chan.recv(String, reply)
++    Self.post(inbox, BrowserInputDone{client, id, Maybe.default(&1, String, line, BR.Browser.fail("browser disconnected"))})
++
++def Hub.browser.queue(m: Maybe<&2, Chan(BR.BMsg)>, h: Hub, +client: U32, +id: String, +o: J.Json) -> IO(Hub):
++  match m h:
++    case Some{+q} Hub{st, f, ls, cl, as, +inbox, cfg, note}:
++      do IO<Hub>:
++        +reply : Chan(String) <- Chan.new(String, 1)
++        ok : Result<&1, &1, BR.BMsg, Unit> <- Chan.send(BR.BMsg, q, BR.BCall{"input",
++          BR.Browser.paged(J.Json.get_str(o, "bot", ""), J.Json.obj([
++            J.KV{"action", J.Str{J.Json.get_str(o, "op", "")}},
++            J.KV{"x", J.Num{Nat.show(J.Json.get_nat(o, "x", 0n))}}, J.KV{"y", J.Num{Nat.show(J.Json.get_nat(o, "y", 0n))}},
++            J.KV{"text", J.Str{J.Json.get_str(o, "text", "")}}, J.KV{"key", J.Str{J.Json.get_str(o, "key", "")}},
++            J.KV{"type", J.Str{Tk.mouse.type(J.Json.get_str(o, "type", "move"))}},
++            J.KV{"dy", J.Num{J.Json.as_raw(J.Json.get(o, "dy"), "0")}}, J.KV{"dx", J.Num{J.Json.as_raw(J.Json.get(o, "dx"), "0")}},
++            J.KV{"url", J.Str{J.Json.get_str(o, "url", "")}}])), reply})
++        IO.spawn(Unit, BrowserInput.wait(reply, inbox, client, id))
++        return Hub{st, f, ls, cl, as, inbox, cfg, note}
++    case None{} h2:
++      Hub.tch.err(h2, client, id, "browser unavailable")
++
+ def Hub.browser.go(h: Hub, +client: U32, +id: String, +o: J.Json) -> IO(Hub):
+   match h:
+     case Hub{st, f, ls, cl, as, inbox, +cfg, note}:
+-      do IO<Hub>:
+-        IO.spawn(Unit, Tk.input(Cfg.br(cfg), J.Json.get_str(o, "bot", ""), o))
+-        Hub.tch.ok(Hub{st, f, ls, cl, as, inbox, cfg, note}, client, id)
++      Hub.browser.queue(Cfg.br(cfg), Hub{st, f, ls, cl, as, inbox, cfg, note}, client, id, o)
++
++def Hub.browser.done(ok: Bool, h: Hub, +client: U32, +id: String, +o: J.Json) -> IO(Hub):
++  match ok:
++    case True{}:
++      Hub.tch.ok(h, client, id)
++    case False{}:
++      Hub.tch.err(h, client, id, J.Json.get_str(o, "error", "browser input failed"))
+ 
+ # the person's input goes through only while they have the browser
+ def Hub.browser.input(idle: Bool, h: Hub, +client: U32, +id: String, +o: J.Json) -> IO(Hub):
+@@ -12945,6 +12976,8 @@ def Msg.kind(m: Msg) -> String:
+       "shot"
+     case TeachReq{_, _, _, _}:
+       "teach_req"
++    case BrowserInputDone{_, _, _}:
++      "browser_input_done"
+     case BrowserEv{_}:
+       "browser_ev"
+     case CefDone{_, _, _}:
+@@ -13757,6 +13790,8 @@ def Hub.handle(h: Hub, m: Msg, +now: Nat) -> IO(Hub):
+       Hub.shot.to(h, text, page)
+     case TeachReq{client, id, m, p}:
+       Hub.teach(h, client, id, m, p, now)
++    case BrowserInputDone{client, id, +line}:
++      Hub.browser.done(J.Json.get_bool(Maybe.default(&2, J.Json, J.Json.parse(line), J.Null{}), "ok", False{}), h, client, id, Maybe.default(&2, J.Json, J.Json.parse(line), J.Null{}))
+     case BrowserEv{line}:
+       Hub.browser_ev(h, line)
+     case CefDone{request, live, err}:
+diff --git a/src/web/app.bend b/src/web/app.bend
+index 49ff2adf8f6e41271d760b1d7f7c92c906499d67..60e0fe8eebf69a6141161187b14ea86bd2ce093f 100644
+--- a/src/web/app.bend
++++ b/src/web/app.bend
+@@ -273,6 +273,10 @@ def lb_css(lb: LB.Lb, b: LB.LbBox, now: Nat) -> String:
+ def tour_key(key: String) -> String:
+   OB.Ob.dom(key)
+ 
++# A stale DOM frame must never send input to a newly selected page.
++def browser_target(+u: U.Ui) -> String:
++  Bool.pick(String, U.Teach.input(u, U.Teach.owner(u)), U.Teach.owner(u), "")
++
+ # The host passes the frame's already resolved language tag.
+ def lb_node_in(tag: String, url: String) -> D.Node:
+   lb_node.loc(I.I18n.of_tag(tag), url)
+diff --git a/src/web/bots.bend b/src/web/bots.bend
+index 8ee8e5b9b489443ab809d03d26d84a84dfe19079..a34eff91db22cedfb3fc56307295912df81fbed6 100644
+--- a/src/web/bots.bend
++++ b/src/web/bots.bend
+@@ -230,7 +230,7 @@ def WB.tabs(+lc: I.Loc, +hd: BI.Head) -> D.Node:
+ # a notch's pixels, data-keyto: a key's name, data-type: typed text).
+ def WB.frame.loc(+lc: I.Loc, +id: String, +n: String, +name: String) -> D.Node:
+   D.El{"img", "bot-frame", [D.At{"src", "/bots/" ++ id ++ "/screen.jpg?n=" ++ n}, D.At{"alt", MSG.T.browser.owner(lc, name)}, D.At{"tabindex", "0"}, D.At{"draggable", "false"},
+-    D.At{"data-pt", "bb-click"}, D.At{"data-wheel", "bb-scroll"}, D.At{"data-keyto", "bb-key"}, D.At{"data-type", "bb-type"}], Nil{}}
++    D.At{"data-owner", id}, D.At{"data-pt", "bb-click"}, D.At{"data-wheel", "bb-scroll"}, D.At{"data-keyto", "bb-key"}, D.At{"data-type", "bb-type"}], Nil{}}
+ 
+ def WB.frame(+id: String, +n: String, +name: String) -> D.Node:
+   WB.frame.loc(I.En{}, id, n, name)
+diff --git a/src/web/browser-input.js b/src/web/browser-input.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..dba92ee9987a05e07f4ab5b6e36c06b45fcaae41
+--- /dev/null
++++ b/src/web/browser-input.js
+@@ -0,0 +1,103 @@
++// Browser frames are pixels. A real editable bridge supplies committed text,
++// IME and software-keyboard events; navigation keys use the remote keyboard.
++export function installBrowserInput(doc, dispatch, currentOwner) {
++  const input = doc.createElement("textarea");
++  input.setAttribute("aria-label", "Type into the remote browser");
++  input.tabIndex = -1;
++  input.autocomplete = "off";
++  input.autocapitalize = "off";
++  input.spellcheck = false;
++  input.style.cssText = "position:fixed;width:1px;height:1px;opacity:0;bottom:0;left:0;font-size:16px;pointer-events:none";
++  doc.body.append(input);
++  let frame = null, owner = "", composing = false;
++  const reset = () => { input.value = "\u200b"; input.setSelectionRange(1, 1); };
++  const allowed = () => frame?.isConnected && frame.hasAttribute("data-keyto") && frame.hasAttribute("data-type") && frame.getAttribute("data-owner") === owner && currentOwner() === owner;
++  const send = (attr, value) => { if (allowed()) dispatch(frame.getAttribute(attr), value); };
++  const clear = () => { composing = false; reset(); };
++  const editKeys = { deleteContentBackward: "Backspace", deleteContentForward: "Delete",
++    deleteWordBackward: "ControlOrMeta+Backspace", insertLineBreak: "Enter", insertParagraph: "Enter",
++    historyUndo: "ControlOrMeta+z", historyRedo: "ControlOrMeta+Shift+z" };
++  const commit = (event) => {
++    if (composing) return;
++    // Some software keyboards emit non-cancelable beforeinput events.
++    if (editKeys[event?.inputType]) { send("data-keyto", editKeys[event.inputType]); reset(); return; }
++    // Remove only our leading sentinel; preserve characters the user supplied.
++    const text = input.value.startsWith("\u200b") ? input.value.slice(1) : input.value;
++    if (text) send("data-type", text);
++    reset();
++  };
++  const focus = (el) => {
++    const next = el.getAttribute("data-owner");
++    if (!next || currentOwner() !== next) return false;
++    if (frame !== el || owner !== next) clear();
++    frame = el; owner = next;
++    input.focus({ preventScroll: true });
++    return true;
++  };
++  reset();
++  doc.addEventListener("click", (e) => {
++    const el = e.target.closest?.("[data-pt]");
++    if (!el || e.button !== 0 || currentOwner() !== el.getAttribute("data-owner")) return;
++    e.preventDefault();
++    // Commit to the old field before moving the remote caret.
++    if (!composing) commit();
++    const r = el.getBoundingClientRect();
++    const th = (v, size) => Math.max(0, Math.min(1000, Math.round(v / Math.max(size, 1) * 1000)));
++    frame = el; owner = el.getAttribute("data-owner");
++    send("data-pt", `${th(e.clientX - r.left, r.width)} ${th(e.clientY - r.top, r.height)}`);
++    clear();
++    focus(el); // synchronous with the tap, required by iOS's keyboard
++  }, true);
++  doc.addEventListener("focusin", (e) => {
++    if (e.target.matches?.("[data-keyto]")) focus(e.target);
++  });
++  doc.addEventListener("wheel", (e) => {
++    const el = e.target.closest?.("[data-wheel]");
++    if (!el || currentOwner() !== el.getAttribute("data-owner")) return;
++    e.preventDefault();
++    dispatch(el.getAttribute("data-wheel"), String(Math.round(Math.max(-600, Math.min(600, e.deltaY)))));
++  }, { passive: false });
++  input.addEventListener("compositionstart", () => { composing = true; });
++  input.addEventListener("compositionend", () => { composing = false; commit(); });
++  input.addEventListener("input", commit);
++  input.addEventListener("blur", clear);
++  input.addEventListener("paste", (e) => {
++    if (!allowed()) return;
++    e.preventDefault();
++    send("data-type", e.clipboardData.getData("text/plain"));
++    clear();
++  });
++  input.addEventListener("beforeinput", (e) => {
++    if (!allowed()) { e.preventDefault(); clear(); return; }
++    if (composing || e.isComposing) return;
++    const key = editKeys[e.inputType];
++    if (key && e.cancelable) { e.preventDefault(); send("data-keyto", key); reset(); }
++  });
++  const named = new Set(["Enter", "Backspace", "Delete", "Tab", "Escape", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown"]);
++  doc.addEventListener("keydown", (e) => {
++    if (e.target !== input || !allowed()) return;
++    // Keep Backplane's shortcuts from stealing keys while this bridge owns focus.
++    e.stopImmediatePropagation();
++    if (composing || e.isComposing || e.key === "Dead" || e.key === "Process" || e.keyCode === 229) return;
++    const altGraph = e.getModifierState?.("AltGraph") || (e.ctrlKey && e.altKey && !e.metaKey);
++    const primary = (e.metaKey || e.ctrlKey) && !altGraph;
++    if (primary && e.key.toLowerCase() === "v") return; // local paste supplies the text
++    // Physical ASCII keys also deliver keydown/keyup to sites with key handlers.
++    // Non-ASCII, dead keys and AltGraph are committed by the editable bridge.
++    if (!primary && !e.altKey && e.key.length === 1 && e.key.charCodeAt(0) >= 32 && e.key.charCodeAt(0) < 127) {
++      e.preventDefault(); send("data-keyto", (e.shiftKey ? "Shift+" : "") + (e.key === " " ? "Space" : e.key)); reset(); return;
++    }
++    if (!named.has(e.key) && !(primary && e.key.length === 1)) return;
++    e.preventDefault();
++    const mods = (primary ? "ControlOrMeta+" : "") + (e.altKey && !altGraph ? "Alt+" : "") + (e.shiftKey ? "Shift+" : "");
++    send("data-keyto", mods + (e.key === " " ? "Space" : e.key));
++    reset();
++  }, true);
++  // A frame refresh keeps focus; changing owner, hiding the viewer or giving
++  // control back invalidates it. Never replay input after a reconnect/switch.
++  const observer = new MutationObserver(() => {
++    if (frame && !allowed()) { input.blur(); frame = null; owner = ""; clear(); }
++  });
++  observer.observe(doc.getElementById("root") || doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-owner", "data-keyto", "data-type"] });
++  return { input };
++}
+diff --git a/src/web/host.js b/src/web/host.js
+index 14cd9c3766ec46ae20ede83da3289254ff202340..bd08568509bde388a80d50ad08e3c92e1de9ebdc 100644
+--- a/src/web/host.js
++++ b/src/web/host.js
+@@ -10,6 +10,7 @@ import { pairBrowser } from "./auth.js";
+ 
+ // Consume the secret before the generic deeplink handler clears the fragment.
+ const pairingReady = pairBrowser({ location, history, storage: localStorage, fetch: window.fetch.bind(window) }).catch(() => false);
++import { installBrowserInput } from "./browser-input.js";
+ import * as Solid from "./solid.js";
+ import * as Plot2d from "./plot2d.js";
+ import * as Wire from "./wire.js";
+@@ -746,53 +747,8 @@ for (const ev of EVENTS) {
+   });
+ }
+ 
+-// A page the person drives (the Browser tab, client.bend's Teach): the
+-// img names the actions (data-pt, data-wheel, data-keyto, data-type); this
+-// only turns DOM events into their values. A click is a place in
+-// thousandths of the frame, the wheel a notch's pixels, a key its name
+-// (Playwright's), typed characters are sent together.
+-let frameText = "";
+-let frameTimer = 0;
+-function frameFlush(el) {
+-  clearTimeout(frameTimer);
+-  const t = frameText;
+-  frameText = "";
+-  const a = el && el.getAttribute("data-type");
+-  if (t && a) dispatch(a, t);
+-}
+-document.addEventListener("click", (e) => {
+-  const el = e.target.closest?.("[data-pt]");
+-  if (!el || e.button !== 0) return;
+-  e.preventDefault();
+-  el.focus();
+-  const r = el.getBoundingClientRect();
+-  const th = (v, size) => Math.max(0, Math.min(1000, Math.round((v / Math.max(size, 1)) * 1000)));
+-  frameFlush(el);
+-  dispatch(el.getAttribute("data-pt"), th(e.clientX - r.left, r.width) + " " + th(e.clientY - r.top, r.height));
+-}, true);
+-document.addEventListener("wheel", (e) => {
+-  const el = e.target.closest?.("[data-wheel]");
+-  if (!el) return;
+-  e.preventDefault();
+-  frameFlush(el);
+-  dispatch(el.getAttribute("data-wheel"), String(Math.round(Math.max(-600, Math.min(600, e.deltaY)))));
+-}, { passive: false });
+-const FRAME_KEYS = { Enter: 1, Backspace: 1, Tab: 1, Escape: 1, Delete: 1, ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1, Home: 1, End: 1, PageUp: 1, PageDown: 1 };
+-document.addEventListener("keydown", (e) => {
+-  const el = e.target.closest?.("[data-keyto]");
+-  if (!el || (e.isComposing || e.keyCode === 229) || e.metaKey) return;
+-  e.preventDefault();
+-  e.stopImmediatePropagation();
+-  if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+-    frameText += e.key;
+-    clearTimeout(frameTimer);
+-    frameTimer = setTimeout(() => frameFlush(el), 40);
+-    return;
+-  }
+-  frameFlush(el);
+-  if (e.key.length === 1 && e.ctrlKey) dispatch(el.getAttribute("data-keyto"), "Control+" + e.key.toLowerCase());
+-  else if (FRAME_KEYS[e.key]) dispatch(el.getAttribute("data-keyto"), (e.shiftKey && e.key === "Tab" ? "Shift+" : "") + e.key);
+-}, true);
++// Input stays scoped to the displayed owner and current control state.
++installBrowserInput(document, dispatch, () => socket?.readyState === 1 ? App.browser_target(ui) : "");
+ 
+ // keys: the page's own shortcuts (app.bend lists them), then a key field
+ // (the terminal) gets every key as "<key>\t<mods>"
+diff --git a/src/web/view.bend b/src/web/view.bend
+index b179cd0dc7d6f962a8819927c812aee8e016e50e..f3df772ee5fdc4cd6422c24bba88898b52efde2a 100644
+--- a/src/web/view.bend
++++ b/src/web/view.bend
+@@ -2078,7 +2078,7 @@ def View.browser.strip(on: Bool, +u: U.Ui) -> List<&2, D.Node>:
+ 
+ def View.browser.loc(+lc: I.Loc, +u: U.Ui) -> List<&2, D.Node>:
+   List.append(&2, D.Node, View.browser.strip.loc(lc, U.CefUI.strip_on(u, U.Ui.page(u)), u),
+-    [WB.WB.browser.k.loc(lc, String.is_empty(U.Ui.info(u, "shot." ++ U.Ui.page(u))), U.Ui.info(u, "shot." ++ U.Ui.page(u)), U.Ui.page(u), MSG.T.browser.thread(lc))])
++    [WB.WB.div("browser-controls", [D.Dom.button("", U.Teach.control.action(u, U.Ui.page(u)), U.Ui.page(u), "Control this browser", U.Teach.control.label(u, U.Ui.page(u)))]), WB.WB.browser.in.loc(lc, U.Teach.input(u, U.Ui.page(u)), String.is_empty(U.Ui.info(u, "shot." ++ U.Ui.page(u))), U.Ui.info(u, "shot." ++ U.Ui.page(u)), U.Ui.page(u), MSG.T.browser.thread(lc))])
+ 
+ # The Mechanical page (client.bend's Mpage): a chip per part, Open in 3D
+ # and Refresh, the part's renders (a click opens one in the lightbox), and
+diff --git a/test/bots_test.bend b/test/bots_test.bend
+index feca4a87d1e12db5af29dcacd56562a986f8c8ce..ede61a5190c5ecd5de93fbe7ec9e68af75e14ebf 100644
+--- a/test/bots_test.bend
++++ b/test/bots_test.bend
+@@ -396,6 +396,9 @@ def main() -> IO(Unit):
+     C.Check.str("task run request", st.tags(ask(tk, 1307n, "bots.task", "{\"bot\":\"" ++ id.of(tk, "Miso") ++ "\",\"op\":\"run\",\"slug\":\"order-status\",\"params\":{\"order\":\"W1\"}}")), "BotWoke MessagePosted MessageFrom TurnChanged | send:reply out out out out ")
+     C.Check.str("task run missing", st.tags(ask(tk, 1307n, "bots.task", "{\"bot\":\"" ++ id.of(tk, "Miso") ++ "\",\"op\":\"run\",\"slug\":\"nope\"}")), "| send:reply ")
+     C.Check.str("task delete request", st.tags(ask(tk, 1308n, "bots.task", "{\"bot\":\"" ++ id.of(tk, "Miso") ++ "\",\"op\":\"delete\",\"slug\":\"order-status\"}")), "TaskDeleted | send:reply fx:task-gone ")
++    +browserThread : M.State = M.State.replay([M.ThreadCreated{"ordinary", "", "Thread", M.Local{}, "", "", "claude", "", 100n}], M.State.empty())
++    C.Check.str("ordinary thread browser request", st.tags(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"ordinary\",\"op\":\"takeover\"}")), "| out ")
++    C.Check.str("missing browser owner rejected", yes(String.contains(st.body(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}")), "no such bot")), "yes")
+     C.Check.str("browser request", st.tags(ask(s, 1309n, "bots.browser", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"click\"}")), "| out ")
+     C.Check.str("teach request", st.tags(ask(s, 1309n, "bots.teach", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"start\"}")), "| out ")
+     C.Check.str("teach unknown bot", st.tags(ask(s, 1309n, "bots.teach", "{\"bot\":\"nobody\",\"op\":\"start\"}")), "| send:reply ")
+diff --git a/test/tools/teach_e2e.ts b/test/tools/teach_e2e.ts
+index 4ce00faa0ee97e59e223aff81e6fb86a34a25a87..f48047e6563dbeb7bca81312dbbb1aee86ec767e 100644
+--- a/test/tools/teach_e2e.ts
++++ b/test/tools/teach_e2e.ts
+@@ -147,6 +147,32 @@ try {
+   const thread: string = set?.thread ?? "";
+   check("a bot to teach", !!bot && !!thread, created);
+ 
++  // Ordinary thread viewers use the same control path, scoped to their page.
++  await rpc("project.add", { path: root });
++  const project = await change("ProjectCreated", c => c.root === root || c.path === root);
++  // Different model versions name the path differently; use this test's only project.
++  const projectId = project?.id ?? seen.find(c => c.$ === "ProjectCreated")?.id;
++  await rpc("thread.create", { project: projectId, title: "Browser input" });
++  const ordinary = await change("ThreadCreated", c => c.title === "Browser input");
++  const owner = ordinary?.id ?? "";
++  check("ordinary browser thread created", !!owner);
++  await mcp(owner, "preview_open", { url: siteUrl });
++  check("ordinary thread takes control", (await rpc("bots.browser", {bot:owner,op:"takeover"}))?.ok === true);
++  check("ordinary agent cannot race user input", (await mcp(owner,"preview_evaluate",{expression:"1"}))?.result?.isError === true);
++  const orderedInput = await Promise.all([
++    rpc("bots.browser", {bot:owner,op:"click",...aim(100)}),
++    rpc("bots.browser", {bot:owner,op:"type",text:"first"}),
++    rpc("bots.browser", {bot:owner,op:"press",key:"Tab"}),
++    rpc("bots.browser", {bot:owner,op:"type",text:"second"}),
++  ]);
++  check("ordinary input acknowledges execution", orderedInput.every(r=>r?.ok === true), orderedInput);
++  const badInput = await rpc("bots.browser", {bot:owner,op:"press",key:"NotARealKey"});
++  check("input failures reach the viewer", badInput?.ok === false, badInput);
++  await rpc("bots.browser", {bot:owner,op:"handback"});
++  const values = text(await mcp(owner,"preview_evaluate",{expression:"[document.getElementById('q').value,document.getElementById('pw').value]"}));
++  check("click typing and Tab stay ordered", values.includes("first") && values.includes("second"), values);
++  check("handback disables ordinary input", (await rpc("bots.browser",{bot:owner,op:"type",text:"late"}))?.ok === false);
++
+   const tools = await fetch(`${base}/mcp/${thread}`, {
+     method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+   }).then((r) => r.json());
+diff --git a/test/view_test.bend b/test/view_test.bend
+index 6de43f5662d6444d4bf1381fc9863af18a0873d7..4cf7674fc4b81be8354e9a91e60276b6280468a3 100644
+--- a/test/view_test.bend
++++ b/test/view_test.bend
+@@ -1,3 +1,5 @@
++import ../src/core/i18n.bend as I
++import ../src/mobile/view.bend as MV
+ import Base
+ import ./check.bend as C
+ import ../src/core/client.bend as U
+@@ -72,3 +74,9 @@ def main() -> IO(Unit):
+     C.Check.str("closed stays closed for its thread", Bool.show(U.Ui.panel(on(on(ui(U.Ui.act(shown, "panel", "")), "c"), "a"))), "False")
+     C.Check.str("a request waits open in its thread", Bool.show(U.Ui.panel(on(other, "b"))), "True")
+     C.Check.str("each thread has its own page", U.Ui.page(on(a, "b")), "b")
++    C.Check.str("thread input targets its own page", U.Teach.owner(on(a, "b")), "b")
++    C.Check.str("thread takeover uses that page", J.Json.get_str(J.Json.get_obj(json(sends(U.Ui.act(on(a, "b"), "tk-takeover", ""))), "p"), "bot", ""), "b")
++    C.Check.str("thread typing uses that page", J.Json.get_str(J.Json.get_obj(json(sends(U.Ui.act(on(a, "b"), "bb-type", "hello"))), "p"), "bot", ""), "b")
++    C.Check.str("bot input keeps bot ownership", U.Teach.owner(U.Ui.scratch_set(a, "@bot", "bot-x")), "bot-x")
++    C.Check.str("phone browser is visible", J.Json.get_str(MV.View.json(I.En{}, ui(MV.View.open.k(on(a, "b"), "browser")), J.Null{}), "open", ""), "browser")
++    C.Check.str("phone browser targets thread", J.Json.get_str(J.Json.get_obj(MV.View.json(I.En{}, ui(MV.View.open.k(on(a, "b"), "browser")), J.Null{}), "browser"), "url", ""), "/bots/b/screen.jpg")
+diff --git a/tools/browser/README.md b/tools/browser/README.md
+index bb7533aa5e149026bedfae63e700df27b0b3726a..a5a6e9461292731d6b4f1e991acc080e0a04fc04 100644
+--- a/tools/browser/README.md
++++ b/tools/browser/README.md
+@@ -73,8 +73,9 @@ written to stdout; diagnostics go to stderr.
+   on the owner's active tab.
+ 
+ - `op` names the request. Arguments sit beside it (or inside `"args": {}`).
+-- `id` is echoed back as given (any JSON value). Requests run concurrently,
+-  so replies may come out of order; match them by `id`.
++- `id` is echoed back as given (any JSON value). Page operations execute in
++  arrival order per owner. Different owners, status and cast leases run
++  concurrently, so match replies by `id`.
+ - `error` is one line. An unparseable line answers `{"id": null, "ok": false,
+   "error": "bad JSON"}`; an unknown op answers `unknown op: X`.
+ - EOF on stdin, SIGTERM, or `close` without `page` shuts the browser down
+@@ -92,6 +93,7 @@ written to stdout; diagnostics go to stderr.
+ | op | arguments | result |
+ |---|---|---|
+ | `status` | | Status |
++| `input` | `action` (`click`, `mouse`, `type`, `press`, `scroll`, `navigate`, `back`, `reload`) and its arguments | Human viewer input. Coordinates are thousandths of the viewport (0..1000); text is at most 65536 UTF-16 units. Conversion and execution are one ordered operation. |
+ | `cast` | `ms?` (default 2500, 0..10000) | `{fps}`. A client shows this owner's page: for `ms` its frames go out at up to `--cast-fps` (a fresh one at once). Clients renew it while they show the page. Protocol version 3. |
+ | `open` | `url?`, `width?`, `height?`, `timeoutMs?` | Status. Launches Chromium and the owner's page if needed, sets the owner's viewport, navigates (waits for `load`) when `url` is given. Default viewport 1280x800. |
+ | `navigate` | `url`, `readiness?` (`"load"` default, `"domContentLoaded"`, `"none"`), `timeoutMs?` | Status |
+diff --git a/tools/browser/src/main.ts b/tools/browser/src/main.ts
+index 31a8e49dc482dced5a6c38324abc85ba5b29f81a..4949469a4027027a0ca7f4ed692299e81265c262 100644
+--- a/tools/browser/src/main.ts
++++ b/tools/browser/src/main.ts
+@@ -972,6 +972,25 @@ const handlers: Record<string, (a: Json, name: string) => Promise<any>> = {
+     }
+     return status(name);
+   },
++  // Human input is one queued operation, including coordinate conversion.
++  // The hub provides only the bounded UI protocol, never arbitrary evaluation.
++  async input(a, name) {
++    const op = String(a.action ?? "");
++    if (!["click", "mouse", "type", "press", "scroll", "navigate", "back", "reload"].includes(op)) throw new Error("unknown input action");
++    const p = await ensurePage(name);
++    const viewport = p.viewportSize() ?? ownerFor(name).viewport;
++    const point = (v: unknown, size: number) => Math.min(size - 1, Math.max(0, Math.round(Number(v || 0) * size / 1000)));
++    let args: Json = {};
++    if (op === "click" || op === "mouse") args = { x: point(a.x, viewport.width), y: point(a.y, viewport.height), type: a.type };
++    else if (op === "type") {
++      const text = String(a.text ?? "");
++      if (text.length > 65536) throw new Error("input text too long");
++      args = { text };
++    } else if (op === "press") args = { key: String(a.key ?? "") };
++    else if (op === "scroll") args = { dx: Number(a.dx || 0), dy: Number(a.dy || 0) };
++    else if (op === "navigate") args = { url: String(a.url ?? "") };
++    return handlers[op](args, name);
++  },
+   async click(a, name) {
+     const p = await ensurePage(name);
+     quick(name);
+@@ -1259,12 +1278,22 @@ const handlers: Record<string, (a: Json, name: string) => Promise<any>> = {
+ // Loop
+ // ----
+ 
++// Mutations of one owner's page execute in arrival order. Independent pages
++// still run concurrently, and frame leases/status never wait behind navigation.
++const pageTails = new Map<string, Promise<unknown>>();
++function ordered<T>(name: string, run: () => Promise<T>): Promise<T> {
++  const next = (pageTails.get(name) ?? Promise.resolve()).catch(() => {}).then(run);
++  pageTails.set(name, next);
++  void next.finally(() => { if (pageTails.get(name) === next) pageTails.delete(name); }).catch(() => {});
++  return next;
++}
++
+ // requests that change nothing on the page (no still for them)
+ const STILL_QUIET = new Set(["cast", "status", "frames", "frame", "close", "close_page", "snapshot", "console", "tabs"]);
+ 
+ // Focus is needed for native hidden-page input, not for idle pages,
+ // snapshots or background evaluations. The scope is released even on error.
+-const CEF_INPUT = new Set(["click", "mouse", "type", "press", "scroll", "select"]);
++const CEF_INPUT = new Set(["input", "click", "mouse", "type", "press", "scroll", "select"]);
+ async function dispatch(op: string, h: (a: Json, name: string) => Promise<any>, args: Json, name: string): Promise<any> {
+   if (engine !== "cef" || !CEF_INPUT.has(op)) return h(args, name);
+   const p = await ensurePage(name);
+@@ -1294,7 +1323,8 @@ async function handle(line: string): Promise<void> {
+   const h = handlers[op];
+   const args = req.args && typeof req.args === "object" ? { ...req, ...req.args } : req;
+   try {
+-    const result = await dispatch(op, h, args, name);
++    const run = () => dispatch(op, h, args, name);
++    const result = await (["cast", "status", "pages"].includes(op) ? run() : ordered(name, run));
+     send({ id, ok: true, result });
+   } catch (e: any) {
+     send({ id, ok: false, error: String(e?.message ?? e).split("\n")[0] });
+diff --git a/tools/browser/test/input.ts b/tools/browser/test/input.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3adc2667f5cfa9d4a54e95a2a88f27456f20b43f
+--- /dev/null
++++ b/tools/browser/test/input.ts
+@@ -0,0 +1,109 @@
++// Real browser input -> UI adapter -> helper -> remote Chromium, without a live profile.
++// bun tools/browser/test/input.ts (install Playwright's chromium/firefox/webkit first)
++import { chromium, firefox, webkit } from 'playwright-core';
++import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { join } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import assert from 'node:assert/strict';
++const root = mkdtempSync(join(tmpdir(), 'bp-input-'));
++const child = Bun.spawn(['bun', fileURLToPath(new URL('../src/main.ts', import.meta.url)), '--profile', join(root, 'profile')], {stdin:'pipe', stdout:'pipe', stderr:'inherit', env:{...process.env,BACKPLANE_CHROME:process.env.BACKPLANE_CHROME ?? chromium.executablePath()}});
++const pending = new Map<number, (r:any)=>void>(); let id = 0;
++(async()=>{ let rest=''; for await(const bytes of child.stdout) { rest += new TextDecoder().decode(bytes); let i; while((i=rest.indexOf('\n'))>=0) { const r=JSON.parse(rest.slice(0,i)); rest=rest.slice(i+1); pending.get(r.id)?.(r); pending.delete(r.id); } } })();
++function ask(op:string, args:any={}, page:string|null='thread-a'):Promise<any> { return new Promise((resolve,reject)=>{
++  const n=++id; const timer=setTimeout(()=>reject(new Error('timeout '+op)),20000);
++  pending.set(n,r=>{clearTimeout(timer); r.ok ? resolve(r.result) : reject(new Error(r.error));});
++  child.stdin.write(JSON.stringify({id:n,op,...(page === null ? {} : {page}),...args})+'\n');
++}); }
++const remote = '<style>body{margin:0}input,textarea{position:absolute;left:10px;width:250px;height:30px}#a{top:10px}#b{top:80px}#c{top:150px}</style><input id=a><input id=b><textarea id=c></textarea>';
++const html = `<!doctype html><div id=root><img id=frame width=640 height=400 tabindex=0 data-owner=thread-a data-pt=bb-click data-wheel=bb-scroll data-keyto=bb-key data-type=bb-type src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'/%3E"></div><script type=module>
++import {installBrowserInput} from '/input.js'; window.owner='thread-a'; window.sent=[];window.inflight=[];
++installBrowserInput(document,(action,value)=>{window.sent.push({action,value});window.inflight.push(window.forward(action,value));},()=>window.owner);window.ready=true;
++</script>`;
++const server=Bun.serve({port:0,fetch(req){return new Response(new URL(req.url).pathname==='/input.js'?readFileSync(new URL('../../../src/web/browser-input.js',import.meta.url),'utf8'):html,{headers:{'content-type':new URL(req.url).pathname==='/input.js'?'text/javascript':'text/html'}});}});
++try {
++  const engines = {chromium,firefox,webkit};
++  const requested = (process.env.BACKPLANE_TEST_BROWSERS ?? 'chromium,firefox,webkit').split(',');
++  assert.ok(requested.length && requested.every(name => name in engines), 'explicit nonempty browser matrix');
++  for(const name of requested) {
++    const engine = engines[name as keyof typeof engines];
++    const browser=await engine.launch(name === 'chromium' && process.env.BACKPLANE_CHROME ? {executablePath:process.env.BACKPLANE_CHROME} : {});
++    try {
++      const page=await browser.newPage({viewport:{width:800,height:600}});
++      await page.exposeFunction('forward', (action:string,value:string)=>{
++        const op=({'bb-click':'click','bb-type':'type','bb-key':'press','bb-scroll':'scroll'} as any)[action];
++        const [x,y]=value.split(' ').map(Number);
++        return ask('input',{action:op,...(op==='click'?{x,y}:op==='type'?{text:value}:op==='press'?{key:value}:{dy:Number(value)})});
++      });
++      await ask('open',{url:'data:text/html,'+encodeURIComponent(remote),width:640,height:400});
++      await page.goto(`http://127.0.0.1:${server.port}`); await page.waitForFunction(()=>window.ready);
++      const drain=()=>page.evaluate(()=>Promise.all(window.inflight));
++      const read=(field:string)=>ask('evaluate',{expression:`document.getElementById('${field}').value`});
++      const click=(y:number)=>page.locator('#frame').click({position:{x:50,y}});
++      await click(25); await page.keyboard.type('hello'); await drain(); assert.equal(await read('a'),'hello');
++      await page.keyboard.press('Shift+ArrowLeft'); await page.keyboard.type('!'); await drain(); assert.equal(await read('a'),'hell!');
++      await page.keyboard.press(process.platform==='darwin'?'Meta+a':'Control+a'); await page.keyboard.insertText('café 日本語 😀'); await drain(); assert.equal(await read('a'),'café 日本語 😀');
++      await page.locator('textarea').evaluate(el=>{ const e=new Event('paste',{bubbles:true,cancelable:true});Object.defineProperty(e,'clipboardData',{value:{getData:()=> ' pasted text'}});el.dispatchEvent(e); });
++      await drain(); assert.equal(await read('a'),'café 日本語 😀 pasted text');
++      await page.keyboard.press('Tab');await page.keyboard.type('second');await drain();assert.equal(await read('b'),'second');
++      await page.keyboard.press('Backspace');await drain();assert.equal(await read('b'),'secon');
++      // No wait between selecting another field and typing into it.
++      await click(165);await page.keyboard.type('line1');await page.keyboard.press('Enter');await page.keyboard.type('line2');await drain();assert.equal(await read('c'),'line1\nline2');
++      await page.locator('textarea').evaluate(el=>{
++        el.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));
++        el.value='\u200b漢';el.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,data:'漢'}));
++        el.value='\u200b漢字';el.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'漢字'}));
++        el.dispatchEvent(new InputEvent('input',{bubbles:true,data:'漢字'}));
++      }); await drain();assert.equal(await read('c'),'line1\nline2漢字');
++      await page.locator('textarea').evaluate(el=>{
++        el.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:false,inputType:'deleteContentBackward'}));
++        el.value='';el.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'deleteContentBackward'}));
++      }); await drain();assert.equal(await read('c'),'line1\nline2漢');
++      // Returning control keeps the same owner but removes editable attributes.
++      // This must release keyboard focus as well as reject any queued input.
++      const returned=await page.evaluate(()=>window.sent.length);
++      await page.evaluate(()=>{
++        const frame=document.getElementById('frame');
++        for (const attr of ['data-pt','data-wheel','data-keyto','data-type']) frame.removeAttribute(attr);
++        // A queued event can arrive before the mutation observer callback.
++        const input=document.activeElement as HTMLTextAreaElement;
++        input.value='queued handback';
++        input.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:'queued handback'}));
++      });
++      await page.keyboard.type('after handback'); await drain();
++      assert.equal(await page.evaluate(()=>window.sent.length),returned,'handback rejects same-owner input');
++      assert.equal(await page.evaluate(()=>document.activeElement.tagName),'BODY','handback releases keyboard');
++      await page.evaluate(()=>{
++        const frame=document.getElementById('frame');
++        Object.entries({'data-pt':'bb-click','data-wheel':'bb-scroll','data-keyto':'bb-key','data-type':'bb-type'}).forEach(([k,v])=>frame.setAttribute(k,v));
++      });
++      await click(25); await drain();
++      const before=await page.evaluate(()=>window.sent.length);
++      await page.evaluate(()=>{window.owner='thread-b';document.getElementById('frame').setAttribute('data-owner','thread-b');});
++      await page.keyboard.type('stale'); await drain(); assert.equal(await page.evaluate(()=>window.sent.length),before);
++      console.log('ok '+name+': typing, selection, primary shortcut, Unicode, paste, Tab, deletion, multiline, composition, same-owner handback, stale-owner rejection');
++    } finally { await browser.close(); }
++  }
++  // Queue click (including viewport conversion), typing and Enter without waiting.
++  await ask('open',{url:'data:text/html,'+encodeURIComponent(remote),width:640,height:400});
++  const batch=[ask('input',{action:'click',x:80,y:60}),...Array.from('ordered').map(text=>ask('input',{action:'type',text})),ask('input',{action:'press',key:'Tab'}),ask('input',{action:'type',text:'next'})];
++  await Promise.all(batch);
++  assert.deepEqual(await ask('evaluate',{expression:'[a.value,b.value]'}),['ordered','next']);
++  await assert.rejects(ask('input',{action:'evaluate',expression:'1'}),/unknown input/);
++  await ask('input',{action:'type',text:' after error'});
++  assert.equal(await ask('evaluate',{expression:'b.value'}),'next after error');
++  console.log('ok ordered input and queue recovery after failure');
++} finally {
++  try {
++    // No page means close the whole helper and await Chromium's shutdown.
++    // Killing Bun on Windows can leave Chromium holding the profile open.
++    await ask('close', {}, null);
++    await child.exited;
++  } finally {
++    if (child.exitCode === null) { child.kill(); await child.exited; }
++    server.stop(true);
++    // Allow Windows a bounded interval to release recently closed handles.
++    rmSync(root, {recursive:true, force:true, maxRetries:10, retryDelay:100});
++  }
++}
++console.log('ok browser shutdown and temporary profile cleanup');

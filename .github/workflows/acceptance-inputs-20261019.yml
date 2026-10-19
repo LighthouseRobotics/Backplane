@@ -1,0 +1,169 @@
+name: Frozen contribution snapshot acceptance (temporary)
+
+on:
+  push:
+    branches: [validation/acceptance-inputs-20261019]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frozen-acceptance-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Frozen ${{ matrix.scope }} checks and proofs
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {scope: release, minutes: 45}
+          - {scope: lifecycle, minutes: 45}
+          - {scope: kicad, minutes: 45}
+          - {scope: history, minutes: 45}
+          - {scope: orientation, minutes: 45}
+          - {scope: native, minutes: 75}
+          - {scope: ios, minutes: 45}
+          - {scope: browser, minutes: 45}
+    env:
+      CHECK_JOBS: '1'
+      CHECK_SHARDS: '4'
+      BEND_NO_TELEMETRY: '1'
+      ACCEPTANCE_SCOPE: ${{ matrix.scope }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Preserve payload and apply exact source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ACCEPTANCE_EVIDENCE="$RUNNER_TEMP/acceptance-evidence/$ACCEPTANCE_SCOPE"
+          echo "ACCEPTANCE_EVIDENCE=$ACCEPTANCE_EVIDENCE" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/acceptance-inputs" "$ACCEPTANCE_EVIDENCE"
+          cp -a acceptance-inputs/20261019/. "$RUNNER_TEMP/acceptance-inputs/"
+          python3 "$RUNNER_TEMP/acceptance-inputs/support/accept.py" apply \
+            --scope "$ACCEPTANCE_SCOPE" --workspace "$GITHUB_WORKSPACE" --evidence "$ACCEPTANCE_EVIDENCE"
+      - name: Bounded temporary proof swap
+        shell: bash
+        run: |
+          set -euo pipefail
+          available=$(df -B1 --output=avail "$RUNNER_TEMP" | tail -n 1 | tr -d ' ')
+          size=$(( (available - 8 * 1073741824) / 1073741824 ))
+          [ "$size" -le 16 ] || size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$RUNNER_TEMP/acceptance-swap"
+            sudo chmod 600 "$RUNNER_TEMP/acceptance-swap"
+            sudo mkswap "$RUNNER_TEMP/acceptance-swap"
+            sudo swapon "$RUNNER_TEMP/acceptance-swap"
+          else
+            echo 'Insufficient disk for additional swap while reserving 8 GiB'
+          fi
+          free -h | tee "$ACCEPTANCE_EVIDENCE/memory-before.log"
+          df -h "$RUNNER_TEMP" >> "$ACCEPTANCE_EVIDENCE/memory-before.log"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - uses: ./.github/actions/setup-bend
+        with:
+          version: '2.0.36'
+      - name: Record exact toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            bend version
+            bun --version
+            git --version
+            python3 --version
+            sha256sum "$(command -v bend)" "$(command -v bun)"
+            sha256sum "$HOME/.bend/bend2"
+          } | tee "$ACCEPTANCE_EVIDENCE/toolchain.log"
+          echo "ACCEPTANCE_REAL_BEND=$(command -v bend)" >> "$GITHUB_ENV"
+      - name: Check every file and prove every law
+        timeout-minutes: 40
+        shell: bash
+        run: |
+          set -u
+          mkdir -p "$RUNNER_TEMP/acceptance-bin"
+          cp "$RUNNER_TEMP/acceptance-inputs/support/bend-capture.sh" "$RUNNER_TEMP/acceptance-bin/bend"
+          chmod +x "$RUNNER_TEMP/acceptance-bin/bend"
+          export PATH="$RUNNER_TEMP/acceptance-bin:$PATH"
+          code=0
+          scripts/check.sh all > "$ACCEPTANCE_EVIDENCE/check.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$ACCEPTANCE_EVIDENCE/check.exit"
+          cat "$ACCEPTANCE_EVIDENCE/check.log"
+          verdict=1
+          if [ -f "$ACCEPTANCE_EVIDENCE/proof.exit" ] && [ -f "$ACCEPTANCE_EVIDENCE/proof.log" ]; then
+            . scripts/bendok.sh
+            bend_verdict "$(cat "$ACCEPTANCE_EVIDENCE/proof.exit")" "$(cat "$ACCEPTANCE_EVIDENCE/proof.log")" && verdict=0
+          fi
+          printf '%s\n' "$verdict" > "$ACCEPTANCE_EVIDENCE/proof.verdict"
+          python3 "$RUNNER_TEMP/acceptance-inputs/support/accept.py" verify \
+            --scope "$ACCEPTANCE_SCOPE" --workspace "$GITHUB_WORKSPACE" --evidence "$ACCEPTANCE_EVIDENCE" || exit 1
+          [ "$code" = 0 ] && [ "$verdict" = 0 ]
+      - name: Native candidate build dependencies
+        if: matrix.scope == 'native'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+          clang --version | tee "$ACCEPTANCE_EVIDENCE/clang.log"
+      - name: Native object cache
+        if: matrix.scope == 'native'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: contribution-linux-llvm19-${{ github.sha }}
+          restore-keys: contribution-linux-llvm19-
+      - name: Build the exact native candidate
+        if: matrix.scope == 'native'
+        timeout-minutes: 25
+        env:
+          BACKPLANE_SKIP_CHECK: '1'
+          BACKPLANE_LOW_MEM: '1'
+          BACKPLANE_JOBS: '2'
+          BACKPLANE_GOOGLE_BAKE: '0'
+        shell: bash
+        run: |
+          code=0
+          scripts/build.sh > "$ACCEPTANCE_EVIDENCE/build.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$ACCEPTANCE_EVIDENCE/build.exit"
+          cat "$ACCEPTANCE_EVIDENCE/build.log"
+          exit "$code"
+      - name: Record full acceptance receipt
+        if: always()
+        env:
+          ACCEPTANCE_JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          export ACCEPTANCE_EVIDENCE="$RUNNER_TEMP/acceptance-evidence/$ACCEPTANCE_SCOPE"
+          mkdir -p "$ACCEPTANCE_EVIDENCE"
+          if [ -f "$RUNNER_TEMP/acceptance-inputs/support/accept.py" ]; then
+            python3 "$RUNNER_TEMP/acceptance-inputs/support/accept.py" receipt \
+              --scope "$ACCEPTANCE_SCOPE" --workspace "$GITHUB_WORKSPACE" --evidence "$ACCEPTANCE_EVIDENCE"
+          else
+            printf '{"result":"fail","error":"payload checkout or preservation failed","input_commit":"%s","checkout_commit":"30884966ef59c383581bcd1b7653f8f739cf009e","scope":"%s"}\n' \
+              "$GITHUB_SHA" "$ACCEPTANCE_SCOPE" > "$ACCEPTANCE_EVIDENCE/receipt.json"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frozen-acceptance-${{ matrix.scope }}-${{ github.sha }}
+          path: ${{ runner.temp }}/acceptance-evidence/${{ matrix.scope }}
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove temporary swap
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "$RUNNER_TEMP/acceptance-swap" ]; then
+            sudo swapoff "$RUNNER_TEMP/acceptance-swap" && sudo rm -f "$RUNNER_TEMP/acceptance-swap"
+          fi

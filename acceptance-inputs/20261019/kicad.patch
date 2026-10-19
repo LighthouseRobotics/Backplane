@@ -1,0 +1,1063 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 3ba8e76799eabe3321eeaa94329680eed2f50c25..3f32564a095ddb722249ba7b4aca8fcb40a0ea44 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -55,6 +55,39 @@ jobs:
+       - uses: oven-sh/setup-bun@v2
+       - run: TEST_JOBS=$(nproc) scripts/test.sh
+ 
++  install:
++    name: Install and update ${{ matrix.target }}
++    strategy:
++      fail-fast: false
++      matrix:
++        include:
++          - { target: linux-x64, os: ubuntu-24.04 }
++          - { target: linux-arm64, os: ubuntu-24.04-arm }
++          - { target: darwin-arm64, os: macos-15 }
++    runs-on: ${{ matrix.os }}
++    timeout-minutes: 20
++    steps:
++      - uses: actions/checkout@v4
++      - uses: ./.github/actions/setup-bend
++      - uses: oven-sh/setup-bun@v2
++      - name: Install clang 19
++        if: runner.os == 'Linux'
++        run: |
++          sudo apt-get update
++          sudo apt-get install -y clang-19
++          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
++      - name: Select Xcode 26.3
++        if: runner.os == 'macOS'
++        run: echo "DEVELOPER_DIR=/Applications/Xcode_26.3.app/Contents/Developer" >> "$GITHUB_ENV"
++      - name: Build the isolated updater fixture
++        run: |
++          mkdir -p build
++          bend test/native/update_swap.bend -o build/update-swap
++        env:
++          BUN_JSC_forceRAMSize: "2147483648"
++      - name: Test synthetic release installation and replacement
++        run: bun test/tools/install_helpers_e2e.ts build/update-swap
++
+   build:
+     name: Build ${{ matrix.target }}
+     # runs beside "laws" (which checks every file); nothing is published here
+diff --git a/LAWS.bend b/LAWS.bend
+index d7539d32921b69ba91b7c1f98212214a8ff7cb50..ca0cb844d583a8b178bd78cddcfd93c9f6c59d53 100644
+--- a/LAWS.bend
++++ b/LAWS.bend
+@@ -105,6 +105,7 @@ import ./src/web/dom.bend as DM
+ import ./src/core/client.bend as U
+ import ./src/mobile/screen.bend as MSC
+ import ./src/core/gh.bend as GH
++import ./src/core/kicadcli.bend as KCL
+ import ./src/gfx/text.bend as X
+ import ./src/core/fold.bend as FO
+ import ./src/core/subs.bend as SB
+@@ -10676,3 +10677,57 @@ law pcb2_hidden_text_draws_nothing:
+   for +sig: U32
+   for +ctx: String
+   {PCB2.Text.visible.k(True{}, at, angle, x, text, up, key, sig, ctx) == Nil{} : List<&2, B.Item>}
++
++# KiCad's CLI
++# -----------
++
++# Known fork platform layouts; publication is a separate pinned decision.
++law kicad_cli_asset_linux_x64:
++  {KCL.Cli.asset("Linux x86_64\n") == "linux-x86_64" : String}
++
++law kicad_cli_asset_mac:
++  {KCL.Cli.asset("Darwin arm64") == "macos-arm64" : String}
++
++law kicad_cli_no_fork_intel_mac:
++  {KCL.Cli.fork_runs("Darwin x86_64") == False{} : Bool}
++
++law kicad_cli_no_fork_arm_linux:
++  {KCL.Cli.fork_runs("Linux aarch64") == False{} : Bool}
++
++# each build has its own folder: a Mac never picks the Linux one (and Linux
++# keeps the folder its installs have always used)
++law kicad_cli_dir_linux:
++  for +data: String
++  for +ver: String
++  {KCL.Cli.dir(data, ver, "linux-x86_64") == data ++ "/kicad/" ++ ver : String}
++
++law kicad_cli_dir_mac:
++  {KCL.Cli.dir("/u/.backplane-bend", "10.0.6", "macos-arm64") == "/u/.backplane-bend/kicad/10.0.6-macos-arm64" : String}
++
++# a Mac tries the fork (its own build), then KiCad.app, then the system's
++law kicad_cli_mac_order:
++  {KCL.Cli.candidates("Darwin arm64\n", "/opt/bp", "/u/.backplane-bend", "10.0.6", "/u") == ["/opt/bp/kicad/bin/kicad-cli", "/u/.backplane-bend/kicad/10.0.6-macos-arm64/bin/kicad-cli", "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/u/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
++
++# an Intel Mac has no fork: KiCad.app, then the system's
++law kicad_cli_intel_mac_app:
++  {KCL.Cli.candidates("Darwin x86_64", "/opt/bp", "/u/.backplane-bend", "10.0.6", "/u") == ["/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/u/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
++
++# Linux x86-64 is unchanged: the fork, then the system's
++law kicad_cli_linux_order:
++  {KCL.Cli.candidates("Linux x86_64", "/opt/bp", "/h/.backplane-bend", "10.0.6", "/h") == ["/opt/bp/kicad/bin/kicad-cli", "/h/.backplane-bend/kicad/10.0.6/bin/kicad-cli", "/usr/bin/kicad-cli", "/usr/local/bin/kicad-cli"] : List<&2, String>}
++
++law kicad_cli_mac_not_published:
++  {KCL.Cli.published("Darwin arm64") == False{} : Bool}
++
++law kicad_cli_legacy_incompatible_on_mac:
++  {KCL.Cli.compatible("Darwin arm64", "") == False{} : Bool}
++
++law kicad_cli_linux_rejects_mac:
++  {KCL.Cli.compatible("Linux x86_64", "macos-arm64") == False{} : Bool}
++
++
++law kicad_cli_api_number:
++  {KCL.Cli.api(J.Num{"2"}) == True{} : Bool}
++
++law kicad_cli_api_string_rejected:
++  {KCL.Cli.api(J.Str{"2"}) == False{} : Bool}
+diff --git a/PROOF.bend b/PROOF.bend
+index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..e36c2c53e8152afd0e46ce2ce6c574bde79e04ca 100644
+--- a/PROOF.bend
++++ b/PROOF.bend
+@@ -62,6 +62,7 @@ import ./src/gfx/font.bend as F
+ import ./src/app/layout.bend as L
+ import ./src/core/eq.bend as Q
+ import ./src/core/gh.bend as GH
++import ./src/core/kicadcli.bend as KCL
+ import ./src/core/fold.bend as FO
+ import ./src/core/subs.bend as SB
+ import ./src/core/plot.bend as PL
+@@ -12357,3 +12358,46 @@ def Laws.auth_cookie_prefix_denied():
+ # ---- PCB viewer text ----
+ def Laws.pcb2_hidden_text_draws_nothing(at, angle, x, text, up, key, sig, ctx):
+   {==}
++
++def Laws.kicad_cli_asset_linux_x64():
++  {==}
++
++def Laws.kicad_cli_asset_mac():
++  {==}
++
++def Laws.kicad_cli_no_fork_intel_mac():
++  {==}
++
++def Laws.kicad_cli_no_fork_arm_linux():
++  {==}
++
++def Laws.kicad_cli_dir_linux(data, ver):
++  {==}
++
++def Laws.kicad_cli_dir_mac():
++  {==}
++
++def Laws.kicad_cli_mac_order():
++  {==}
++
++def Laws.kicad_cli_intel_mac_app():
++  {==}
++
++def Laws.kicad_cli_linux_order():
++  {==}
++
++def Laws.kicad_cli_mac_not_published():
++  {==}
++
++def Laws.kicad_cli_legacy_incompatible_on_mac():
++  {==}
++
++def Laws.kicad_cli_linux_rejects_mac():
++  {==}
++
++
++def Laws.kicad_cli_api_number():
++  {==}
++
++def Laws.kicad_cli_api_string_rejected():
++  {==}
+diff --git a/deploy/install.sh.in b/deploy/install.sh.in
+index bafa936ba8faef6132b0e39ab54ac01849d3b553..635fc854ae292d2446c7fe0f7125a56c911c5bd4 100644
+--- a/deploy/install.sh.in
++++ b/deploy/install.sh.in
+@@ -53,7 +53,7 @@ rm -rf "$prefix/web.old"
+ [ -d "$prefix/web" ] && mv "$prefix/web" "$prefix/web.old"
+ mv -f "$tmp/backplane-$os-$arch/backplane" "$tmp/backplane-$os-$arch/backplane-serve" "$prefix/"
+ mv "$tmp/backplane-$os-$arch/web" "$prefix/web"
+-for h in backplane-browser backplane-step2glb backplane-voice LICENSE; do
++for h in backplane-browser backplane-step2glb backplane-voice backplane-kipc LICENSE; do
+   [ -e "$tmp/backplane-$os-$arch/$h" ] && mv -f "$tmp/backplane-$os-$arch/$h" "$prefix/"
+ done
+ if [ -d "$tmp/backplane-$os-$arch/licenses" ]; then
+diff --git a/docs/kicad-ipc.md b/docs/kicad-ipc.md
+index 624ad9793988809f58d0aa21fc3eefa131ffa3b2..5a764a11afc16d5b66f72efbdfe09781a4536c31 100644
+--- a/docs/kicad-ipc.md
++++ b/docs/kicad-ipc.md
+@@ -84,3 +84,41 @@ path plus a new alternate, and an occupied path with no new socket.
+ When the pinned managed install is absent, discovery retains other installed versions as newest-first fallbacks.
+ An old install therefore reports old and offers Update; the pinned directory appearing invalidates the health cache
+ and takes precedence.
++
++Managed discovery and installation are platform aware. The pinned bp.4
++release publishes only a Linux x86-64 runtime; a known Apple-silicon bundle
++layout does not imply an available Mac download. On macOS the installer
++reports that missing asset and preserves the selected runtime. A local
++KiCad.app remains available for checks and exports; stock KiCad does not
++provide Backplane's patched IPC API. Managed manifests must match the host;
++legacy manifests without a platform are treated as Linux x86-64 only.
++Apple-silicon managed directories use a `-macos-arm64` suffix. A managed
++runtime that fails its version probe falls through to working local copies;
++an explicit path remains selected so its failure is visible.
++
++Downloads are checked using `sha256sum` or macOS's `shasum -a 256`, then
++extracted and smoke-tested inside the per-destination lock. The version
++command identifies upstream KiCad (`10.99.0` for bp.4); the manifest and live
++`api-server --describe` identify the fork (`10.99.0-bp.4`). Bend parses both
++JSON objects, requiring the pinned fork version, matching source commit,
++upstream core, platform, API 2, descriptor path and headless capabilities. The previous
++runtime is moved only after validation, restored if promotion fails, and a
++per-destination lock rejects concurrent installers. Failed downloads,
++checksums, extraction, version checks, and promotion preserve the prior
++runtime's bytes. The IPC helper must be installed beside Backplane and
++answer `--describe` with protocol version 1 and runtime API 2; incompatible
++or missing helpers fail visibly before receiving persistent requests.
++
++Offline regression validation uses the production Bend selector and shell
++transaction with synthetic runtimes, archives, checksums, and fault tools:
++
++```sh
++bend test/kicadcli_test.bend
++bend test/kipc_protocol_test.bend
++BACKPLANE_LOW_MEM=1 BACKPLANE_JOBS=1 scripts/build-app.sh test/native/kicad_platform.bend build/kicad_platform
++bun test/tools/kicad_platform_e2e.ts build/kicad_platform
++```
++
++These fixtures simulate platform responses; they do not certify a Mac
++launch, board export/view, or IPC session. Actual macOS acceptance still
++requires an accessible Mac and a compatible published or locally built fork.
+diff --git a/src/server/kicad.bend b/src/server/kicad.bend
+index 994e8080c7b5ebfb301b0d410640af0a64cebd6b..70ac412b42323f2ecf5a2617326fe3054837dbd8 100644
+--- a/src/server/kicad.bend
++++ b/src/server/kicad.bend
+@@ -5,6 +5,7 @@ import ../core/json.bend as J
+ import ../core/utf8.bend as U
+ import ../core/kihealth.bend as KH
+ import ../core/port.bend as PORT
++import ../core/kicadcli.bend as KC
+ 
+ # KiCad on this machine: which kicad-cli to use (the Backplane KiCad fork,
+ # with IPC, when present), a project's canonical files, and the KiStack
+@@ -195,14 +196,14 @@ def Rt.installed.paths(ns: List<&2, String>, +data: String) -> List<&2, KCandida
+ def Rt.installed(ns: List<&2, String>, data: String) -> List<&2, KCandidate>:
+   Rt.installed.paths(List.sort(~String, ~Rt.installed.before, List.filter(~String, ~Rt.installed.keep, ns)), data)
+ 
+-def Rt.candidates(+setting: String, +root: String, +explicit: String, +exe: String, +data: String, +user: String, +path: String, mac: Bool, older: List<&2, KCandidate>) -> List<&2, KCandidate>:
++def Rt.candidates(+setting: String, +root: String, +explicit: String, +exe: String, +data: String, +user: String, +path: String, +platform: String, older: List<&2, KCandidate>) -> List<&2, KCandidate>:
+   List.concat(&2, KCandidate, [
+     Bool.pick(List<&2, KCandidate>, String.is_empty(setting), Nil{}, [KCandidate{setting, "setting"}]),
+     Bool.pick(List<&2, KCandidate>, String.is_empty(root), Nil{}, [KCandidate{root, "env"}]),
+     Bool.pick(List<&2, KCandidate>, String.is_empty(explicit), Nil{}, [KCandidate{explicit, "env"}]),
+-    [KCandidate{exe ++ "/kicad/bin/kicad-cli", "bundled"}, KCandidate{data ++ "/kicad/" ++ KiCad.version() ++ "/bin/kicad-cli", "installed"}],
++    [KCandidate{exe ++ "/kicad/bin/kicad-cli", "bundled"}, KCandidate{KC.Cli.dir(data, KiCad.version(), KC.Cli.asset(platform)) ++ "/bin/kicad-cli", "installed"}],
+     older,
+-    Bool.pick(List<&2, KCandidate>, mac, [KCandidate{"/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "app"}, KCandidate{user ++ "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "app"}], Nil{}),
++    Bool.pick(List<&2, KCandidate>, KC.Cli.is_mac(platform), [KCandidate{"/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "app"}, KCandidate{user ++ "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli", "app"}], Nil{}),
+     Rt.paths(String.split(path, ':')), [KCandidate{"/usr/bin/kicad-cli", "system"}, KCandidate{"/usr/local/bin/kicad-cli", "system"}]])
+ 
+ def Rt.platform(r: P.Ran) -> String:
+@@ -216,6 +217,12 @@ def Rt.explicit.k(file: Bool, +p: String) -> String:
+ def Rt.explicit(+p: String) -> IO(String):
+   IO.bind(Bool, String, Io.is_file(p), file => IO.pure(String, Rt.explicit.k(file, p)))
+ 
++def Rt.installed.on(ns: List<&2, String>, +platform: String) -> List<&2, String>:
++  match ns:
++    case Nil{}: Nil{}
++    case +n <> t:
++      List.append(&2, String, Bool.pick(List<&2, String>, KC.Cli.installed(n, platform), [n], Nil{}), Rt.installed.on(t, platform))
++
+ def Rt.list(+setting: String, +explicit: String, +exe: String, +data: String) -> IO(List<&2, KCandidate>):
+   do IO<List<&2, KCandidate>>:
+     root0 : String <- Rt.env("BACKPLANE_KICAD")
+@@ -224,9 +231,9 @@ def Rt.list(+setting: String, +explicit: String, +exe: String, +data: String) ->
+     explicit2 : String <- Rt.explicit(explicit)
+     user : String <- Rt.env("HOME")
+     path : String <- Rt.env("PATH")
+-    os : P.Ran <- P.Proc.run("uname", ["-sm"], "/")
++    +os : P.Ran <- P.Proc.run("uname", ["-sm"], "/")
+     installed : List<&2, String> <- Io.names(data ++ "/kicad")
+-    return Rt.candidates(setting2, root, explicit2, exe, data, user, path, String.starts_with(Rt.platform(os), "Darwin"), Rt.installed(installed, data))
++    return Rt.candidates(setting2, root, explicit2, exe, data, user, path, Rt.platform(os), Rt.installed(Rt.installed.on(installed, Rt.platform(os)), data))
+ 
+ def Rt.stamp.k(r: Result<&1, &1, U32 & String, U32 & U32 & U32>) -> String:
+   match r:
+@@ -269,11 +276,39 @@ def Rt.stamps(cs: List<&2, KCandidate>) -> IO(String):
+ def Rt.read.fallback(+cli: String, +source: String, +text: String) -> IO(Rt):
+   do IO<Rt>:
+     alt : String <- Io.text(Rt.root(cli) ++ "/Contents/Resources/manifest.json")
+-    return Rt.set(Rt.manifest(cli, Bool.pick(String, String.is_empty(String.trim(text)), alt, text)), "source", J.Str{source})
++    +manifest : String = Bool.pick(String, String.is_empty(String.trim(text)), alt, text)
++    return Rt.set(Rt.set(Rt.manifest(cli, manifest), "source", J.Str{source}), "platform", J.Str{J.Json.get_str(Maybe.default(&2, J.Json, J.Json.parse(manifest), J.Null{}), "platform", "")})
+ 
+ def Rt.read(+cli: String, +source: String) -> IO(Rt):
+   IO.bind(String, Rt, Io.text(Rt.root(cli) ++ "/manifest.json"), text => Rt.read.fallback(cli, source, text))
+ 
++def Rt.managed(+source: String) -> Bool:
++  Bool.or(String.eq(source, "installed"), String.eq(source, "bundled"))
++
++def Rt.compatible.keep(keep: Bool, candidate: KCandidate, rest: List<&2, KCandidate>) -> List<&2, KCandidate>:
++  match keep:
++    case True{}: candidate <> rest
++    case False{}: rest
++
++# Managed runtimes must match the host. Historical platform-less releases
++# are Linux x86-64 only. A copied Linux install cannot shadow KiCad.app.
++def Rt.compatible(cs: List<&2, KCandidate>, +platform: String) -> IO(List<&2, KCandidate>):
++  match cs:
++    case Nil{}: IO.pure(List<&2, KCandidate>, Nil{})
++    case KCandidate{+p, +source} <> t:
++      do IO<List<&2, KCandidate>>:
++        rt : Rt <- Rt.read(p, source)
++        rest : List<&2, KCandidate> <- Rt.compatible(t, platform)
++        return Rt.compatible.keep(Bool.or(Bool.not(Rt.managed(source)), KC.Cli.compatible(platform, J.Json.get_str(Rt.health(rt), "platform", ""))), KCandidate{p, source}, rest)
++
++# Include the host in every discovery pass, also when using the persisted
++# cache from another machine. No version process runs during boot.
++def Rt.list.on(+setting: String, +explicit: String, +exe: String, +data: String) -> IO(List<&2, KCandidate>):
++  do IO<List<&2, KCandidate>>:
++    cs : List<&2, KCandidate> <- Rt.list(setting, explicit, exe, data)
++    os : P.Ran <- P.Proc.run("uname", ["-sm"], "/")
++    Rt.compatible(cs, Rt.platform(os))
++
+ def Rt.choose.k(found: Bool, explicit: Bool, +p: String, +source: String, rest: IO(Rt)) -> IO(Rt):
+   match found explicit:
+     case True{} _: Rt.read(p, source)
+@@ -287,15 +322,7 @@ def Rt.choose(cs: List<&2, KCandidate>) -> IO(Rt):
+       IO.bind(Bool, Rt, Io.is_file(p), f => Rt.choose.k(f, Bool.or(String.eq(source, "setting"), String.eq(source, "env")), p, source, Rt.choose(t)))
+ 
+ def Rt.discover(+setting: String, +explicit: String, +exe: String, +data: String) -> IO(Rt):
+-  IO.bind(List<&2, KCandidate>, Rt, Rt.list(setting, explicit, exe, data), Rt.choose)
+-
+-# Compatibility callers use the last checked override from this hub's
+-# cache, plus the same environment/bundle/PATH candidates as the hub.
+-def Rt.resolve(+explicit: String, +exe: String, +data: String) -> IO(Rt):
+-  do IO<Rt>:
+-    text : String <- Io.text(data ++ "/kicad-health.json")
+-    +o : J.Json = Maybe.default(&2, J.Json, J.Json.parse(text), J.Null{})
+-    Rt.discover(J.Json.get_str(o, "setting", ""), explicit, exe, data)
++  IO.bind(List<&2, KCandidate>, Rt, Rt.list.on(setting, explicit, exe, data), Rt.choose)
+ 
+ def Rt.json(rt: Rt) -> J.Json:
+   match rt:
+@@ -311,6 +338,11 @@ def Rt.cache.status(+o: J.Json) -> String:
+ def Rt.cached(+o: J.Json) -> Rt:
+   Rt{J.Json.get_str(o, "cli", ""), J.Json.get_bool(o, "fork", False{}), J.Json.get_str(o, "version", ""), J.Json.get_str(o, "commit", ""), KH.KH.put.obj(o, "status", J.Str{Rt.cache.status(o)})}
+ 
++def Rt.contains(cs: List<&2, KCandidate>, +cli: String) -> Bool:
++  match cs:
++    case Nil{}: String.is_empty(cli)
++    case KCandidate{p, _} <> t: Bool.or(String.eq(p, cli), Rt.contains(t, cli))
++
+ def Rt.boot.k(valid: Bool, o: J.Json, +stamp: String, cs: List<&2, KCandidate>) -> IO(Rt):
+   match valid:
+     case True{}: IO.pure(Rt, Rt.cached(o))
+@@ -319,11 +351,11 @@ def Rt.boot.k(valid: Bool, o: J.Json, +stamp: String, cs: List<&2, KCandidate>)
+ def Rt.boot(+home: String, +setting: String, +exe: String) -> IO(Rt):
+   do IO<Rt>:
+     explicit : String <- Rt.env("BACKPLANE_KICAD_CLI")
+-    +cs : List<&2, KCandidate> <- Rt.list(setting, explicit, exe, home)
++    +cs : List<&2, KCandidate> <- Rt.list.on(setting, explicit, exe, home)
+     text : String <- Io.text(home ++ "/kicad-health.json")
+     +o : J.Json = Maybe.default(&2, J.Json, J.Json.parse(text), J.Null{})
+     +stamp : String <- Rt.stamps(Rt.watch(cs, J.Json.get_str(o, "cli", "")))
+-    Rt.boot.k(Bool.and(String.eq(J.Json.get_str(o, "stamp", "?"), stamp), String.eq(J.Json.get_str(o, "setting", "?"), setting)), o, stamp, cs)
++    Rt.boot.k(Bool.and(String.eq(J.Json.get_str(o, "stamp", "?"), stamp), Bool.and(String.eq(J.Json.get_str(o, "setting", "?"), setting), Rt.contains(cs, J.Json.get_str(o, "cli", "")))), o, stamp, cs)
+ 
+ def Rt.checked(rt: Rt, +found: Bool, r: P.Ran) -> Rt:
+   match rt r:
+@@ -368,6 +400,23 @@ def Rt.run.k(found: Bool, +rt: Rt) -> IO(Rt):
+ def Rt.run(+rt: Rt) -> IO(Rt):
+   IO.bind(Bool, Rt, Io.is_file(Rt.cli(rt)), found => Rt.run.k(found, rt))
+ 
++def Rt.probed(+rt: Rt, rest: IO(Rt)) -> IO(Rt):
++  Bool.pick(IO(Rt), Bool.or(String.is_empty(Rt.cli(rt)), Bool.and(Rt.managed(J.Json.get_str(Rt.health(rt), "source", "")), Bool.not(J.Json.get_bool(Rt.health(rt), "runs", False{})))), rest, IO.pure(Rt, rt))
++
++def Rt.healthy(cs: List<&2, KCandidate>) -> IO(Rt):
++  match cs:
++    case Nil{}: IO.pure(Rt, Rt.checked(Rt.empty(), False{}, P.Ran{127, ""}))
++    case c <> t:
++      IO.bind(Rt, Rt, Rt.choose([c]), rt => IO.bind(Rt, Rt, Rt.run(rt), checked => Rt.probed(checked, Rt.healthy(t))))
++
++# Compatibility callers use the last checked override from this hub's
++# cache and probe the same candidates as the hub before choosing one.
++def Rt.resolve(+explicit: String, +exe: String, +data: String) -> IO(Rt):
++  do IO<Rt>:
++    text : String <- Io.text(data ++ "/kicad-health.json")
++    +o : J.Json = Maybe.default(&2, J.Json, J.Json.parse(text), J.Null{})
++    IO.bind(List<&2, KCandidate>, Rt, Rt.list.on(J.Json.get_str(o, "setting", ""), explicit, exe, data), Rt.healthy)
++
+ def Rt.save(+home: String, +rt: Rt) -> IO(Unit):
+   IO.bind(P.Ran, Unit, P.Proc.run("sh", ["-c", "umask 077; printf '%s' \"$2\" > \"$1.tmp\" && mv \"$1.tmp\" \"$1\"", "sh", home ++ "/kicad-health.json", J.Json.show(Rt.json(rt))], "/"), _ => IO.pure(Unit, Unit{}))
+ 
+@@ -376,18 +425,17 @@ def Rt.refresh.k(check: Bool, +home: String, +setting: String, +stamp: String, +
+     case False{}: IO.pure(Rt, last)
+     case True{}:
+       do IO<Rt>:
+-        rt : Rt <- Rt.choose(cs)
+-        +rt2 : Rt <- Rt.run(rt)
++        +rt2 : Rt <- Rt.healthy(cs)
+         chosen_stamp : String <- Rt.stamps(Rt.watch(cs, Rt.cli(rt2)))
+         return Rt.set(Rt.set(Rt.set(rt2, "setting", J.Str{setting}), "stamp", J.Str{chosen_stamp}), "can_install", J.Flag{can})
+ 
+ def Rt.refresh(+home: String, +setting: String, +exe: String, force: Bool, +last: Rt) -> IO(Rt):
+   do IO<Rt>:
+     explicit : String <- Rt.env("BACKPLANE_KICAD_CLI")
+-    +cs : List<&2, KCandidate> <- Rt.list(setting, explicit, exe, home)
++    +cs : List<&2, KCandidate> <- Rt.list.on(setting, explicit, exe, home)
+     +stamp : String <- Rt.stamps(Rt.watch(cs, Rt.cli(last)))
+     os : P.Ran <- P.Proc.run("uname", ["-sm"], "/")
+-    Rt.refresh.k(Bool.or(force, Bool.or(String.eq(Rt.status(last), "checking"), Bool.not(String.eq(J.Json.get_str(Rt.health(last), "stamp", ""), stamp)))), home, setting, stamp, cs, String.eq(Rt.platform(os), "Linux x86_64"), last)
++    Rt.refresh.k(Bool.or(force, Bool.or(String.eq(Rt.status(last), "checking"), Bool.not(String.eq(J.Json.get_str(Rt.health(last), "stamp", ""), stamp)))), home, setting, stamp, cs, KC.Cli.published(Rt.platform(os)), last)
+ 
+ # Project files
+ # -------------
+@@ -554,18 +602,49 @@ def KiCad.install.k(r: P.Ran) -> String:
+ # The fork, installed on request
+ # ------------------------------
+ 
+-# download Backplane KiCad for linux-x86_64, check it against the release's
+-# SHA256SUMS, unpack into <data>/kicad/<version>; answers "" or an error
++# Staging retains the directory lock while Bend validates the manifest and
++# live describe reply structurally. Only then can promotion replace the old
++# runtime; failed validation or promotion restores its exact directory.
++def KiCad.install.script() -> String:
++  PORT.Port.tmo() ++ "set -eu\nfinal=$1; base=$2; name=$3; pinned=$4\nparent=${final%/*}\nmkdir -p \"$parent\"\nlock=\"$final.install-lock\"\nmkdir \"$lock\" 2>/dev/null || { echo 'another KiCad installation is in progress'; exit 1; }\nstage=\"$lock/stage\"; ready=0\ncleanup() {\n  code=$?\n  trap - 0\n  if [ \"$ready\" = 0 ]; then rm -rf \"$stage\"; rmdir \"$lock\"; fi\n  exit \"$code\"\n}\ntrap cleanup 0\ntrap 'exit 1' 1 2 15\nmkdir \"$stage\"\ncurl -fsSL --max-time 300 -o \"$stage/pkg.tgz\" \"$base$name\"\ncurl -fsSL --max-time 30 -o \"$stage/SUMS\" \"${base}SHA256SUMS\"\nwant=$(awk -v n=\"$name\" '$2 == n || $2 == \"./\" n { print $1 }' \"$stage/SUMS\")\nif command -v sha256sum >/dev/null 2>&1; then\n  sum=$(sha256sum \"$stage/pkg.tgz\")\nelif command -v shasum >/dev/null 2>&1; then\n  sum=$(shasum -a 256 \"$stage/pkg.tgz\")\nelse\n  echo 'sha256sum or shasum is required'; exit 1\nfi\ngot=${sum%% *}\n[ \"$want\" = \"$got\" ] && [ \"$got\" = \"$pinned\" ] || { echo 'checksum mismatch'; exit 1; }\nmkdir \"$stage/runtime\"\ntar -xf \"$stage/pkg.tgz\" -C \"$stage/runtime\" --strip-components=1\n[ -x \"$stage/runtime/bin/kicad-cli\" ] && [ -s \"$stage/runtime/manifest.json\" ] && [ -s \"$stage/runtime/share/backplane/api.desc\" ] || { echo 'runtime is incomplete'; exit 1; }\ntmo 10 \"$stage/runtime/bin/kicad-cli\" version > \"$stage/version.txt\"\ntmo 10 \"$stage/runtime/bin/kicad-cli\" api-server --describe > \"$stage/describe.json\"\n[ -s \"$stage/describe.json\" ] || { echo 'runtime IPC identity missing'; exit 1; }\nready=1\n"
++
++def KiCad.install.promote() -> String:
++  "set -eu\nfinal=$1; valid=$2\nlock=\"$final.install-lock\"; stage=\"$lock/stage\"\ncleanup() {\n  code=$?\n  trap - 0\n  trap '' 1 2 15\n  if [ \"$code\" != 0 ] && { [ -e \"$stage/previous\" ] || [ -L \"$stage/previous\" ]; }; then\n    if [ -e \"$final\" ] || [ -L \"$final\" ]; then\n      mv \"$final\" \"$stage/failed\" || { echo \"restore failed: previous runtime is at $stage/previous; selected runtime is at $final\" >&2; exit 1; }\n    fi\n    mv \"$stage/previous\" \"$final\" || { echo \"restore failed: previous runtime is at $stage/previous; staging retained at $stage\" >&2; exit 1; }\n  fi\n  rm -rf \"$stage\"\n  rmdir \"$lock\"\n  exit \"$code\"\n}\ntrap cleanup 0\ntrap 'exit 1' 1 2 15\n[ \"$valid\" = True ] || { echo 'runtime version or IPC identity mismatch'; exit 1; }\nif [ -e \"$final\" ] || [ -L \"$final\" ]; then\n  mv \"$final\" \"$stage/previous\"\nfi\nmv \"$stage/runtime\" \"$final\"\n"
++
++def KiCad.install.staged(r: P.Ran, +dir: String, +version: String, +asset: String) -> IO(String):
++  match r:
++    case P.Ran{0, _}:
++      do IO<String>:
++        +stage : String = dir ++ ".install-lock/stage"
++        manifest : String <- Io.text(stage ++ "/runtime/manifest.json")
++        describe : String <- Io.text(stage ++ "/describe.json")
++        cli : String <- Io.text(stage ++ "/version.txt")
++        +valid : Bool = KC.Cli.identity(Maybe.default(&2, J.Json, J.Json.parse(manifest), J.Null{}), Maybe.default(&2, J.Json, J.Json.parse(describe), J.Null{}), cli, version, asset)
++        promoted : P.Ran <- P.Proc.run("sh", ["-c", KiCad.install.promote(), "sh", dir, Bool.show(valid)], "/")
++        return KiCad.install.k(promoted)
++    case P.Ran{code, out}:
++      IO.pure(String, KiCad.install.k(P.Ran{code, out}))
++
++def KiCad.install.transaction(+dir: String, base: String, name: String, sha: String, +version: String, +asset: String) -> IO(String):
++  do IO<String>:
++    staged : P.Ran <- P.Proc.run("sh", ["-c", KiCad.install.script(), "sh", dir, base, name, sha], "/")
++    KiCad.install.staged(staged, dir, version, asset)
++
++def KiCad.install.go(+data: String, +platform: String) -> IO(String):
++  +dir = KC.Cli.dir(data, KiCad.version(), KC.Cli.asset(platform))
++  +base = "https://github.com/i2cjak/Backplane_KiCad/releases/download/" ++ KiCad.release() ++ "/"
++  KiCad.install.transaction(dir, base, KiCad.asset(), KiCad.sha256(), KiCad.version(), KC.Cli.asset(platform))
++
++def KiCad.install.on(can: Bool, data: String, +platform: String) -> IO(String):
++  match can:
++    case True{}: KiCad.install.go(data, platform)
++    case False{}: IO.pure(String, KC.Cli.unsupported(platform, KiCad.version()))
++
+ def KiCad.install(+data: String) -> IO(String):
+   do IO<String>:
+-    +dir : String = data ++ "/kicad/" ++ KiCad.version()
+-    +name : String = KiCad.asset()
+-    +base : String = "https://github.com/i2cjak/Backplane_KiCad/releases/download/" ++ KiCad.release() ++ "/"
+-    mk : Result<&1, &1, U32 & String, Unit> <- H.FS.mkdirs(dir)
+-    r : P.Ran <- P.Proc.run("sh", ["-c",
+-      "set -e; cd \"$1\"; curl -fsSL -o pkg.tgz \"$2$3\"; curl -fsSL -o SUMS \"$2SHA256SUMS\"; want=$(awk -v n=\"$3\" '$2 == n || $2 == \"./\" n { print $1 }' SUMS); got=$(sha256sum pkg.tgz | cut -d' ' -f1); [ \"$want\" = \"$got\" ] && [ \"$got\" = \"$4\" ] || { echo checksum mismatch; exit 1; }; tar -xf pkg.tgz --strip-components=1; rm pkg.tgz SUMS",
+-      "sh", dir, base, name, KiCad.sha256()], "/")
+-    return KiCad.install.k(r)
++    os : P.Ran <- P.Proc.run("uname", ["-sm"], "/")
++    +platform : String = Rt.platform(os)
++    KiCad.install.on(KC.Cli.published(platform), data, platform)
+ 
+ # Opening a project
+ # -----------------
+@@ -582,7 +661,7 @@ def KiCad.open.k(fork: Bool, +cli: String, +fs: Files) -> IO(String):
+     case True{} Files{+pro, +pcb, +sch, _}:
+       do IO<String>:
+         r : P.Ran <- P.Proc.run("sh", ["-c",
+-          "r=\"$1\"; if [ -n \"$2\" ]; then set -- kicad \"$2\"; elif [ -n \"$3\" ]; then set -- pcbnew \"$3\"; elif [ -n \"$4\" ]; then set -- eeschema \"$4\"; else echo \"no KiCad project here\"; exit 1; fi; [ -x \"$r/bin/$1\" ] || { echo \"Backplane KiCad has no $1\"; exit 1; }; setsid -f \"$r/bin/$1\" \"$2\" </dev/null >/dev/null 2>&1",
++          "r=\"$1\"; if [ -n \"$2\" ]; then set -- kicad \"$2\"; elif [ -n \"$3\" ]; then set -- pcbnew \"$3\"; elif [ -n \"$4\" ]; then set -- eeschema \"$4\"; else echo \"no KiCad project here\"; exit 1; fi; [ -x \"$r/bin/$1\" ] || { echo \"Backplane KiCad has no $1\"; exit 1; }; if command -v setsid >/dev/null 2>&1; then setsid -f \"$r/bin/$1\" \"$2\" </dev/null >/dev/null 2>&1; else nohup \"$r/bin/$1\" \"$2\" </dev/null >/dev/null 2>&1 & fi",
+           "sh", Rt.root(cli), pro, pcb, sch], "/")
+         return KiCad.open.said(r)
+     case False{} _:
+diff --git a/src/server/kserve.bend b/src/server/kserve.bend
+index bf04d80c16db1eec38009212dad4adf9b55ccd38..09cb204e83812c3160bbe6ffcf31d626e6e5ba31 100644
+--- a/src/server/kserve.bend
++++ b/src/server/kserve.bend
+@@ -7,6 +7,7 @@ import ../core/json.bend as J
+ import ../core/utf8.bend as U
+ import ../core/kserve.bend as KS
+ import ../core/kihealth.bend as KH
++import ../core/port.bend as PORT
+ 
+ # The hub's headless KiCad servers (core/kserve.bend is the policy). One
+ # actor owns a record per project and one backplane-kipc helper
+@@ -261,8 +262,22 @@ def KServe.spawned(r: Result<&1, &1, U32 & String, U32 & Socket>, +q: Chan(KMsg)
+     case Fail{_}:
+       IO.pure(Maybe<&2, Chan(String)>, None{})
+ 
++def KServe.protocol(r: P.Ran) -> Bool:
++  match r:
++    case P.Ran{0, out}:
++      +o = KServe.parse(out)
++      Bool.and(String.eq(J.Json.get_str(o, "name", ""), "backplane-kipc"),
++        Bool.and(Nat.is_eq(J.Json.get_nat(o, "protocolVersion", 0n), 1n), Nat.is_eq(J.Json.get_nat(o, "runtimeApi", 0n), KH.KH.min_api())))
++    case _: False{}
++
++def KServe.start.k(compatible: Bool, +exe: String, +q: Chan(KMsg)) -> IO(Maybe<&2, Chan(String)>):
++  match compatible:
++    case True{}:
++      IO.bind(Result<&1, &1, U32 & String, U32 & Socket>, Maybe<&2, Chan(String)>, H.Proc.spawn(exe, Nil{}, "/", 0), r => KServe.spawned(r, q))
++    case False{}: IO.pure(Maybe<&2, Chan(String)>, None{})
++
+ def KServe.start(+exe: String, +q: Chan(KMsg)) -> IO(Maybe<&2, Chan(String)>):
+-  IO.bind(Result<&1, &1, U32 & String, U32 & Socket>, Maybe<&2, Chan(String)>, H.Proc.spawn(exe, Nil{}, "/", 0), r => KServe.spawned(r, q))
++  IO.bind(P.Ran, Maybe<&2, Chan(String)>, P.Proc.run("sh", PORT.Port.timeout(["5", exe, "--describe"]), "/"), r => KServe.start.k(KServe.protocol(r), exe, q))
+ 
+ # the running helper's input, starting it if needed
+ def KServe.ensure(m: Maybe<&2, Chan(String)>, +exe: String, +q: Chan(KMsg)) -> IO(Maybe<&2, Chan(String)>):
+@@ -281,7 +296,7 @@ def KServe.sent(m: Maybe<&2, Chan(String)>, +fields: List<&2, J.KV>, +id: Nat, +
+         return Hp{Some{c}, BR.Pend{Nat.show(id), reply} <> ps, n, exe}
+     case None{} Hp{_, ps, n, exe}:
+       do IO<Hp>:
+-        BR.Browser.say(reply, KServe.failed("the KiCad IPC helper could not start (is backplane-kipc installed next to Backplane?)"))
++        BR.Browser.say(reply, KServe.failed("the KiCad IPC helper is missing, incompatible, or could not start (install the matching backplane-kipc next to Backplane)"))
+         return Hp{None{}, ps, n, exe}
+ 
+ def KServe.call(hp: Hp, +q: Chan(KMsg), +fields: List<&2, J.KV>, +reply: Chan(String)) -> IO(Hp):
+diff --git a/src/server/update.bend b/src/server/update.bend
+index a5c15aae9d684c7f513b7366ea9758367a6a5daf..b204cbf0f7a02f5b9e0f4da901b27a5694912e0f 100644
+--- a/src/server/update.bend
++++ b/src/server/update.bend
+@@ -200,7 +200,7 @@ def Update.swap.one(+from: String, +to: String) -> IO(String):
+     r : Result<&1, &1, U32 & String, Unit> <- H.FS.rename(from, to)
+     return Update.swap.k(r, to)
+ 
+-# the binaries and web client must swap; the helpers (browser, STEP, voice) swap
++# the binaries and web client must swap; the helpers (browser, STEP, voice, KiCad IPC) swap
+ # when the release carries them
+ def Update.swap(+src: String, +exe: String, +tag: String) -> IO(String):
+   do IO<String>:
+@@ -211,6 +211,7 @@ def Update.swap(+src: String, +exe: String, +tag: String) -> IO(String):
+     hb : Result<&1, &1, U32 & String, Unit> <- H.FS.rename(src ++ "/backplane-browser", exe ++ "/backplane-browser")
+     hs : Result<&1, &1, U32 & String, Unit> <- H.FS.rename(src ++ "/backplane-step2glb", exe ++ "/backplane-step2glb")
+     hv : Result<&1, &1, U32 & String, Unit> <- H.FS.rename(src ++ "/backplane-voice", exe ++ "/backplane-voice")
++    hk : Result<&1, &1, U32 & String, Unit> <- H.FS.rename(src ++ "/backplane-kipc", exe ++ "/backplane-kipc")
+     return e1 ++ e2 ++ e3
+ 
+ def Update.install.go(+tag: String, +plat: String, +tn: String, +tu: String, +su: String, +exe: String, +dir: String) -> IO(String):
+diff --git a/test/kicadcli_test.bend b/test/kicadcli_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..ce9220e7cc56fbe335a6f556a1d15089422dcd64
+--- /dev/null
++++ b/test/kicadcli_test.bend
+@@ -0,0 +1,37 @@
++import Base
++import ./check.bend as C
++import ../src/core/kicadcli.bend as KC
++import ../src/core/json.bend as J
++import ../src/core/kihealth.bend as KH
++
++def identity_doc() -> J.Json:
++  J.Json.obj([J.KV{"sourceRepository", J.Str{"https://github.com/i2cjak/Backplane_KiCad"}}, J.KV{"sourceCommit", J.Str{"5dbc22d292704d02b609d5b7a0edc971f1b7f08b"}}, J.KV{"version", J.Str{"10.99.0-bp.4"}}, J.KV{"kicadVersion", J.Str{"10.99.0"}}, J.KV{"apiVersion", J.Num{"2"}}, J.KV{"platform", J.Str{"linux-x86_64"}}, J.KV{"apiDescriptor", J.Str{"share/backplane/api.desc"}}, J.KV{"capabilities", J.Json.arr([J.Str{"api-server"}, J.Str{"headless-pcb"}, J.Str{"headless-sch"}])}])
++
++def identity(describe: J.Json) -> Bool:
++  KC.Cli.identity(identity_doc(), describe, "10.99.0\n", "10.99.0-bp.4", "linux-x86_64")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    C.Check.str("Linux bp.4 published", Bool.show(KC.Cli.published("Linux x86_64\n")), "True")
++    C.Check.str("Mac layout does not promise a published asset", Bool.show(KC.Cli.published("Darwin arm64")), "False")
++    C.Check.str("unsupported architecture", Bool.show(KC.Cli.published("Linux aarch64")), "False")
++    C.Check.str("legacy Linux compatible", Bool.show(KC.Cli.compatible("Linux x86_64", "")), "True")
++    C.Check.str("legacy Linux incompatible on Mac", Bool.show(KC.Cli.compatible("Darwin arm64", "")), "False")
++    C.Check.str("explicit platform incompatible", Bool.show(KC.Cli.compatible("Linux x86_64", "macos-arm64")), "False")
++    C.Check.str("Mac manifest compatible", Bool.show(KC.Cli.compatible("Darwin arm64", "macos-arm64")), "True")
++    C.Check.str("unsupported manifest incompatible", Bool.show(KC.Cli.compatible("Linux aarch64", "")), "False")
++    C.Check.str("Mac never scans legacy installs", Bool.show(KC.Cli.installed("10.99.0-bp.4", "Darwin arm64")), "False")
++    C.Check.str("Linux never scans Mac installs", Bool.show(KC.Cli.installed("10.99.0-bp.4-macos-arm64", "Linux x86_64")), "False")
++    C.Check.str("Mac isolated install", KC.Cli.dir("/tmp/data", "10.99.0-bp.4", "macos-arm64"), "/tmp/data/kicad/10.99.0-bp.4-macos-arm64")
++    C.Check.str("real release separates CLI core from fork version", Bool.show(identity(identity_doc())), "True")
++    C.Check.str("empty identity rejected", Bool.show(identity(J.Json.obj(Nil{}))), "False")
++    C.Check.str("identity array rejected", Bool.show(identity(J.Json.arr(Nil{}))), "False")
++    C.Check.str("wrong fork version rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "version", J.Str{"10.99.0-bp.3"}))), "False")
++    C.Check.str("wrong upstream CLI version rejected", Bool.show(KC.Cli.identity(identity_doc(), identity_doc(), "9.0.0-bp.4", "10.99.0-bp.4", "linux-x86_64")), "False")
++    C.Check.str("wrong API rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "apiVersion", J.Num{"1"}))), "False")
++    C.Check.str("fractional API rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "apiVersion", J.Num{"2.5"}))), "False")
++    C.Check.str("string API rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "apiVersion", J.Str{"2"}))), "False")
++    C.Check.str("wrong platform rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "platform", J.Str{"macos-arm64"}))), "False")
++    C.Check.str("wrong source rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "sourceCommit", J.Str{"other"}))), "False")
++    C.Check.str("missing capabilities rejected", Bool.show(identity(KH.KH.put.obj(identity_doc(), "capabilities", J.Json.arr([J.Str{"api-server"}])))), "False")
++    C.Check.str("malformed manifest rejected", Bool.show(KC.Cli.identity(J.Null{}, identity_doc(), "10.99.0", "10.99.0-bp.4", "linux-x86_64")), "False")
+diff --git a/test/kipc_protocol_test.bend b/test/kipc_protocol_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..7e54f6787c256f36bc7d8b8cb4ab518a6efe8c3b
+--- /dev/null
++++ b/test/kipc_protocol_test.bend
+@@ -0,0 +1,16 @@
++import Base
++import ./check.bend as C
++import ../src/server/kserve.bend as KS
++import ../src/server/proc.bend as P
++
++def accepts(out: String) -> String:
++  Bool.show(KS.KServe.protocol(P.Ran{0, out}))
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    C.Check.str("matching helper protocol", accepts("{\"name\":\"backplane-kipc\",\"protocolVersion\":1,\"runtimeApi\":2}"), "True")
++    C.Check.str("legacy helper rejected", accepts(""), "False")
++    C.Check.str("malformed description rejected", accepts("{not JSON}"), "False")
++    C.Check.str("unknown protocol rejected", accepts("{\"name\":\"backplane-kipc\",\"protocolVersion\":2,\"runtimeApi\":2}"), "False")
++    C.Check.str("old runtime API rejected", accepts("{\"name\":\"backplane-kipc\",\"protocolVersion\":1,\"runtimeApi\":1}"), "False")
++    C.Check.str("failed command rejected", Bool.show(KS.KServe.protocol(P.Ran{1, "{\"name\":\"backplane-kipc\",\"protocolVersion\":1,\"runtimeApi\":2}"})), "False")
+diff --git a/test/native/kicad_platform.bend b/test/native/kicad_platform.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..511f912d6fe17292ff916fd2e151aa94022b1953
+--- /dev/null
++++ b/test/native/kicad_platform.bend
+@@ -0,0 +1,44 @@
++import Base
++import ../../src/server/argv.bend as AV
++import ../../src/server/host.bend as H
++import ../../src/server/proc.bend as P
++import ../../src/server/kicad.bend as K
++import ../../src/core/json.bend as J
++
++# The production runtime selector and transaction, with no hub or providers.
++# Fixture digests are arguments only in this test entry point.
++def ran(r: P.Ran) -> IO(Unit):
++  match r:
++    case P.Ran{0, out}: IO.print(out)
++    case P.Ran{_, out}: IO.die(Unit, 1, out)
++
++def installed(error: String) -> IO(Unit):
++  match error:
++    case "": IO.print("installed")
++    case _: IO.die(Unit, 1, error)
++
++def args(xs: List<String>) -> IO(Unit):
++  match xs:
++    case "discover" <> data <> exe <> Nil{}:
++      IO.bind(K.Rt, Unit, K.Rt.discover("", "", exe, data), rt => IO.print(J.Json.show(K.Rt.json(rt))))
++    case "refresh" <> data <> exe <> Nil{}:
++      IO.bind(K.Rt, Unit, K.Rt.refresh(data, "", exe, True{}, K.Rt.empty()), rt => IO.print(J.Json.show(K.Rt.json(rt))))
++    case "boot" <> data <> exe <> Nil{}:
++      IO.bind(K.Rt, Unit, K.Rt.boot(data, "", exe), rt => IO.print(J.Json.show(K.Rt.json(rt))))
++    case "resolve" <> data <> exe <> Nil{}:
++      do IO<Unit>:
++        explicit : String <- K.Rt.env("BACKPLANE_KICAD_CLI")
++        rt : K.Rt <- K.Rt.resolve(explicit, exe, data)
++        IO.print(J.Json.show(K.Rt.json(rt)))
++    case "install" <> data <> Nil{}:
++      IO.bind(String, Unit, K.KiCad.install(data), IO.print)
++    case "transaction" <> dir <> base <> name <> sha <> ver <> Nil{}:
++      IO.bind(String, Unit, K.KiCad.install.transaction(dir, base, name, sha, ver, "linux-x86_64"), installed)
++    case _:
++      IO.die(Unit, 2, "usage: kicad_platform discover|refresh|boot|resolve DATA EXE | install DATA | transaction DIR BASE NAME SHA VERSION")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    frame : List<&2, U32> <- H.Json.cbor_frame("null", "", "")
++    xs : List<String> <- AV.Argv.args()
++    args(xs)
+diff --git a/test/native/update_swap.bend b/test/native/update_swap.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..31606a49c082830bc4e599faf888ee5d6a8d4aae
+--- /dev/null
++++ b/test/native/update_swap.bend
+@@ -0,0 +1,31 @@
++import Base
++import ../check.bend as C
++import ../../src/server/argv.bend as AV
++import ../../src/server/host.bend as H
++import ../../src/server/update.bend as U
++
++# Calls the production updater's file swap only. The harness supplies
++# temporary source and install directories; no release is downloaded and
++# no hub, installed binary, or provider is started.
++def done(error: String) -> IO(Unit):
++  match error:
++    case SNil{}:
++      IO.print("ok update swap")
++    case other:
++      IO.die(Unit, 1, other)
++
++def args(xs: List<String>) -> IO(Unit):
++  match xs:
++    case src <> dst <> tag <> Nil{}:
++      IO.bind(String, Unit, U.Update.swap(src, dst, tag), done)
++    case _:
++      IO.die(Unit, 2, "usage: update_swap SOURCE INSTALL TAG")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    # host.c's join helpers need its CBOR buffer in small native targets,
++    # as in native/mailstore_test.bend. This opens no socket or hub.
++    frame : List<&2, U32> <- H.Json.cbor_frame("null", "", "")
++    C.Check.str("host effect linkage frame", Nat.show(List.length(&2, U32, frame)), "3")
++    xs : List<String> <- AV.Argv.args()
++    args(xs)
+diff --git a/test/tools/install_helpers_e2e.ts b/test/tools/install_helpers_e2e.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..bcc08ee64a0752c4c8e2357efa918d7dddc0fa6a
+--- /dev/null
++++ b/test/tools/install_helpers_e2e.ts
+@@ -0,0 +1,177 @@
++// Exercise the real release installer and updater with generated files.
++// No release download, installed Backplane, hub, or provider is used.
++//
++//   bun test/tools/install_helpers_e2e.ts --installer-only
++//   bend test/native/update_swap.bend -o build/update-swap
++//   bun test/tools/install_helpers_e2e.ts build/update-swap
++import { createHash } from "node:crypto";
++import { spawnSync } from "node:child_process";
++import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { dirname, join, resolve } from "node:path";
++
++const args = process.argv.slice(2);
++if (args.length !== 1) throw new Error("usage: install_helpers_e2e.ts --installer-only|SWAP_FIXTURE");
++const fixture = args[0] === "--installer-only" ? undefined : resolve(args[0]);
++if (fixture && !existsSync(fixture)) throw new Error(`compile test/native/update_swap.bend first: ${fixture}`);
++const template = readFileSync("deploy/install.sh.in", "utf8");
++const helpers = ["backplane-browser", "backplane-step2glb", "backplane-voice", "backplane-kipc"];
++const platforms = [
++  { name: "linux-x64", os: "Linux", arch: "x86_64" },
++  { name: "linux-arm64", os: "Linux", arch: "aarch64" },
++  { name: "darwin-arm64", os: "Darwin", arch: "arm64" },
++];
++const version = "v0.0.0-install-test";
++const root = realpathSync(mkdtempSync(join(tmpdir(), "bp-install-helpers-")));
++let checks = 0, failures = 0;
++function check(label: string, ok: boolean, detail?: unknown) {
++  checks++;
++  console.log(`${ok ? "ok" : "FAIL"} ${label}${ok ? "" : `: ${JSON.stringify(detail)?.slice(0, 500)}`}`);
++  if (!ok) failures++;
++}
++const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
++const text = (path: string) => existsSync(path) ? readFileSync(path, "utf8") : "";
++const marker = (name: string, revision: string) => `#!/bin/sh\nprintf '%s\\n' '${revision} ${name}'\n`;
++function put(path: string, value: string, executable = false) {
++  mkdirSync(dirname(path), { recursive: true });
++  writeFileSync(path, value);
++  if (executable) chmodSync(path, 0o755);
++}
++function stage(dir: string, revision: string, present: string[]) {
++  for (const name of ["backplane", "backplane-serve", ...present]) put(join(dir, name), marker(name, revision), true);
++  put(join(dir, "web", "index.html"), `${revision} web`);
++  put(join(dir, "LICENSE"), `${revision} license`);
++  put(join(dir, "licenses", "NOTICE"), `${revision} notice`);
++}
++function snapshot(dir: string): unknown[] {
++  return readdirSync(dir).sort().map(name => {
++    const path = join(dir, name), st = lstatSync(path);
++    if (st.isSymbolicLink()) return [name, "link", readlinkSync(path)];
++    if (st.isDirectory()) return [name, "dir", snapshot(path)];
++    return [name, st.mode & 0o777, readFileSync(path).toString("base64")];
++  });
++}
++function run(command: string, argv: string[], env: Record<string, string>, cwd: string) {
++  const result = spawnSync(command, argv, { env, cwd, encoding: "utf8", timeout: 15000 });
++  if (result.error) throw result.error;
++  return result;
++}
++function environment(dir: string) {
++  const home = join(dir, "user"), temp = join(dir, "temp");
++  mkdirSync(home, { recursive: true });
++  mkdirSync(temp, { recursive: true });
++  return { HOME: home, BACKPLANE_HOME: join(home, "backplane-test"), TMPDIR: temp, PATH: "/usr/bin:/bin", LANG: "C", BACKPLANE_NO_UPDATE: "1" };
++}
++function installed(label: string, prefix: string, present: string[], revision = "new") {
++  for (const name of ["backplane", "backplane-serve", ...present]) {
++    const path = join(prefix, name);
++    check(`${label}: ${name} installed beside hub`, text(path) === marker(name, revision), text(path));
++    check(`${label}: ${name} remains executable`, existsSync(path) && (lstatSync(path).mode & 0o111) !== 0);
++  }
++  check(`${label}: current web client installed`, text(join(prefix, "web", "index.html")) === `${revision} web`);
++}
++
++try {
++  // uname selects each supported archive; curl only copies a generated
++  // archive after checking the exact requested release asset URL.
++  for (const platform of platforms) {
++    for (const variant of ["modern", "without-kipc", "without-helpers"]) {
++      const present = variant === "modern" ? helpers : variant === "without-kipc" ? helpers.slice(0, 3) : [];
++      const pack = join(root, "archives", platform.name, variant);
++      const source = join(pack, `backplane-${platform.name}`);
++      stage(source, "new", present);
++      const archive = join(pack, `backplane-${version}-${platform.name}.tar.gz`);
++      const packed = run("/usr/bin/tar", ["-czf", archive, "-C", pack, `backplane-${platform.name}`], environment(pack), pack);
++      if (packed.status !== 0) throw new Error(packed.stderr);
++      const sum = createHash("sha256").update(readFileSync(archive)).digest("hex");
++      for (const upgrade of [false, true]) {
++        const label = `installer ${platform.name} ${variant} ${upgrade ? "upgrade" : "fresh"}`;
++        const dir = join(root, "installer", platform.name, variant, upgrade ? "upgrade" : "fresh");
++        const prefix = join(dir, "prefix with spaces"), bin = join(dir, "bin with spaces"), fake = join(dir, "fake");
++        const env = environment(dir);
++        mkdirSync(bin, { recursive: true });
++        mkdirSync(prefix, { recursive: true });
++        if (upgrade) {
++          stage(prefix, "old", helpers);
++          put(join(prefix, "web.old", "obsolete"), "obsolete");
++          put(join(prefix, "licenses", "obsolete"), "obsolete");
++        }
++        put(join(fake, "uname"), "#!/bin/sh\ncase $1 in -s) printf '%s\\n' \"$TEST_OS\";; -m) printf '%s\\n' \"$TEST_ARCH\";; *) exit 94;; esac\n", true);
++        put(join(fake, "curl"), `#!/bin/sh
++set -eu
++output= url=
++while [ "$#" -gt 0 ]; do
++  case $1 in
++    -o) output=$2; shift 2;;
++    --proto) shift 2;;
++    --tlsv1.2|-fsSL) shift;;
++    https://*) url=$1; shift;;
++    *) exit 93;;
++  esac
++done
++[ "$url" = "$EXPECTED_URL" ] && [ -n "$output" ] || exit 92
++printf '%s\\n' "$url" >> "$DOWNLOAD_LOG"
++cp "$OFFLINE_ARCHIVE" "$output"
++`, true);
++        const url = `https://github.com/i2cjak/Backplane/releases/download/${version}/backplane-${version}-${platform.name}.tar.gz`;
++        const script = join(dir, "install.sh");
++        put(script, template.replaceAll("@VERSION@", version)
++          .replaceAll("@SHA_LINUX_X64@", platform.name === "linux-x64" ? sum : "1".repeat(64))
++          .replaceAll("@SHA_LINUX_ARM64@", platform.name === "linux-arm64" ? sum : "2".repeat(64))
++          .replaceAll("@SHA_DARWIN_ARM64@", platform.name === "darwin-arm64" ? sum : "3".repeat(64)));
++        const installedEnv = { ...env, PATH: `${fake}:/usr/bin:/bin`, BACKPLANE_PREFIX: prefix, BACKPLANE_BIN: bin, TEST_OS: platform.os, TEST_ARCH: platform.arch, EXPECTED_URL: url, OFFLINE_ARCHIVE: archive, DOWNLOAD_LOG: join(dir, "downloads") };
++        const result = run("/bin/sh", [script], installedEnv, dir);
++        check(`${label}: installer succeeds`, result.status === 0, result.stderr);
++        check(`${label}: selects the requested platform archive`, text(installedEnv.DOWNLOAD_LOG).trim() === url, text(installedEnv.DOWNLOAD_LOG));
++        installed(label, prefix, present);
++        for (const name of helpers.filter(name => !present.includes(name))) {
++          check(`${label}: absent optional ${name} stays compatible`, upgrade ? text(join(prefix, name)) === marker(name, "old") : !existsSync(join(prefix, name)));
++        }
++        for (const name of ["backplane", "backplane-serve"]) {
++          check(`${label}: ${name} command links to prefix`, lstatSync(join(bin, name)).isSymbolicLink() && readlinkSync(join(bin, name)) === join(prefix, name));
++        }
++        check(`${label}: license installed`, text(join(prefix, "LICENSE")) === "new license");
++        check(`${label}: license notices installed`, text(join(prefix, "licenses", "NOTICE")) === "new notice" && !existsSync(join(prefix, "licenses", "obsolete")));
++        check(`${label}: previous web client retained only for upgrade`, upgrade ? text(join(prefix, "web.old", "index.html")) === "old web" && !existsSync(join(prefix, "web.old", "obsolete")) : !existsSync(join(prefix, "web.old")));
++
++        // A rejected archive must leave this successful installation,
++        // its helper versions, notices, backups and command links alone.
++        const before = [snapshot(prefix), snapshot(bin)];
++        put(script, text(script).replaceAll(sum, "0".repeat(64)));
++        const rejected = run("/bin/sh", [script], installedEnv, dir);
++        check(`${label}: checksum mismatch is refused`, rejected.status !== 0 && rejected.stderr.includes("does not match its sha256"), rejected);
++        check(`${label}: checksum failure preserves existing installation`, same([snapshot(prefix), snapshot(bin)], before));
++      }
++    }
++  }
++
++  if (fixture) {
++    // The actual native Update.swap handles both archive generations.
++    // Missing optional files must remain compatible with older releases.
++    for (const variant of ["modern", "without-kipc", "without-helpers"]) {
++      const present = variant === "modern" ? helpers : variant === "without-kipc" ? helpers.slice(0, 3) : [];
++      for (const upgrade of [false, true]) {
++        const label = `updater ${variant} ${upgrade ? "upgrade" : "fresh"}`;
++        const dir = join(root, "updater", variant, upgrade ? "upgrade" : "fresh");
++        const source = join(dir, "source with spaces"), prefix = join(dir, "prefix with spaces");
++        const env = environment(dir);
++        stage(source, "new", present);
++        mkdirSync(prefix, { recursive: true });
++        if (upgrade) stage(prefix, "old", helpers);
++        const tag = "v0.0.0-updater-test";
++        const result = run(fixture, [source, prefix, tag], env, dir);
++        check(`${label}: production file swap succeeds`, result.status === 0 && result.stdout.includes("ok update swap") && !/^FAIL\b/m.test(result.stdout), result);
++        installed(label, prefix, present);
++        for (const name of present) check(`${label}: ${name} moved from archive`, !existsSync(join(source, name)));
++        for (const name of helpers.filter(name => !present.includes(name))) {
++          check(`${label}: missing optional ${name} leaves existing install alone`, upgrade ? text(join(prefix, name)) === marker(name, "old") : !existsSync(join(prefix, name)));
++        }
++        check(`${label}: previous web retained under release tag`, upgrade ? text(join(prefix, `web.old-${tag}`, "index.html")) === "old web" : !existsSync(join(prefix, `web.old-${tag}`)));
++      }
++    }
++  }
++} finally {
++  rmSync(root, { recursive: true, force: true });
++}
++console.log(`${checks} assertions, ${failures} failures${fixture ? "" : " (installer only)"}`);
++process.exit(failures ? 1 : 0);
+diff --git a/test/tools/kicad_platform_e2e.ts b/test/tools/kicad_platform_e2e.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ed6f3e0619fe948c372f8cbb9521e642fe35717f
+--- /dev/null
++++ b/test/tools/kicad_platform_e2e.ts
+@@ -0,0 +1,153 @@
++// Synthetic, offline acceptance of the production discovery and installer.
++// scripts/build-app.sh test/native/kicad_platform.bend build/kicad_platform
++// bun test/tools/kicad_platform_e2e.ts build/kicad_platform
++import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, lstatSync, symlinkSync, writeFileSync } from "node:fs";
++import { createHash } from "node:crypto";
++import { tmpdir } from "node:os";
++import { dirname, join, resolve } from "node:path";
++import { spawnSync } from "node:child_process";
++const binary = resolve(process.argv[2] ?? "build/kicad_platform");
++const root = mkdtempSync(join(tmpdir(), "bp-kicad-platform-"));
++const bin = join(root, "bin"), data = join(root, "data"), user = join(root, "user"), exe = join(root, "app");
++for (const dir of [bin, data, user, exe]) mkdirSync(dir);
++let checks = 0;
++function check(name: string, condition: unknown) {
++  if (!condition) throw new Error(name);
++  console.log(`ok ${name}`); checks++;
++}
++function script(path: string, text: string) { mkdirSync(dirname(path), {recursive: true}); writeFileSync(path, `#!/bin/sh\n${text}\n`); chmodSync(path, 0o755); }
++function which(name: string) { const p = spawnSync("sh", ["-c", 'command -v "$1"', "sh", name], {encoding: "utf8"}).stdout.trim(); if (!p) throw new Error(`missing fixture tool ${name}`); return p; }
++const real = Object.fromEntries(["sh", "awk", "tar", "cp", "mv", "rm", "rmdir", "mkdir", "mktemp", "timeout", "sha256sum", "shasum", "perl", "cat", "sleep", "cut", "gzip"].map(n => [n, which(n)]));
++for (const [name, target] of Object.entries(real)) symlinkSync(target, join(bin, name));
++script(join(bin, "uname"), 'printf "%s\\n" "$TEST_PLATFORM"');
++rmSync(join(bin, "mv")); script(join(bin, "mv"), `case "$1" in
++  *.install-lock/stage/runtime) [ "\${FAIL_PROMOTE:-0}" != 1 ] || { echo 'injected rename failure' >&2; exit 42; };;
++  *.install-lock/stage/previous) [ "\${FAIL_RESTORE:-0}" != 1 ] || { echo 'injected restore failure' >&2; exit 42; };;
++esac
++'${real.mv}' "$@" || exit $?
++case "\${INTERRUPT_PROMOTE:-}:$1:$2" in
++  after_backup:*:*.install-lock/stage/previous|after_publish:*.install-lock/stage/runtime:*)
++    echo 'injected promotion interruption' >&2; kill -TERM "$PPID";;
++esac`);
++rmSync(join(bin, "tar")); script(join(bin, "tar"), `'${real.tar}' "$@" || exit $?\n[ "\${FAIL_TAR:-0}" != 1 ] || { echo 'injected partial extraction' >&2; exit 42; }`);
++script(join(bin, "curl"), `out=''; while [ "$#" -gt 0 ]; do case "$1" in -o) out=$2; shift 2;; *) url=$1; shift;; esac; done
++[ "\${FAIL_DOWNLOAD:-0}" != 1 ] || { echo 'injected download failure' >&2; exit 22; }
++case "$url" in *SHA256SUMS) src=$TEST_SUMS;; *) src=$TEST_ARCHIVE;; esac
++exec '${real.cp}' "$src" "$out"`);
++const env = {...process.env, HOME: user, PATH: bin, TEST_PLATFORM: "Linux x86_64", BACKPLANE_KICAD: "", BACKPLANE_KICAD_CLI: "", BACKPLANE_HOME: data};
++function run(args: string[], extra: Record<string,string> = {}) { return spawnSync(binary, args, {env: {...env,...extra}, encoding:"utf8", timeout:30000}); }
++function runtime(dir: string, platform?: string, fail = false, bundle = false) {
++  const cli = join(dir, bundle ? "Contents/MacOS/kicad-cli" : "bin/kicad-cli");
++  const manifest = {sourceRepository:"https://github.com/i2cjak/Backplane_KiCad", sourceCommit:"5dbc22d292704d02b609d5b7a0edc971f1b7f08b", version:"10.99.0-bp.4", kicadVersion:"10.99.0", apiVersion:2, apiDescriptor:"share/backplane/api.desc", capabilities:["api-server","headless-pcb","headless-sch"], ...(platform ? {platform}: {})};
++  const describe = {...manifest, platform:platform ?? "linux-x86_64"};
++  script(cli, fail ? "echo cannot-execute >&2; exit 126" : `[ "\${FAIL_RUNTIME:-0}" != 1 ] || { echo 'injected runtime failure' >&2; exit 126; }\ncase "$1" in version) printf '%s\\n' "\${TEST_VERSION:-10.99.0}";; api-server) if [ -n "\${TEST_DESCRIBE:-}" ]; then printf '%s\\n' "$TEST_DESCRIBE"; else printf '%s\\n' '${JSON.stringify(describe)}'; fi;; *) exit 1;; esac`);
++  const md = bundle ? join(dir,"Contents/Resources") : dir; mkdirSync(md, {recursive:true}); writeFileSync(join(md,"manifest.json"), JSON.stringify(manifest));
++  mkdirSync(join(dir,"share/backplane"), {recursive:true}); writeFileSync(join(dir,"share/backplane/api.desc"), "synthetic descriptor");
++  return cli;
++}
++function info(mode: string, platform: string) { const r = run([mode,data,exe], {TEST_PLATFORM:platform}); check(`${mode} ${platform} succeeds`, r.status === 0); return JSON.parse(r.stdout.trim()); }
++function snapshot(dir: string): string {
++  if (!existsSync(dir)) return "absent";
++  return JSON.stringify(readdirSync(dir).sort().map(n => {const p=join(dir,n),s=lstatSync(p); return [n,s.mode,s.isSymbolicLink()?readlinkSync(p):s.isDirectory()?snapshot(p):readFileSync(p).toString("base64")];}));
++}
++try {
++  const linux = runtime(join(data,"kicad/10.99.0-bp.4"));
++  runtime(join(exe,"kicad"));
++  const mac = runtime(join(user,"Applications/KiCad/KiCad.app"), undefined, false, true);
++  // Stock KiCad still supports CLI work without being advertised as IPC-capable.
++  rmSync(join(user,"Applications/KiCad/KiCad.app/Contents/Resources/manifest.json"));
++  script(mac, "[ \"$1\" = version ] || exit 2; printf '10.0.6\\n'");
++  script(join(bin,"kicad-cli"), "[ \"$1\" = version ] || exit 2; printf '10.0.6\\n'");
++  check("Mac ignores legacy Linux managed and bundled copies", info("discover","Darwin arm64").cli === mac);
++  const stock=info("refresh","Darwin arm64");
++  check("stock Mac exports remain available without IPC", stock.cli === mac && stock.status === "stock" && stock.fork === false && stock.can_install === false);
++  check("Intel Mac uses stock application", info("discover","Darwin x86_64").cli === mac);
++  check("Linux ARM ignores Linux x64 managed install", info("discover","Linux aarch64").cli === join(bin,"kicad-cli"));
++  const localMac=runtime(join(data,"kicad/10.99.0-bp.4-macos-arm64"), "macos-arm64");
++  check("compatible isolated Mac fork is discoverable", info("discover","Darwin arm64").cli === localMac);
++  const before=snapshot(data);
++  const unsupported=run(["install",data], {TEST_PLATFORM:"Darwin arm64",FAIL_DOWNLOAD:"1"});
++  check("unsupported installer reports unpublished platform accurately", unsupported.status===0 && unsupported.stdout.includes("no published runtime for Darwin arm64") && unsupported.stdout.includes("IPC requires"));
++  check("unsupported installer leaves managed files unchanged", snapshot(data)===before);
++  runtime(join(exe,"kicad"), "macos-arm64");
++  check("Linux ignores wrong-platform bundled runtime", info("discover","Linux x86_64").cli === linux);
++  runtime(join(data,"kicad/10.99.0-bp.4"), undefined, true);
++  const healthy=info("refresh","Linux x86_64");
++  check("broken managed runtime falls back to working stock CLI", healthy.cli===join(bin,"kicad-cli") && healthy.status==="stock");
++  const explicit=run(["refresh",data,exe], {BACKPLANE_KICAD:dirname(dirname(linux))});
++  check("explicit broken selection remains visible", explicit.status===0 && JSON.parse(explicit.stdout).status==="broken" && JSON.parse(explicit.stdout).cli===linux);
++  // The actual check/export child resolver must agree with the hub's validated
++  // cached selection, rather than reselecting the first existing managed file.
++  writeFileSync(join(data,"kicad-health.json"),JSON.stringify(healthy));
++  const cached=info("boot","Linux x86_64");
++  check("hub accepts validated stock fallback cache",cached.cli===healthy.cli && cached.status==="stock" && cached.runs===true);
++  const resolved=info("resolve","Linux x86_64");
++  check("check and export resolver keeps healthy cached fallback",resolved.cli===cached.cli && resolved.status==="stock" && resolved.runs===true);
++  const resolveRoot=run(["resolve",data,exe],{BACKPLANE_KICAD:dirname(dirname(linux))});
++  check("resolver preserves broken explicit runtime root",resolveRoot.status===0 && JSON.parse(resolveRoot.stdout).cli===linux && JSON.parse(resolveRoot.stdout).status==="broken" && JSON.parse(resolveRoot.stdout).source==="env");
++  const resolveCli=run(["resolve",data,exe],{BACKPLANE_KICAD_CLI:linux});
++  check("resolver preserves broken explicit CLI argument",resolveCli.status===0 && JSON.parse(resolveCli.stdout).cli===linux && JSON.parse(resolveCli.stdout).status==="broken" && JSON.parse(resolveCli.stdout).source==="env");
++  writeFileSync(join(data,"kicad-health.json"),JSON.stringify({...healthy,setting:linux}));
++  const resolveSetting=run(["resolve",data,exe]);
++  check("resolver preserves cached explicit setting failure",resolveSetting.status===0 && JSON.parse(resolveSetting.stdout).cli===linux && JSON.parse(resolveSetting.stdout).status==="broken" && JSON.parse(resolveSetting.stdout).source==="setting");
++  const packageDir=join(root,"package"), archive=join(root,"runtime.tgz"), sums=join(root,"SHA256SUMS"), name="fixture.tar.gz";
++  runtime(packageDir,"linux-x86_64");
++  const tar=spawnSync(real.tar,["-czf",archive,"-C",root,"package"]); check("synthetic archive created",tar.status===0);
++  const sha=createHash("sha256").update(readFileSync(archive)).digest("hex"); writeFileSync(sums,`${sha}  ${name}\n`);
++  const final=join(root,"managed","10.99.0-bp.4"); runtime(final); writeFileSync(join(final,"user-marker"),"retain exact bytes\n");
++  const prior=snapshot(final);
++  const args=["transaction",final,"https://fixture.invalid/",name,sha,"10.99.0-bp.4"];
++  const fixture={TEST_ARCHIVE:archive,TEST_SUMS:sums};
++  for (const [label,fault,message] of [["download",{FAIL_DOWNLOAD:"1"},"injected download"],["partial extraction",{FAIL_TAR:"1"},"injected partial"],["promotion",{FAIL_PROMOTE:"1"},"injected rename"],["runtime launch",{FAIL_RUNTIME:"1"},"injected runtime"],["runtime version",{TEST_VERSION:"9.0.0"},"identity mismatch"],["wrong core with same build",{TEST_VERSION:"9.0.0-bp.4"},"identity mismatch"]] as const) {
++    const r=run(args,{...fixture,...fault}); check(`${label} fails visibly`,r.status!==0 && (r.stdout+r.stderr).includes(message)); check(`${label} preserves prior runtime bytes`,snapshot(final)===prior);
++  }
++  for(const point of ["after_backup","after_publish"]) {
++    const interrupted=run(args,{...fixture,INTERRUPT_PROMOTE:point});
++    check(`${point} interruption fails visibly`,interrupted.status!==0 && (interrupted.stdout+interrupted.stderr).includes("injected promotion interruption"));
++    check(`${point} interruption restores exact selected bytes`,snapshot(final)===prior);
++    check(`${point} interruption removes staging without nested backup`,!existsSync(`${final}.install-lock`) && !existsSync(join(final,"previous")));
++  }
++  const restoreStage=join(`${final}.install-lock`,"stage");
++  const failedRestore=run(args,{...fixture,INTERRUPT_PROMOTE:"after_publish",FAIL_RESTORE:"1"});
++  check("failed restoration reports preserved backup path",failedRestore.status!==0 && (failedRestore.stdout+failedRestore.stderr).includes(`restore failed: previous runtime is at ${restoreStage}/previous`));
++  check("failed restoration retains exact prior bytes",snapshot(join(restoreStage,"previous"))===prior);
++  check("failed restoration keeps new runtime aside and lock",!existsSync(final) && existsSync(join(restoreStage,"failed/bin/kicad-cli")) && existsSync(`${final}.install-lock`));
++  const restored=spawnSync(real.mv,[join(restoreStage,"previous"),final]);
++  check("reported backup permits explicit recovery",restored.status===0 && snapshot(final)===prior);
++  rmSync(`${final}.install-lock`,{recursive:true});
++  const goodDescribe=JSON.parse(readFileSync(join(packageDir,"manifest.json"),"utf8"));
++  for(const [label,description] of [
++    ["malformed describe", "{broken"],
++    ["empty describe object", "{}"],
++    ["describe array shape", "[]"],
++    ["wrong describe version", JSON.stringify({...goodDescribe,version:"10.99.0-bp.3"})],
++    ["wrong describe API", JSON.stringify({...goodDescribe,apiVersion:1})],
++    ["wrong describe platform", JSON.stringify({...goodDescribe,platform:"macos-arm64"})],
++    ["wrong describe source", JSON.stringify({...goodDescribe,sourceCommit:"other"})],
++    ["wrong describe repository", JSON.stringify({...goodDescribe,sourceRepository:"https://example.invalid/Backplane_KiCad"})],
++    ["missing IPC capabilities", JSON.stringify({...goodDescribe,capabilities:["api-server"]})],
++  ]) {
++    const result=run(args,{...fixture,TEST_DESCRIBE:description});
++    check(`${label} fails visibly`,result.status!==0 && (result.stdout+result.stderr).includes("identity mismatch"));
++    check(`${label} preserves prior runtime bytes`,snapshot(final)===prior);
++    check(`${label} releases transaction lock`,!existsSync(`${final}.install-lock`));
++  }
++  const bad=run(args.map((a,i)=>i===4?"0".repeat(64):a),fixture);
++  check("checksum mismatch fails visibly",bad.status!==0 && (bad.stdout+bad.stderr).includes("checksum mismatch")); check("checksum failure preserves prior runtime bytes",snapshot(final)===prior);
++  rmSync(join(bin,"sha256sum"));
++  const shasum=run(args,fixture); if (shasum.status !== 0) console.error(shasum); check("portable shasum fallback installs successfully",shasum.status===0); check("successful transaction publishes new complete runtime",!existsSync(join(final,"user-marker")) && existsSync(join(final,"share/backplane/api.desc")));
++  symlinkSync(real.sha256sum,join(bin,"sha256sum"));
++  const current=snapshot(final);
++  mkdirSync(`${final}.install-lock`);
++  const locked=run(args,fixture); check("concurrent installer refused",locked.status!==0 && (locked.stdout+locked.stderr).includes("in progress")); check("lock refusal preserves runtime",snapshot(final)===current); rmSync(`${final}.install-lock`,{recursive:true});
++  // Reproduce baseline's partial-overwrite defect using its exact shell body.
++  const baseline=spawnSync("git",["show","30884966ef59c383581bcd1b7653f8f739cf009e:src/server/kicad.bend"],{encoding:"utf8"}).stdout;
++  const match=baseline.match(/"set -e; cd .*?"(?=,\n\s+"sh", dir, base, name, KiCad.sha256\(\))/);
++  check("baseline installer source found",!!match);
++  writeFileSync(join(final,"bin/kicad-cli"),"old runtime bytes\n");
++  const baselineBefore=snapshot(final);
++  const old=spawnSync(real.sh,["-c",JSON.parse(match![0]),"sh",final,"https://fixture.invalid/",name,sha],{env:{...env,...fixture,FAIL_TAR:"1"},encoding:"utf8"});
++  check("baseline partial extraction fails",old.status!==0);
++  check("baseline reproduces overwrite of selected runtime",snapshot(final)!==baselineBefore && readFileSync(join(final,"bin/kicad-cli"),"utf8").startsWith("#!/bin/sh"));
++  console.log(`${checks} assertions passed`);
++} finally { rmSync(root,{recursive:true,force:true}); }
+diff --git a/tools/kipc/src/main.ts b/tools/kipc/src/main.ts
+index 21236a80e371a08021438e7d1ae09b582a1e67b1..21f03bf04eeddec4f999cae93d0b7ae2a734c0fa 100644
+--- a/tools/kipc/src/main.ts
++++ b/tools/kipc/src/main.ts
+@@ -18,6 +18,12 @@ import { existsSync, readdirSync, statSync } from "node:fs";
+ import { basename, dirname, join } from "node:path";
+ 
+ const args = process.argv.slice(2);
++// Probed before the hub starts a persistent helper. A missing/older helper
++// fails visibly instead of accepting an incompatible NDJSON protocol.
++if (args.includes("--describe")) {
++  console.log(JSON.stringify({ name: "backplane-kipc", protocolVersion: 1, runtimeApi: 2 }));
++  process.exit(0);
++}
+ const opt = (n: string) => {
+   const i = args.indexOf(n);
+   return i >= 0 ? (args[i + 1] ?? "") : "";

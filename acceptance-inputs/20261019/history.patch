@@ -1,0 +1,514 @@
+diff --git a/docs/schematic-performance.md b/docs/schematic-performance.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c3193d994b7e7ef503cb5a61d85bebe377eeb6ed
+--- /dev/null
++++ b/docs/schematic-performance.md
+@@ -0,0 +1,66 @@
++# Schematic and history regression checks
++
++This integrates Cameron Basham's PR [#64](https://github.com/i2cjak/Backplane/pull/64)
++with the current localized shared client. The sheet reader evaluates the tail
++once. The shared history bar reads its track once; web and phone bars share that
++same track with their ticks and comparison menus. The phone avoids parsing a hidden bar. The native
++bar uses the shared implementation; its scrubber still obtains its own track.
++
++Large sheet tables use the existing tail-recursive line splitter instead of
++Base's character-recursive splitter, preserving blank-line behavior. No persisted
++state type or event meaning changes.
++
++Run the focused cases and generated fixtures from the repository root:
++
++```sh
++bend test/hier_test.bend
++bend test/hist_test.bend
++mkdir -p build
++bend src/core/hier.bend -o build/hier.mjs
++node --stack-size=500 test/tools/hier_bench.mjs build/hier.mjs
++bend test/tools/history_render.bend -o build/history-render.mjs
++(ulimit -s 131072; node --stack-size=65536 test/tools/history_render.mjs build/history-render.mjs > build/history.json)
++scripts/check.sh
++```
++
++The history runner covers 0, 3, 64, 256 and 1,024 synthetic CAD steps, English
++and Japanese, live/first/last/diff/play/compare/schematic/closed states, and the
++shared bar, web DOM, comparison menu and phone JSON. It hashes every field and leaf with an
++iterative walk. The enlarged Node stack is only for exporting full client states
++through Bend's generated test API; it is not evidence of phone stack acceptance.
++
++For an exact before/after comparison, build the same fixture on main at
++`30884966ef59c383581bcd1b7653f8f739cf009e`. Its wrapper needs these API substitutions
++in `test/tools/history_render.bend`:
++
++- `W.View.hist.of(l, U.Hs.track(u), u)` becomes
++  `W.View.hist(l, U.Hs.bar.loc(l, u), u)`.
++- `W.View.hist.menu(l, U.Hs.track(u), u)` becomes `W.View.hist.menu(l, u)`.
++- `P.Hist.json(l, True{}, u)` becomes
++  `P.Hist.json(l, U.Hs.bar.for.loc(l, u, True{}), u)`.
++
++Run the current JS runner on that baseline module first, then pass its JSON as
++argument three when running the candidate module. Every one of the 320 hashes
++must match. Timing samples include the generated JS export marshalling overhead;
++they compare identical inputs and APIs and are not device display latency.
++
++`hier_bench.mjs` reads and round-trips the same labeled Unicode sheet rows at
++increasing sizes, then checks empty rows. A baseline run can be limited to 20
++rows with argument three: the old strict conditional doubles the tail work for
++every row. The candidate goes to 1,024 rows by default.
++
++On the generated sheet-table fixture, current-source main took 7,585 ms for
++20 rows; the candidate took 2.4 ms for the identical 20 rows and 37.2 ms for
++1,024 rows. Empty-row behavior and Unicode round trips matched. A separate
++candidate run with `node --stack-size=500` completed 1,024 rows in 32.4 ms.
++These are parser timings from Node 22.23.3 on this Linux host, not phone display
++latency. The original PR's historical timings are not used as measurements.
++
++All 320 baseline/candidate output hashes matched on the current source. At
++1,024 steps in English, median shared-bar rendering fell from 107.2 to 23.0 ms,
++web history from 120.0 to 23.5 ms, and phone history JSON from 679.7 to 27.0 ms.
++The benchmark uses seven samples per case and includes generated API marshalling;
++these results are from Node on an Intel Core i7-8650U Linux host. The comparison
++uses the same fixture, language, navigation states and runner for both modules.
++The full focused checks and affected app bundles remain separate acceptance
++lanes; the enlarged test stack does not certify a phone's stack or frame budget.
+diff --git a/src/core/client.bend b/src/core/client.bend
+index 1212155dbc570373a85c15de03490021ec805043..a029cf0f94b10b8aa564d31a3f54d255ead8b1a4 100644
+--- a/src/core/client.bend
++++ b/src/core/client.bend
+@@ -7328,13 +7328,16 @@ def Hs.menu.steps() -> Nat:
+   8n
+ 
+ # the menu's rows for a side ("a" the old version, "b" the new)
+-def Hs.menu.loc(+l: I.Loc, +u: Ui, +side: String) -> List<&2, HRow>:
++def Hs.menu.track.loc(+l: I.Loc, +ss: List<&2, HI.Step>, +u: Ui, +side: String) -> List<&2, HRow>:
+   +r = Hs.refs(u)
+   +es = M.State.mine(Ui.state(u), Ui.sel(u))
+   List.append(&2, HRow, [HRow{MSG.T.history.workingcopy(l), MSG.T.history.workingcopy.note(l), Hs.row.value(side, "", "Working copy", "", "")}],
+-    List.append(&2, HRow, List.take(&2, HRow, Hs.row.steps(Hs.track(u), l, side, es, 1n, Nil{}), Hs.menu.steps()),
++    List.append(&2, HRow, List.take(&2, HRow, Hs.row.steps(ss, l, side, es, 1n, Nil{}), Hs.menu.steps()),
+       Hs.row.refs(HI.Hist.refs(J.Json.get_str(r, "refs", "")), l, side, J.Json.get_str(r, "git", ""), J.Json.get_str(r, "top", ""))))
+ 
++def Hs.menu.loc(+l: I.Loc, +u: Ui, +side: String) -> List<&2, HRow>:
++  Hs.menu.track.loc(l, Hs.track(u), u, side)
++
+ def Hs.menu(+u: Ui, side: String) -> List<&2, HRow>:
+   Hs.menu.loc(Lang.loc(u), u, side)
+ 
+@@ -8000,12 +8003,29 @@ def HBar.h(+b: HBar) -> U32:
+ def Hs.fade() -> Nat:
+   220n
+ 
++# the bar and its position from one parse of the thread's steps
++def Hs.bar.at(+l: I.Loc, +ss: List<&2, HI.Step>, +at: Nat, +u: Ui) -> HBar:
++  Hs.bar.k(l, HI.Hist.nth(ss, at), u, Hs.n(ss), at, M.State.mine(Ui.state(u), Ui.sel(u)))
++
++def Hs.bar.track(+l: I.Loc, +ss: List<&2, HI.Step>, +u: Ui) -> HBar:
++  Hs.bar.at(l, ss, Hs.at(u, ss), u)
++
++def Hs.bar.off() -> HBar:
++  HBar{False{}, 0n, 0n, "", "", "", "", False{}, False{}, False{}, "", "", ""}
++
+ def Hs.bar.on(+l: I.Loc, on: Bool, +u: Ui) -> HBar:
+   match on:
+     case True{}:
+-      Hs.bar.k(l, HI.Hist.nth(Hs.track(u), Hs.at(u, Hs.track(u))), u, Hs.n(Hs.track(u)), Hs.at(u, Hs.track(u)), M.State.mine(Ui.state(u), Ui.sel(u)))
++      Hs.bar.track(l, Hs.track(u), u)
+     case False{}:
+-      HBar{False{}, 0n, 0n, "", "", "", "", False{}, False{}, False{}, "", "", ""}
++      Hs.bar.off()
++
++def Hs.bar.on.with(+l: I.Loc, on: Bool, +ss: List<&2, HI.Step>, +u: Ui) -> HBar:
++  match on:
++    case True{}:
++      Hs.bar.track(l, ss, u)
++    case False{}:
++      Hs.bar.off()
+ 
+ # the bar for the selected thread's viewer when it shows (on): off unless
+ # a board or a schematic shows
+@@ -8022,6 +8042,11 @@ def Hs.bar.loc(+l: I.Loc, +u: Ui) -> HBar:
+ def Hs.bar(+u: Ui) -> HBar:
+   Hs.bar.loc(Lang.loc(u), u)
+ 
++# Hs.bar for a track already read (the web's viewer reads it once a render,
++# for the bar and its ticks)
++def Hs.bar.with(+l: I.Loc, +ss: List<&2, HI.Step>, +u: Ui) -> HBar:
++  Hs.bar.on.with(l, Bool.and(Ui.panel(u), Bool.and(Nat.is_lt(Hs.kind(u), 2n), Bool.not(String.is_empty(Ui.sel(u))))), ss, u)
++
+ # Actions (Ui.actions from "hist-go")
+ def Hs.act(i: Nat, +u: Ui, +value: String) -> Act:
+   match i:
+diff --git a/src/core/hier.bend b/src/core/hier.bend
+index a35f49827fe68e6e53065bd46f9a42c5f732989b..4e3eda8f9155167a98f42bb3a5c73a37ab549c2b 100644
+--- a/src/core/hier.bend
++++ b/src/core/hier.bend
+@@ -1,6 +1,7 @@
+ import Base
+ import ./sexpr.bend as S
+ import ./schematic.bend as SC
++import ./diff.bend as DF
+ 
+ # A hierarchical schematic as a tree of sheets. Each .kicad_sch lists its
+ # child sheets (name and file, the file relative to the parent's folder).
+@@ -294,15 +295,26 @@ def Hier.field(+fs: List<&2, String>, +i: Nat) -> String:
+ def Hier.read.row(+fs: List<&2, String>) -> Row:
+   Row{Maybe.default(&2, Nat, Nat.read(Hier.field(fs, 0n)), 0n), Hier.field(fs, 2n), Hier.field(fs, 3n), String.eq(Hier.field(fs, 1n), "1")}
+ 
++# a line's row ahead of the rest (a blank line has none); the rest is read
++# once and passed in, as Bool.pick would read it in both of its arms
++def Hier.read.keep(empty: Bool, +l: String, rest: List<&2, Row>) -> List<&2, Row>:
++  match empty:
++    case True{}:
++      rest
++    case False{}:
++      Hier.read.row(String.split(l, '\t')) <> rest
++
+ def Hier.read.go(ls: List<&2, String>) -> List<&2, Row>:
+   match ls:
+     case Nil{}:
+       Nil{}
+     case +l <> +t:
+-      Bool.pick(List<&2, Row>, String.is_empty(l), Hier.read.go(t), Hier.read.row(String.split(l, '\t')) <> Hier.read.go(t))
++      Hier.read.keep(String.is_empty(l), l, Hier.read.go(t))
+ 
+ def Hier.read(+s: String) -> List<&2, Row>:
+-  Hier.read.go(String.split(s, '\n'))
++  # Base's split recurses once per character on the JS target. The shared
++  # tail-recursive line reader also handles large sheet tables on phones.
++  Hier.read.go(DF.Diff.lines(s))
+ 
+ def Hier.kids.sheets(k: Kids) -> List<&2, Sheet>:
+   match k:
+diff --git a/src/mobile/view.bend b/src/mobile/view.bend
+index bbef998fb8de91765e30dbeccadd5a2dbb008d26..bc9326edc9cd8d8f3c73c056f6d65cb96f2c4ebd 100644
+--- a/src/mobile/view.bend
++++ b/src/mobile/view.bend
+@@ -745,20 +745,39 @@ def Hist.rows(rs: List<&2, U.HRow>) -> List<&2, J.Json>:
+     case U.HRow{+l, +sub, +v} <> t:
+       J.Json.obj([J.KV{"label", J.Str{l}}, J.KV{"sub", J.Str{sub}}, J.KV{"value", J.Str{v}}]) <> Hist.rows(t)
+ 
+-def Hist.menu(+lc: I.Loc, +side: String, +u: U.Ui) -> J.Json:
+-  Bool.pick(J.Json, String.is_empty(side), J.Null{}, J.Json.arr(Hist.rows(U.Hs.menu.loc(lc, u, side))))
++def Hist.menu.k(+lc: I.Loc, empty: Bool, +side: String, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
++  match empty:
++    case True{}:
++      J.Null{}
++    case False{}:
++      J.Json.arr(Hist.rows(U.Hs.menu.track.loc(lc, ss, u, side)))
+ 
+-def Hist.json.k(+lc: I.Loc, b: U.HBar, +u: U.Ui) -> J.Json:
++def Hist.menu(+lc: I.Loc, +side: String, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
++  Hist.menu.k(lc, String.is_empty(side), side, ss, u)
++
++def Hist.json.k(+lc: I.Loc, b: U.HBar, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
+   match b:
+     case U.HBar{_, +n, +at, +title, +entry, +label, +said, +pl, +df, +cmp, +a, +bb, +menu}:
+       J.Json.obj([J.KV{"n", J.Num{Nat.show(n)}}, J.KV{"at", J.Num{Nat.show(at)}}, J.KV{"title", J.Str{title}}, J.KV{"entry", J.Str{entry}},
+         J.KV{"said", J.Str{Bool.pick(String, Nat.is_eq(at, 0n), U.Hs.live.said.loc(lc, n), Bool.pick(String, String.is_empty(said), label, said))}},
+         J.KV{"playing", J.Json.bool(pl)}, J.KV{"diff", J.Json.bool(df)}, J.KV{"cmp", J.Json.bool(cmp)}, J.KV{"a", J.Str{a}}, J.KV{"b", J.Str{bb}}, J.KV{"side", J.Str{menu}}, J.KV{"as", J.Str{U.Rv.showing(u)}},
+-        J.KV{"ticks", J.Json.arr(Hist.ticks(U.Hs.track(u), 0n, at))}, J.KV{"menu", Hist.menu(lc, menu, u)},
++        J.KV{"ticks", J.Json.arr(Hist.ticks(ss, 0n, at))}, J.KV{"menu", Hist.menu(lc, menu, ss, u)},
+         J.KV{"keys", J.Json.arr([J.Num{U32.show(LO.Look.mark.color(False{}, 26))}, J.Num{U32.show(LO.Look.mark.color(False{}, 27))}, J.Num{U32.show(LO.Look.mark.color(False{}, 28))}])}])
+ 
+-def Hist.json(+lc: I.Loc, +b: U.HBar, +u: U.Ui) -> J.Json:
+-  Bool.pick(J.Json, U.HBar.on(b), Hist.json.k(lc, b, u), J.Null{})
++def Hist.json.track(+lc: I.Loc, +ss: List<&2, HS.Step>, +u: U.Ui) -> J.Json:
++  Hist.json.k(lc, U.Hs.bar.track(lc, ss, u), ss, u)
++
++# A hidden viewer must not parse its history. A visible bar and its ticks
++# use exactly the same track, as on the web.
++def Hist.json.on(+lc: I.Loc, on: Bool, +u: U.Ui) -> J.Json:
++  match on:
++    case True{}:
++      Hist.json.track(lc, U.Hs.track(u), u)
++    case False{}:
++      J.Null{}
++
++def Hist.json(+lc: I.Loc, on: Bool, +u: U.Ui) -> J.Json:
++  Hist.json.on(lc, Bool.and(on, Bool.and(Nat.is_lt(U.Hs.kind(u), 2n), Bool.not(String.is_empty(U.Ui.sel(u))))), u)
+ 
+ # what the phone's viewer needs: the source open ("" closed), its key and
+ # the key of the plot it draws layers from, the choices, and how to draw:
+@@ -887,7 +906,7 @@ def View.json(+lc: I.Loc, +u: U.Ui, +rb: J.Json) -> J.Json:
+     J.KV{"review", Rv.json(lc, String.eq(View.kind(u), "review"), u, rb)},
+     J.KV{"files", Files.json(lc, String.eq(View.kind(u), "files"), u)}, J.KV{"file", File.json(Bool.or(String.eq(View.kind(u), "image"), String.eq(View.kind(u), "pdf")), u)},
+     J.KV{"layers", J.Str{Bool.pick(String, View.mech(u), "", View.layers.at(View.kind(u), U.Ui.root(u), View.src(u)))}},
+-    J.KV{"hist", Hist.json(lc, U.Hs.bar.for.loc(lc, View.as_client(u), Nat.is_lt(View.hist.num(View.kind(u)), 2n)), View.as_client(u))},
++    J.KV{"hist", Hist.json(lc, Nat.is_lt(View.hist.num(View.kind(u)), 2n), View.as_client(u))},
+     J.KV{"mech", Mech.json(lc, View.mech(u), u)},
+     J.KV{"sheets", J.Json.arr(List.append(&2, J.Json, View.board.list(u), View.sheet.list(u)))}, J.KV{"layerList", J.Json.arr(View.layer.list(u))},
+     J.KV{"off", J.Num{U32.show(LY.Masks.off(View.masks(u)))}}, J.KV{"dim", J.Num{U32.show(LY.Masks.dim(View.masks(u)))}}, J.KV{"lift", J.Num{U32.show(LY.Lyr.top(View.focus(u)))}},
+diff --git a/src/web/view.bend b/src/web/view.bend
+index b179cd0dc7d6f962a8819927c812aee8e016e50e..20d12b39769cbdb11d84a81ecfc609c9ec6edfa5 100644
+--- a/src/web/view.bend
++++ b/src/web/view.bend
+@@ -2178,10 +2178,13 @@ def View.boards(+u: U.Ui, +what: String) -> List<&2, D.Node>:
+ def View.sheet.chips(rs: List<&2, HI.Row>, +i: Nat, +cur: String) -> List<&2, D.Node>:
+   View.sheet.chips.loc(I.En{}, rs, i, cur)
+ 
+-def View.sheets.loc(+lc: I.Loc, +u: U.Ui) -> List<&2, D.Node>:
++def View.sheets.of(+lc: I.Loc, +rs: List<&2, HI.Row>, +u: U.Ui) -> List<&2, D.Node>:
++  Bool.pick(List<&2, D.Node>, Nat.is_gt(List.length(&2, HI.Row, rs), 1n),
++    View.sheet.chips.loc(lc, rs, 0n, U.Ui.view_get(u, "view.path")), [D.Dom.span("what", MSG.T.viewer.schematic.tip(lc))])
+ 
+-  Bool.pick(List<&2, D.Node>, Nat.is_gt(List.length(&2, HI.Row, HI.Hier.read(U.Ui.info(u, "sheets:" ++ U.Ui.root(u)))), 1n),
+-    View.sheet.chips.loc(lc, HI.Hier.read(U.Ui.info(u, "sheets:" ++ U.Ui.root(u))), 0n, U.Ui.view_get(u, "view.path")), [D.Dom.span("what", MSG.T.viewer.schematic.tip(lc))])
++# the project's sheets, read once per render
++def View.sheets.loc(+lc: I.Loc, +u: U.Ui) -> List<&2, D.Node>:
++  View.sheets.of(lc, HI.Hier.read(U.Ui.info(u, "sheets:" ++ U.Ui.root(u))), u)
+ 
+ # the Layers menu (core/layers.bend): each layer shown by default, in
+ # KiCad's order (plot2d.js hides those the file has nothing on), a row of
+@@ -2311,7 +2314,7 @@ def View.hist.said.loc(+lc: I.Loc, live: Bool, +text: String) -> List<&2, D.Node
+ def View.hist.said(live: Bool, +text: String) -> List<&2, D.Node>:
+   View.hist.said.loc(I.En{}, live, text)
+ 
+-def View.hist.walk(+lc: I.Loc, b: U.HBar, +u: U.Ui) -> D.Node:
++def View.hist.walk(+lc: I.Loc, b: U.HBar, +ss: List<&2, HS.Step>, +u: U.Ui) -> D.Node:
+   match b:
+     case U.HBar{_, +n, +at, +title, _, +label, +said, +pl, +df, _, _, _, _}:
+       D.El{"div", "", [D.At{"class", "hist"}], [
+@@ -2324,7 +2327,7 @@ def View.hist.walk(+lc: I.Loc, b: U.HBar, +u: U.Ui) -> D.Node:
+           D.Dom.span("title", title), D.Dom.span("grow", ""),
+           D.Dom.button(Bool.pick(String, df, "hbtn on", "hbtn"), "hist-diff", "", MSG.T.history.changes.tip(lc), MSG.T.viewer.history.changes(lc)),
+           D.Dom.button("hbtn", "cmp", "a", MSG.T.history.compare.tip(lc), MSG.T.viewer.history.compare(lc))], View.hist.live.loc(lc, at))},
+-        D.El{"div", "", [D.At{"class", "hist-scrub"}], View.hist.ticks.loc(lc, U.Hs.track(u), 0n, n, at)},
++        D.El{"div", "", [D.At{"class", "hist-scrub"}], View.hist.ticks.loc(lc, ss, 0n, n, at)},
+         D.El{"div", "", [D.At{"class", "hist-said"}], View.hist.said.loc(lc, Nat.is_eq(at, 0n), Bool.pick(String, Nat.is_eq(at, 0n), U.Hs.live.said.loc(lc, n), Bool.pick(String, String.is_empty(said), label, said)))}]}
+ 
+ def View.hist.key(+layer: U32, +label: String) -> D.Node:
+@@ -2362,17 +2365,21 @@ def View.hist.cmp.loc(+lc: I.Loc, b: U.HBar, +u: U.Ui) -> D.Node:
+ def View.hist.cmp(b: U.HBar, +u: U.Ui) -> D.Node:
+   View.hist.cmp.loc(I.En{}, b, u)
+ 
+-def View.hist.k(+lc: I.Loc, on: Bool, cmp: Bool, b: U.HBar, +u: U.Ui) -> List<&2, D.Node>:
++def View.hist.k(+lc: I.Loc, on: Bool, cmp: Bool, b: U.HBar, +ss: List<&2, HS.Step>, +u: U.Ui) -> List<&2, D.Node>:
+   match on cmp:
+     case False{} _:
+       Nil{}
+     case True{} True{}:
+       [View.hist.cmp.loc(lc, b, u)]
+     case True{} False{}:
+-      [View.hist.walk(lc, b, u)]
++      [View.hist.walk(lc, b, ss, u)]
++
++def View.hist(+lc: I.Loc, +b: U.HBar, +ss: List<&2, HS.Step>, +u: U.Ui) -> List<&2, D.Node>:
++  View.hist.k(lc, U.HBar.on(b), U.HBar.cmp(b), b, ss, u)
+ 
+-def View.hist(+lc: I.Loc, +b: U.HBar, +u: U.Ui) -> List<&2, D.Node>:
+-  View.hist.k(lc, U.HBar.on(b), U.HBar.cmp(b), b, u)
++# the bar and its ticks share a single history parse, including localization
++def View.hist.of(+lc: I.Loc, +ss: List<&2, HS.Step>, +u: U.Ui) -> List<&2, D.Node>:
++  View.hist(lc, U.Hs.bar.with(lc, ss, u), ss, u)
+ 
+ # the menu of versions over the stage, a row each; a press outside shuts it
+ def View.hist.rows(rs: List<&2, U.HRow>) -> List<&2, D.Node>:
+@@ -2390,16 +2397,16 @@ def View.hist.ref.loc(+lc: I.Loc, +side: String) -> D.Node:
+ def View.hist.ref(+side: String) -> D.Node:
+   View.hist.ref.loc(I.En{}, side)
+ 
+-def View.hist.menu.k(+lc: I.Loc, open: Bool, +u: U.Ui, +side: String) -> List<&2, D.Node>:
++def View.hist.menu.k(+lc: I.Loc, open: Bool, +ss: List<&2, HS.Step>, +u: U.Ui, +side: String) -> List<&2, D.Node>:
+   match open:
+     case True{}:
+       [D.El{"div", "", [D.At{"class", "hist-scrim"}, D.At{"data-value", ""}, D.On{"click", "cmp-shut"}], Nil{}},
+-       D.El{"div", "", [D.At{"class", "hist-menu"}], D.Dom.span("head", Bool.pick(String, String.eq(side, "b"), MSG.T.viewer.history.compare.new(lc), MSG.T.viewer.history.compare.old(lc))) <> (View.hist.ref.loc(lc, side) <> View.hist.rows(U.Hs.menu.loc(lc, u, side)))}]
++       D.El{"div", "", [D.At{"class", "hist-menu"}], D.Dom.span("head", Bool.pick(String, String.eq(side, "b"), MSG.T.viewer.history.compare.new(lc), MSG.T.viewer.history.compare.old(lc))) <> (View.hist.ref.loc(lc, side) <> View.hist.rows(U.Hs.menu.track.loc(lc, ss, u, side)))}]
+     case False{}:
+       Nil{}
+ 
+-def View.hist.menu(+lc: I.Loc, +u: U.Ui) -> D.Node:
+-  D.El{"div", "", [D.At{"class", "hist-over"}], View.hist.menu.k(lc, Bool.not(String.is_empty(U.Ui.scratch(u, "@cmp.menu"))), u, U.Ui.scratch(u, "@cmp.menu"))}
++def View.hist.menu(+lc: I.Loc, +ss: List<&2, HS.Step>, +u: U.Ui) -> D.Node:
++  D.El{"div", "", [D.At{"class", "hist-over"}], View.hist.menu.k(lc, Bool.not(String.is_empty(U.Ui.scratch(u, "@cmp.menu"))), ss, u, U.Ui.scratch(u, "@cmp.menu"))}
+ 
+ # Review comments (client.bend's Rc), over the canvas: a pin at each place
+ # (plot2d.js puts them where the plot's own transform says: data-x, data-y in
+@@ -2523,13 +2530,16 @@ def View.rc.checks.loc(+lc: I.Loc, +u: U.Ui) -> List<&2, D.Node>:
+ def View.rc.checks(+u: U.Ui) -> List<&2, D.Node>:
+   View.rc.checks.loc(I.En{}, u)
+ 
+-def View.plot(+lc: I.Loc, +u: U.Ui, +what: List<&2, D.Node>) -> List<&2, D.Node>:
++def View.plot.track(+lc: I.Loc, +ss: List<&2, HS.Step>, +u: U.Ui, +what: List<&2, D.Node>) -> List<&2, D.Node>:
+   View.bar.loc(lc, List.append(&2, D.Node, what, [View.layers.loc(lc, String.eq(U.Solid.kind(u), "schematic"), Nat.is_eq(HS.Hist.kind(U.Ui.view_get(u, "view.path")), 2n), U.Solid.off(u), U.Lfocus.of(u))]), MSG.T.viewer.pan.tip(lc))
+    <> D.El{"div", "", [D.At{"class", "viewer-stage"}], D.El{"canvas", "plot", [D.At{"id", "plot"}, D.At{"data-key", U.Solid.want(u)},
+         D.At{"data-off", U32.show(LY.Masks.off(LY.Lyr.masks(U.Lfocus.kind(u), U.Solid.off(u), U.Lfocus.of(u))))},
+         D.At{"data-dim", U32.show(LY.Masks.dim(LY.Lyr.masks(U.Lfocus.kind(u), U.Solid.off(u), U.Lfocus.of(u))))}, D.At{"data-lift", U32.show(LY.Lyr.top(U.Lfocus.of(u)))},
+-        D.At{"data-fade", Nat.show(U.Hs.fade())}, D.At{"data-fam", HS.Hist.key.family(U.Solid.want(u))}], Nil{}} <> (View.hist.menu(lc, u) <> View.rc.loc(lc, u))}
+-   <> View.hist(lc, U.Hs.bar.loc(lc, u), u)
++        D.At{"data-fade", Nat.show(U.Hs.fade())}, D.At{"data-fam", HS.Hist.key.family(U.Solid.want(u))}], Nil{}} <> (View.hist.menu(lc, ss, u) <> View.rc.loc(lc, u))}
++   <> View.hist.of(lc, ss, u)
++
++def View.plot(+lc: I.Loc, +u: U.Ui, +what: List<&2, D.Node>) -> List<&2, D.Node>:
++  View.plot.track(lc, U.Hs.track(u), u, what)
+ 
+ # over a part in 3D: the thread's parts and Renders; the board: its name
+ # after the parts: Renders for one of them, or the name of another model
+diff --git a/test/hier_test.bend b/test/hier_test.bend
+index b7dd9c95676d0825acc055d4ec074d61f2edcf22..83a8edc481caf65b781b5c1b92688e9f13f7f50b 100644
+--- a/test/hier_test.bend
++++ b/test/hier_test.bend
+@@ -33,12 +33,23 @@ def Show.maybe(m: Maybe<&2, Nat>) -> String:
+ def sch() -> String:
+   "(kicad_sch (version 20231120)\n  (wire (pts (xy 0 0) (xy 1 1)))\n  (sheet (at 10 10) (size 20 20) (uuid \"u1\")\n    (property \"Sheetname\" \"Power\" (at 10 9 0))\n    (property \"Sheetfile\" \"power.kicad_sch\" (at 10 31 0)))\n  (sheet (at 40 10) (size 20 20) (uuid \"u2\")\n    (property \"Sheet name\" \"IO\" (at 40 9 0))\n    (property \"Sheet file\" \"io/io.kicad_sch\" (at 40 31 0))))\n"
+ 
++# n sheet rows as Hier.show writes them, one per line
++def many(n: Nat) -> String:
++  match n:
++    case 0n:
++      "0\t0\ttop.kicad_sch\t/p/top.kicad_sch"
++    case 1n+k:
++      many(k) ++ "\n1\t0\tsheet\t/p/sheet.kicad_sch"
++
+ def main() -> IO(Unit):
+   do IO<Unit>:
+     +rs : List<&2, H.Row> = H.Hier.rows(tab(), "/p/top.kicad_sch")
+     C.Check.str("rows", H.Hier.show(rs),
+       "0\t0\ttop.kicad_sch\t/p/top.kicad_sch\n1\t0\tpower\t/p/power.kicad_sch\n2\t1\tagain\t/p/top.kicad_sch\n1\t0\tio\t/p/io/io.kicad_sch\n2\t0\tadc\t/p/io/adc.kicad_sch")
+     C.Check.str("text round trip", H.Hier.show(H.Hier.read(H.Hier.show(rs))), H.Hier.show(rs))
++    # each row is read once: 40 rows come back at once (reading the rest
++    # twice per row took 2^n reads, minutes at 30 sheets)
++    C.Check.str("forty sheets read", Nat.show(List.length(&2, H.Row, H.Hier.read(many(40n)))), "41")
+     C.Check.str("chain of adc", Show.nats(H.Hier.chain(rs, 4n)), "0 3 4 ")
+     C.Check.str("chain of root", Show.nats(H.Hier.chain(rs, 0n)), "0 ")
+     C.Check.str("parent of adc", Nat.show(H.Hier.parent(rs, 4n)), "3")
+diff --git a/test/tools/hier_bench.mjs b/test/tools/hier_bench.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f443fc73a1651d4e8a41b3ce2bf2aab5dfe7504
+--- /dev/null
++++ b/test/tools/hier_bench.mjs
+@@ -0,0 +1,18 @@
++// bend src/core/hier.bend -o build/hier.mjs
++// node test/tools/hier_bench.mjs build/hier.mjs [max rows, default 1024]
++import { pathToFileURL } from "node:url";
++import { resolve } from "node:path";
++const { default: H } = await import(pathToFileURL(resolve(process.argv[2])));
++const max = Number(process.argv[3] || 1024);
++const out = [];
++for (const n of [4, 8, 12, 16, 20, 40, 64, 128, 256, 512, 1024].filter(n=>n<=max)) {
++  const rows = Array.from({length:n},(_,i)=>`${i%4}\t${i%17===0?1:0}\tSheet ${i} 日本語\t/p/sheet${i}.kicad_sch`);
++  const input=rows.join("\n");
++  const t=performance.now();const rs=H["Hier.read"](input);const ms=performance.now()-t;
++  const actual=H["Hier.show"](rs);
++  if(actual!==input) throw new Error(`round trip failed at ${n} rows`);
++  out.push({rows:n,ms});
++}
++const blank="\n\n0\t0\tRoot\t/p/root\n\n1\t1\tChild\t/p/root\n\n";
++if(H["Hier.show"](H["Hier.read"](blank))!=="0\t0\tRoot\t/p/root\n1\t1\tChild\t/p/root") throw new Error("empty rows changed");
++console.log(JSON.stringify({timings:out,emptyRows:"pass"},null,2));
+diff --git a/test/tools/history_render.bend b/test/tools/history_render.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..52400b87f9f8fa61a241f24b9e8dac1e0234f2e3
+--- /dev/null
++++ b/test/tools/history_render.bend
+@@ -0,0 +1,51 @@
++import Base
++import ../../src/core/client.bend as U
++import ../../src/core/model.bend as M
++import ../../src/core/hist.bend as H
++import ../../src/core/i18n.bend as I
++import ../../src/core/json.bend as J
++import ../../src/web/view.bend as W
++import ../../src/web/dom.bend as D
++import ../../src/mobile/view.bend as P
++
++# Generated history, never a real event store. Include board and schematic
++# edits and user text before each step, as a long CAD conversation does.
++def changes(+n: Nat, acc: List<&2, M.Change>) -> List<&2, M.Change>:
++  match n:
++    case 0n:
++      acc
++    case 1n+k:
++      +id = Nat.show(1n+k)
++      changes(k,
++        M.MessagePosted{"t", "u" ++ id, M.User{}, "Route stage " ++ id ++ " 日本語", 1n+k} <>
++        M.ActivityLogged{"t", "step:c" ++ id, "step", "kicad",
++          H.Hist.record("c" ++ id ++ "\nc" ++ Nat.show(k) ++ "\n/r/.git\n/r\nM\0b.kicad_pcb\0M\0s.kicad_sch\0", "u" ++ id), 1n+k} <> acc)
++
++def ui(a: U.Act) -> U.Ui:
++  match a:
++    case U.Act{u, _}: u
++
++def make(n: Nat) -> U.Ui:
++  U.Ui.view_put(ui(U.Ui.act(U.Ui.adopt(U.Ui.init(0n), M.State.replay(
++    M.ThreadCreated{"t", "", "Synthetic CAD history", M.Local{}, "", "", "claude", "", 0n} <> changes(n, Nil{}), M.State.empty())), "select", "t")), "board", "/r/b.kicad_pcb")
++
++def variant(+u: U.Ui, +v: String) -> U.Ui:
++  match v:
++    case "schematic":
++      U.Ui.view_put(u, "schematic", "/r/s.kicad_sch")
++    case "compare":
++      ui(U.Ui.act(ui(U.Ui.act(u, "cmp", "")), "cmp-pick", "a\tc1\tStep 1\t/r/.git\t/r"))
++    case _:
++      ui(U.Ui.act(u, v, ""))
++
++def bar(+u: U.Ui, +l: I.Loc) -> U.HBar:
++  U.Hs.bar.loc(l, u)
++
++def web(+u: U.Ui, +l: I.Loc) -> List<&2, D.Node>:
++  W.View.hist.of(l, U.Hs.track(u), u)
++
++def webmenu(+u: U.Ui, +l: I.Loc) -> D.Node:
++  W.View.hist.menu(l, U.Hs.track(u), u)
++
++def phone(+u: U.Ui, +l: I.Loc) -> String:
++  J.Json.show(P.Hist.json(l, True{}, u))
+diff --git a/test/tools/history_render.mjs b/test/tools/history_render.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..d5a0e8091e05b2b6fe3897c8b781bf72ab9f5c1a
+--- /dev/null
++++ b/test/tools/history_render.mjs
+@@ -0,0 +1,54 @@
++// bend test/tools/history_render.bend -o build/history-render.mjs
++// node test/tools/history_render.mjs build/history-render.mjs [baseline.json]
++import { pathToFileURL } from "node:url";
++import { resolve } from "node:path";
++import { readFileSync } from "node:fs";
++import { createHash } from "node:crypto";
++import assert from "node:assert/strict";
++const { default: B } = await import(pathToFileURL(resolve(process.argv[2])));
++const baseline = process.argv[3] && JSON.parse(readFileSync(process.argv[3], "utf8"));
++const encode = v => JSON.stringify(v, (_, x) => typeof x === "bigint" ? x.toString() : x);
++// Iterative traversal: a long list of ticks must not overflow the test
++// runner's JSON serializer stack. Preserve all keys, text and leaf values.
++const hash = x => {
++  const h = createHash("sha256"), todo = [x];
++  while (todo.length) {
++    const v = todo.pop();
++    if (v && typeof v === "object") {
++      const keys = Object.keys(v);
++      h.update(Array.isArray(v) ? "array" : "object");
++      h.update(JSON.stringify(keys));
++      for (let i = keys.length - 1; i >= 0; i--) todo.push(v[keys[i]]);
++    } else {
++      const leaf = encode(v) ?? "undefined";
++      h.update(`${typeof v}:${leaf.length}:${leaf}`);
++    }
++  }
++  return h.digest("hex");
++};
++const results = [];
++const samples = [];
++for (const n of [0, 3, 64, 256, 1024]) {
++  const u = B.make(BigInt(n));
++  assert.equal(B.bar(u, {$: "En"}).n, BigInt(n), `fixture track ${n}`);
++  for (const language of ["En", "Ja"]) {
++    const l = {$: language};
++    for (const variant of ["live", "hist-first", "hist-last", "hist-diff", "hist-play", "compare", "schematic", "panel"]) {
++      const state = variant === "live" ? u : B.variant(u, variant);
++      for (const client of ["bar", "web", "phone", "webmenu"]) {
++        const value = B[client](state, l);
++        const id = `${n}/${language}/${variant}/${client}`;
++        const digest = hash(value);
++        if (baseline) assert.equal(digest, baseline.results.find(x=>x.id===id)?.sha256, id);
++        results.push({id, sha256:digest});
++      }
++    }
++    for (const client of ["bar", "web", "phone"]) {
++      const times=[];
++      for(let i=0;i<7;i++) {const t=performance.now(); B[client](u,l); times.push(performance.now()-t);}
++      times.sort((a,b)=>a-b);
++      samples.push({steps:n, language, client, medianMs:times[3],p95Ms:times[6]});
++    }
++  }
++}
++console.log(JSON.stringify({runtime:process.version,results,samples,baselineCompared:!!baseline},null,2));

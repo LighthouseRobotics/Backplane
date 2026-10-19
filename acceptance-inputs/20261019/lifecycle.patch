@@ -1,0 +1,2105 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 3ba8e76799eabe3321eeaa94329680eed2f50c25..01f31ec33a707c430fa20ac68a10c898311ca485 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -98,6 +98,25 @@ jobs:
+           sudo apt-get update
+           sudo apt-get install -y clang-19 libx11-dev
+           sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
++      - name: Carry staged work into thread worktrees
++        run: |
++          set -euo pipefail
++          scripts/build-app.sh test/native/worktree_carry_test.bend build/worktree_carry_test
++          build/worktree_carry_test | tee build/worktree-carry.log
++          ! grep -q '^FAIL ' build/worktree-carry.log
++          test "$(grep -c '^ok ' build/worktree-carry.log)" -eq 37
++      - name: Preserve carried work throughout thread lifecycle
++        run: |
++          set -euo pipefail
++          scripts/build-app.sh test/native/worktree_lifecycle_test.bend build/worktree_lifecycle_test
++          build/worktree_lifecycle_test
++      - name: Preserve ignored tracked files in checkpoints
++        run: |
++          set -euo pipefail
++          scripts/build-app.sh test/native/checkpoint_ignored_test.bend build/checkpoint_ignored_test
++          build/checkpoint_ignored_test | tee build/checkpoint-ignored.log
++          if grep -q '^FAIL ' build/checkpoint-ignored.log; then exit 1; fi
++          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 53
+       - name: Object cache
+         # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
+         # unchanged unit is not compiled again. Never holds the Google client
+@@ -108,10 +127,30 @@ jobs:
+           key: objs-${{ matrix.target }}-${{ github.sha }}
+           restore-keys: objs-${{ matrix.target }}-
+       - run: clang --version
++      - name: Native reconnect state
++        run: |
++          set -o pipefail
++          scripts/build-app.sh test/outbox_test.bend build/outbox_test
++          build/outbox_test | tee build/outbox-native.log
++          ! grep -q '^FAIL ' build/outbox-native.log
++          test "$(grep -c '^ok ' build/outbox-native.log)" -eq 42
+       - run: scripts/build.sh
+         env:
+           BACKPLANE_SKIP_CHECK: "1" # the laws job checks every file
+       - run: scripts/smoke.sh
++      - name: Test Git worktrees
++        run: |
++          scripts/build-app.sh test/native/git_test.bend build/git_test
++          build/git_test
++      - name: Test event log startup
++        run: |
++          BACKPLANE_SKIP_CHECK=1 scripts/build-app.sh test/native/log_read.bend build/log_read
++          bun test/tools/logread_e2e.ts dist/backplane build/wire build/log_read
++      - name: Reconnect request ordering
++        run: |
++          set -o pipefail
++          bend test/fixtures/outbox/index.html -o build/outbox-client
++          bun test/tools/outbox_e2e.ts dist/backplane build/outbox-client
+       - uses: actions/upload-artifact@v4
+         with:
+           name: backplane-${{ matrix.target }}
+diff --git a/LAWS.bend b/LAWS.bend
+index d7539d32921b69ba91b7c1f98212214a8ff7cb50..15c4c681dcbb9322ee982a8c4f58f2b7da0ee3ce 100644
+--- a/LAWS.bend
++++ b/LAWS.bend
+@@ -127,6 +127,7 @@ import ./src/core/hier.bend as HI
+ 
+ import ./src/core/boot.bend as BT
+ import ./src/core/store.bend as ST
++import ./src/server/logread.bend as LOGREAD
+ import ./src/core/sign.bend as SG
+ import ./src/core/ring.bend as RG
+ import ./src/core/cron.bend as CR
+@@ -143,6 +144,7 @@ import ./src/core/desk.bend as DK
+ import ./src/core/emb.bend as EMB
+ import ./src/core/outbox.bend as OB
+ import ./src/core/live.bend as LV
++import ./src/core/rpcout.bend as RPO
+ import ./src/core/farlive.bend as FLV
+ import ./src/core/qr.bend as QR
+ import ./src/core/layers.bend as LY
+@@ -2305,6 +2307,18 @@ law reset_asks_card_again:
+ law reset_drops_results:
+   {U.Ui.info(U.Ui.reset(U.Ui.info_set(U.Ui.reset(U.Ui.init(0n), U.Reset.demo("O")), "fm.list:t1", "x"), U.Reset.demo("O")), "fm.list:t1") == "" : String}
+ 
++# Kept requests replay in numeric request order, with their original bytes.
++# Empty entries from older saved clients are not requests.
++law client_outbox_numeric_order:
++  {RPO.RpcOut.values(Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.new(&2, String), "100", "fourth"), "9", "first"), "99", "third"), "10", "second")) == ["first", "second", "third", "fourth"] : List<&2, String>}
++
++law client_outbox_legacy_empty:
++  {RPO.RpcOut.values(Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.set(&2, String, Map.new(&2, String), "9", "first"), "10", ""), "100", "second"), "unknown", "")) == ["first", "second"] : List<&2, String>}
++
++law client_outbox_payload_exact:
++  for +request: String
++  {RPO.RpcOut.values(Map.set(&2, String, Map.new(&2, String), "9", request)) == Bool.pick(List<&2, String>, String.is_empty(request), [], [request]) : List<&2, String>}
++
+ # a page's lines are those after since, oldest first; the walk stops at
+ # the first line at or below it
+ law far_feed_after_stops:
+@@ -5103,6 +5117,16 @@ law store_torn_tail_newline:
+ law store_fail_names_repair:
+   {ST.Store.fail.msg("disk full", True{}) ++ "|" ++ ST.Store.fail.msg("disk full", False{}) == "disk full|disk full; the log's tail could not be repaired" : String}
+ 
++# An existing history must not be replayed as empty after an IO failure.
++law log_read_missing_only:
++  {[LOGREAD.LogRead.missing(2), LOGREAD.LogRead.missing(0), LOGREAD.LogRead.missing(5), LOGREAD.LogRead.missing(13)] == [True{}, False{}, False{}, False{}] : List<&2, Bool>}
++
++law log_read_complete_only:
++  {[LOGREAD.LogRead.complete(0, 0n), LOGREAD.LogRead.complete(3, 3n), LOGREAD.LogRead.complete(3, 2n), LOGREAD.LogRead.complete(3, 4n)] == [True{}, True{}, False{}, False{}] : List<&2, Bool>}
++
++law log_read_native_capacity:
++  {[LOGREAD.LogRead.supported(0), LOGREAD.LogRead.supported(2147483647), LOGREAD.LogRead.supported(2147483648), LOGREAD.LogRead.supported(4294967295)] == [True{}, True{}, False{}, False{}] : List<&2, Bool>}
++
+ # torn before the task's state: the child's turn ended, so its task ends
+ law task_repair_finishes_ended_child:
+   {H.Task.marked(H.Queue.changes(H.Task.repair(M.State.replay([M.TurnChanged{"t1", M.Completed{}, 5n}], H.Task.demo(False{})), 9n)), "k1") == True{} : Bool}
+diff --git a/PROOF.bend b/PROOF.bend
+index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..6c98ef7cb3d395a14cec372700ae943c8e770358 100644
+--- a/PROOF.bend
++++ b/PROOF.bend
+@@ -77,11 +77,13 @@ import ./src/mobile/hubs.bend as Hb
+ import ./src/mobile/bots.bend as MBN
+ import ./src/core/space.bend as SPC
+ import ./src/core/client.bend as U
++import ./src/core/rpcout.bend as RPO
+ import ./src/core/menu.bend as MN
+ import ./src/core/hier.bend as HI
+ 
+ import ./src/core/boot.bend as BT
+ import ./src/core/store.bend as ST
++import ./src/server/logread.bend as LOGREAD
+ import ./src/core/sign.bend as SG
+ import ./src/core/cron.bend as CR
+ import ./src/core/google.bend as GO
+@@ -4510,6 +4512,19 @@ def Laws.reset_new_origin_drops_viewer():
+ def Laws.reset_drops_results():
+   {==}
+ 
++def Laws.client_outbox_numeric_order():
++  {==}
++
++def Laws.client_outbox_legacy_empty():
++  {==}
++
++def Laws.client_outbox_payload_exact(request):
++  match request:
++    case SNil{}:
++      {==}
++    case SCon{c, t}:
++      {==}
++
+ def Laws.far_feed_after_stops():
+   {==}
+ 
+@@ -7150,6 +7165,15 @@ def Laws.store_torn_tail_newline():
+ def Laws.store_fail_names_repair():
+   {==}
+ 
++def Laws.log_read_missing_only():
++  {==}
++
++def Laws.log_read_complete_only():
++  {==}
++
++def Laws.log_read_native_capacity():
++  {==}
++
+ def Laws.task_repair_finishes_ended_child():
+   {==}
+ 
+diff --git a/docs/git.md b/docs/git.md
+index b87b3e05ee585adb96f1f64fecccf7961f28daaf..7000f042145d41686daf271aab9cf52caa36da33 100644
+--- a/docs/git.md
++++ b/docs/git.md
+@@ -77,9 +77,10 @@ Git.skipped(s) -> Bool
+ ```
+ 
+ - Every new thread gets a worktree of its project's repository on a fresh `backplane/<8 hex>` branch from upstream: origin's default branch (`origin/main`), fetched first (30 s at most; offline, the last fetched one), with no tracking so a push never goes to main. Without an origin it starts from HEAD (the thread setting `thread.env`: `auto`, the default, or `worktree`; `local` works in the folder). The first message names the branch.
++- For a project inside a repository, if its relative path is not a directory in the upstream commit but is a directory in HEAD, the new worktree starts from HEAD instead. For example, a checked-out feature branch may add `mechanical/fixture/` before that folder reaches `origin/main`; a thread for that project then has a working directory at the same relative path. Repository-root projects and folders already present upstream keep the usual upstream base. This exception selects the starting commit; the uncommitted-work rules below still apply.
+ - The worktree lives in the repository, under `.backplane/worktrees/`, listed in `info/exclude` (not `.gitignore`), so the folder's status, file list and checkpoints never see it. A project that is a folder inside a bigger repository works at the same place in its worktree.
+ - No repository, or no commit yet: the thread works in the project folder (`WorktreeSkipped`). Until the worktree exists (at most two minutes), the thread's messages wait in its queue.
+-- A hardware project (KiCad files in the project folder) brings its uncommitted work into the new worktree: changed and untracked files (not ignored ones, KiCad backups, locks, autosaves or the footprint cache), and deletions. Such a worktree starts from HEAD instead of upstream, since the carried files were made against it. A software project starts clean from upstream.
++- A hardware project (KiCad files in the project folder) brings its uncommitted work into the new worktree: staged and unstaged changes, untracked files (not ignored ones, KiCad backups, locks, autosaves or the footprint cache), and deletions. The new worktree gets the files' current contents; the source's index is unchanged. Such a worktree starts from HEAD instead of upstream, since the carried files were made against it. A software project starts clean from upstream.
+ - The viewer shows the selected thread's worktree, so it shows the board that thread edits.
+ 
+ Removal (`M.Worktree.drop`, laws `worktree_kept_*`, `worktree_dropped_*`):
+@@ -128,7 +129,7 @@ refs/backplane/checkpoints/<b64url(thread_id)>/turn/<n>
+   - it is pointed to only by its hidden ref, so no branch moves and no commit lands on the user's branch.
+ 
+ How a capture works:
+-- The work tree is staged into the thread's own index file, `<git-dir>/backplane-<b64url(thread_id)>.index`. Git runs as `env GIT_INDEX_FILE=<idx> git add -A`, which picks up tracked and untracked files but respects `.gitignore`.
++- The real index's staged path records seed a fresh private index file, `<git-dir>/backplane-<b64url(thread_id)>.index`, before each capture. Git runs as `env GIT_INDEX_FILE=<idx> git add -A`, which records the current working contents of tracked files (including tracked files that match ignore rules) and non-ignored untracked files. An unborn repository with no index starts with an empty private index. Cached file metadata and optimization flags are omitted so working contents are always read. The real index and its staged contents are never changed.
+ - `git write-tree` turns that index into a tree.
+ - `git commit-tree` makes the commit, and `git update-ref` points the hidden ref at it.
+ - In a worktree, `<git-dir>` is that worktree's private git directory.
+@@ -136,9 +137,9 @@ How a capture works:
+ `diff_worktree` snapshots the current files the same way and diffs the checkpoint against that tree, so untracked new files show up.
+ 
+ How a revert works:
+-1. It syncs the thread index with the current files (`add -A`).
++1. It seeds the thread index from the real index, then syncs it with the current files (`add -A`).
+ 2. It runs `read-tree -u --reset <checkpoint tree>`. Files that differ are restored. Files the checkpoint lacks are deleted if they are tracked, or untracked and not ignored.
+-- Ignored files are never in that index, so they are never touched.
++- Ignored untracked files stay outside that index and are left alone. Ignored tracked files are restored like other tracked files.
+ - HEAD, the branch and the real index do not move.
+ 
+ All diffs use `-c core.quotepath=false diff --no-color --no-ext-diff --src-prefix=a/ --dst-prefix=b/ -M`.
+@@ -173,3 +174,5 @@ Git.act(cwd, action, message, title, body) -> IO(String)
+ - **commit**: runs `git add -A`, then `git commit -m <message>`. The default message is "Update from Backplane". The step answers `commit: <short sha> <subject>`, or `commit: nothing to commit`. Nothing to commit is not a failure, so a later push still runs.
+ - **push**: runs `git push` when the branch has an upstream. Otherwise it runs `git push -u origin <branch>`. It answers `push: <branch>[ -> origin/<branch>]`. A detached HEAD is an error.
+ - **create_pr**: runs `gh pr create --title T --body B --head <branch>`, or `--fill` when the title is empty. It answers `pr: <url>`, taken from the last line of gh's output.
++
++Carrying work into a thread retains newly tracked paths as intent-to-add in the destination, so newly tracked ignored files remain part of later checkpoints. The source index remains byte-for-byte unchanged; the destination has no staged content. A failed copy, extraction, deletion or tracking update returns an error and leaves source work intact.
+diff --git a/src/core/client.bend b/src/core/client.bend
+index 1212155dbc570373a85c15de03490021ec805043..a4cdacad2b10b2270be0dbfaffb47df25f9883ff 100644
+--- a/src/core/client.bend
++++ b/src/core/client.bend
+@@ -12,6 +12,7 @@ import ./kserve.bend as KSV
+ import ./kexport.bend as KEX
+ import ./deploy.bend as DP
+ import ./live.bend as LV
++import ./rpcout.bend as RPO
+ import ./json.bend as J
+ import ./model.bend as M
+ import ./usage.bend as UZ
+@@ -584,10 +585,11 @@ def Ui.reply.err.std(+o: J.Json) -> String:
+ def Ui.reply.err(+o: J.Json) -> String:
+   Bool.pick(String, String.is_empty(J.Json.get_str(J.Json.get_obj(o, "result"), "kicad", "")), Ui.reply.err.std(o), "")
+ 
++# Replies to ordinary RPCs must not add empty entries to the kept queue.
+ def Ui.reply.k(u: Ui, +o: J.Json) -> Ui:
+   match u:
+     case Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, _, note, nf, ob, tr}:
+-      Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, Ui.reply.err(o), note, nf, Map.set(&2, String, ob, J.Json.as_raw(J.Json.get(o, "id"), ""), ""), tr}
++      Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, Ui.reply.err(o), note, nf, Map.del(&2, String, ob, J.Json.as_raw(J.Json.get(o, "id"), "")), tr}
+ 
+ # The viewer belongs to a thread: what it shows for thread t is kept as
+ # "view.kind:t" and "view.path:t" (a file an agent asked for, else the
+@@ -890,10 +892,14 @@ def Out.resend(xs: List<&2, String>) -> List<&2, Cmd>:
+ def Ui.outbox(u: Ui) -> List<&2, Cmd>:
+   match u:
+     case Ui{_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, ob, tr}:
+-      Out.resend(Map.values(&2, String, ob))
++      Out.resend(RPO.RpcOut.values(ob))
+ 
+ def Ui.recv_act.k(connected: Bool, +u: Ui) -> Act:
+-  Act{u, Bool.pick(List<&2, Cmd>, connected, Ui.outbox(u), Nil{})}
++  match connected:
++    case True{}:
++      Act{u, Ui.outbox(u)}
++    case False{}:
++      Act{u, Nil{}}
+ 
+ # the client's own id (a host sets it once at start)
+ def Ui.set_cid(u: Ui, +cid: String) -> Ui:
+@@ -928,7 +934,7 @@ def Pending.go(xs: List<&2, String>, +thread: String, +es: List<&2, M.Entry>) ->
+ def Ui.pending(u: Ui, +thread: String) -> List<&2, String>:
+   match u:
+     case Ui{st, _, _, _, _, _, _, _, _, _, _, _, _, _, _, ob, tr}:
+-      Pending.go(Map.values(&2, String, ob), thread, M.State.mine(st, thread))
++      Pending.go(RPO.RpcOut.values(ob), thread, M.State.mine(st, thread))
+ 
+ # (a new connection has answered nothing: what the Mechanical page and a
+ # part in 3D asked for is asked again)
+diff --git a/src/core/rpcout.bend b/src/core/rpcout.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..d7d915f1f1d174180d7168bdfa9412b577859359
+--- /dev/null
++++ b/src/core/rpcout.bend
+@@ -0,0 +1,53 @@
++import Base
++
++# Kept requests use canonical decimal request numbers as map keys. A
++# map walks those keys as text: "10" comes before "9". Reconnects and
++# pending messages need creation order, so sort active keys by their
++# digit count and then their text, without reading the request bodies.
++# This row is temporary; the clients keep the existing map representation.
++type RpcOutItem is Data:
++  RpcOutItem{key: String, digits: Nat, text: String}
++
++def RpcOutItem.before.k(c: Cmp, a: String, b: String) -> Bool:
++  match c:
++    case LT{}:
++      True{}
++    case EQ{}:
++      String.is_le(a, b)
++    case GT{}:
++      False{}
++
++def RpcOutItem.before(a: RpcOutItem, b: RpcOutItem) -> Bool:
++  match a b:
++    case RpcOutItem{ak, an, _} RpcOutItem{bk, bn, _}:
++      RpcOutItem.before.k(Nat.cmp(an, bn), ak, bk)
++
++# Older saved phone state may still hold empty entries for answered
++# requests. Drop them before counting digits or sorting.
++def RpcOut.keep(empty: Bool, +key: String, text: String, rest: List<&2, RpcOutItem>) -> List<&2, RpcOutItem>:
++  match empty:
++    case True{}:
++      rest
++    case False{}:
++      RpcOutItem{key, String.length(key), text} <> rest
++
++def RpcOut.collect(m: Map<&2, String>, acc: List<&2, RpcOutItem>) -> List<&2, RpcOutItem>:
++  match m:
++    case MTip{}:
++      acc
++    case MLeaf{key, +text}:
++      RpcOut.keep(String.is_empty(text), key, text, acc)
++    case MNode{_, lo, hi}:
++      RpcOut.collect(lo, RpcOut.collect(hi, acc))
++
++def RpcOut.texts(xs: List<&2, RpcOutItem>, acc: List<&2, String>) -> List<&2, String>:
++  match xs:
++    case Nil{}:
++      List.reverse(&2, String, acc)
++    case RpcOutItem{_, _, text} <> rest:
++      RpcOut.texts(rest, text <> acc)
++
++# Outstanding requests only, oldest first. Gaps in the request numbers
++# cost no work, and each payload is returned exactly as it was kept.
++def RpcOut.values(m: Map<&2, String>) -> List<&2, String>:
++  RpcOut.texts(List.sort(~RpcOutItem, ~RpcOutItem.before, RpcOut.collect(m, Nil{})), Nil{})
+diff --git a/src/server/effects/host.c b/src/server/effects/host.c
+index 15b65ce90477a962fcbdd6d3b5bb31864e72108b..50918c790660864de253fca950fa3c081aab9a7e 100644
+--- a/src/server/effects/host.c
++++ b/src/server/effects/host.c
+@@ -1331,6 +1331,8 @@ static int jc_frame(const char* text, size_t n, const char* ks, size_t kn, const
+ 
+ #endif
+ 
++#if defined(CID(Sock.send_items)) || defined(CID(Json.items_frames))
++
+ // A join frame's lines (core/outbox.bend's Items.texts.s) as the binary
+ // WebSocket frames of their CBOR, back to back: the first frame is hd, then
+ // plain (or split when the lines take more frames), the lines joined by
+@@ -1426,6 +1428,8 @@ static int ji_run(Env e, Term* f, JcBuf* out) {
+   return ok;
+ }
+ 
++#endif
++
+ #ifdef CID(Json.cbor_frame)
+ 
+ Term json_cbor_frame_run(Env e, Term* f, IoWork* w) {
+diff --git a/src/server/git.bend b/src/server/git.bend
+index 5ad0d9d750b61aa139103cb7093bb9a869772cc5..3e580dc87d8fa06b85b3f559d68d12ca8f7519ec 100644
+--- a/src/server/git.bend
++++ b/src/server/git.bend
+@@ -399,12 +399,29 @@ def Git.exclude(+cwd: String) -> IO(String):
+   Git.seq(Git.run(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"]),
+     dir => Git.seq(P.Proc.run("sh", ["-c", Git.exclude.sh(), "sh", dir], cwd), _ => Git.done("")))
+ 
+-# Copy the folder's uncommitted work (changed and untracked files, not
+-# ignored ones) into a new worktree, and delete there what is deleted here.
+-# KiCad's own droppings (backups, locks, autosaves, the footprint cache)
+-# stay behind.
++# Copy working contents while leaving the source index and branch untouched.
++# Materialize the copy list and archive so every command failure is visible.
++# Newly tracked paths use intent-to-add in the destination: no staged content,
++# but checkpoint snapshots retain newly tracked ignored files after a carry.
++# KiCad backups, locks, autosaves and footprint cache stay behind.
+ def Git.carry.sh() -> String:
+-  "cd \"$1\" || exit 1; git ls-files -z -m -o --exclude-standard | grep -zv -e '-backups/' -e '\\.lck$' -e 'fp-info-cache$' -e '_autosave-' | tar -c --null -T - -f - 2>/dev/null | tar -x -f - -C \"$2\" 2>/dev/null; git ls-files -z -d | (cd \"$2\" && xargs -0 -r rm -f --); exit 0"
++  String.join([
++    "set -eu",
++    "export GIT_OPTIONAL_LOCKS=0",
++    "cd \"$1\"",
++    "test -d \"$2\"",
++    "d=$(mktemp -d \"${TMPDIR:-/tmp}/bp-carry.XXXXXX\")",
++    "trap 'rm -rf \"$d\"' 0",
++    "git diff --no-renames --name-only -z --diff-filter=d HEAD -- > \"$d/changed\"",
++    "git ls-files -z -o --exclude-standard >> \"$d/changed\"",
++    "perl -0ne 'chomp; print \"$_\\0\" unless m{-backups/|\\.lck$|fp-info-cache$|_autosave-}' \"$d/changed\" > \"$d/copy\"",
++    "if [ -s \"$d/copy\" ]; then tar -c --null -T \"$d/copy\" -f \"$d/files.tar\"; tar -x -f \"$d/files.tar\" -C \"$2\"; fi",
++    "git diff --no-renames --name-only -z --diff-filter=D HEAD -- > \"$d/deleted\"",
++    "xargs -0 sh -c 'd=$1; shift; for p do if [ ! -e \"$p\" ] && [ ! -L \"$p\" ]; then rm -f -- \"$d/$p\" || exit; fi; done' sh \"$2\" < \"$d/deleted\"",
++    "git diff --no-renames --name-only -z --diff-filter=A HEAD -- > \"$d/added\"",
++    "perl -0ne 'chomp; print \"$_\\0\" unless m{-backups/|\\.lck$|fp-info-cache$|_autosave-}' \"$d/added\" > \"$d/track\"",
++    "xargs -0 sh -c 'd=$1; shift; for p do if [ -e \"$d/$p\" ] || [ -L \"$d/$p\" ]; then git -C \"$d\" add -N -f -- \"$p\" || exit; fi; done' sh \"$2\" < \"$d/track\""
++  ], "\n")
+ 
+ def Git.carry(+top: String, +path: String) -> IO(String):
+   Git.seq(P.Proc.run("sh", ["-c", Git.carry.sh(), "sh", top, path], top), _ => Git.done(""))
+@@ -422,7 +439,7 @@ def Git.thread_wt.carry(carry: Bool, +top: String, +path: String, +cwd: String)
+ # folder's uncommitted work is carried over (it belongs on the HEAD it was
+ # made against; copied onto a newer tree it would undo upstream's edits).
+ def Git.upstream.sh() -> String:
+-  "[ \"$1\" = 1 ] && git ls-files -m -o -d --exclude-standard | grep -v -e '-backups/' -e '\\.lck$' -e 'fp-info-cache$' -e '_autosave-' | grep -q . && exit 0; git remote get-url origin >/dev/null 2>&1 || exit 0; b=$(git symbolic-ref -q --short refs/remotes/origin/HEAD); b=${b:-origin/main}; t=; command -v timeout >/dev/null 2>&1 && t='timeout 30'; GIT_TERMINAL_PROMPT=0 $t git fetch -q origin \"${b#origin/}\" </dev/null >/dev/null 2>&1; git rev-parse -q --verify \"refs/remotes/$b\" >/dev/null && printf %s \"$b\"; exit 0"
++  "[ \"$1\" = 1 ] && { git ls-files -m -o -d --exclude-standard; git diff --cached --name-only --no-renames --; } | grep -v -e '-backups/' -e '\\.lck$' -e 'fp-info-cache$' -e '_autosave-' | grep -q . && exit 0; git remote get-url origin >/dev/null 2>&1 || exit 0; b=$(git symbolic-ref -q --short refs/remotes/origin/HEAD); b=${b:-origin/main}; t=; command -v timeout >/dev/null 2>&1 && t='timeout 30'; GIT_TERMINAL_PROMPT=0 $t git fetch -q origin \"${b#origin/}\" </dev/null >/dev/null 2>&1; git rev-parse -q --verify \"refs/remotes/$b\" >/dev/null && printf %s \"$b\"; exit 0"
+ 
+ def Git.upstream.of(r: P.Ran) -> String:
+   match r:
+@@ -434,6 +451,41 @@ def Git.upstream.of(r: P.Ran) -> String:
+ def Git.upstream(+carry: Bool, +top: String) -> IO(String):
+   IO.bind(P.Ran, String, P.Proc.run("sh", ["-c", Git.upstream.sh(), "sh", Bool.pick(String, carry, "1", "0")], top), r => IO.pure(String, Git.upstream.of(r)))
+ 
++# A subdirectory project may only exist on the checked-out branch. Keep
++# upstream when it contains the directory, else use HEAD when it does.
++# A blob at that path is not a directory. Empty base already means HEAD
++# (no origin, or uncommitted hardware work that will be carried over).
++def Git.thread_wt.tree(r: P.Ran) -> Bool:
++  match r:
++    case P.Ran{code, out}:
++      Bool.and(U32.is_eq(code, 0), String.eq(String.trim(out), "tree"))
++
++def Git.thread_wt.base.head(found: Bool, +base: String, +prefix: String) -> IO(String):
++  match found:
++    case True{}:
++      Git.done("")
++    case False{}:
++      Git.done("error: project directory " ++ Git.thread_wt.sub(prefix) ++ " is not a directory in " ++ base ++ " or HEAD")
++
++def Git.thread_wt.base.upstream(found: Bool, +top: String, +base: String, +prefix: String) -> IO(String):
++  match found:
++    case True{}:
++      Git.done(base)
++    case False{}:
++      IO.bind(P.Ran, String, Git.run(top, ["cat-file", "-t", "HEAD:" ++ Git.thread_wt.sub(prefix)]),
++        r => Git.thread_wt.base.head(Git.thread_wt.tree(r), base, prefix))
++
++def Git.thread_wt.base.check(needed: Bool, +top: String, +base: String, +prefix: String) -> IO(String):
++  match needed:
++    case True{}:
++      IO.bind(P.Ran, String, Git.run(top, ["cat-file", "-t", base ++ ":" ++ Git.thread_wt.sub(prefix)]),
++        r => Git.thread_wt.base.upstream(Git.thread_wt.tree(r), top, base, prefix))
++    case False{}:
++      Git.done(base)
++
++def Git.thread_wt.base(+top: String, +base: String, +prefix: String) -> IO(String):
++  Git.thread_wt.base.check(Bool.and(Bool.not(String.is_empty(base)), Bool.not(String.is_empty(prefix))), top, base, prefix)
++
+ # --no-track: the thread's branch is its own; a push never goes to main
+ def Git.thread_wt.add(+base: String, +carry: Bool, +top: String, +prefix: String, +b: String) -> IO(String):
+   Git.seq(Git.run(top, List.append(&2, String, ["worktree", "add", "--no-track", "-b", b, Git.thread_wt.path(top, b)], Git.base_args(base))),
+@@ -441,7 +493,8 @@ def Git.thread_wt.add(+base: String, +carry: Bool, +top: String, +prefix: String
+ 
+ def Git.thread_wt.made(+carry: Bool, +top: String, +prefix: String, +b: String) -> IO(String):
+   Git.and(Git.exclude(top), _ =>
+-    IO.bind(String, String, Git.upstream(carry, top), base => Git.thread_wt.add(base, carry, top, prefix, b)))
++    IO.bind(String, String, Git.upstream(carry, top), base =>
++      Git.and(Git.thread_wt.base(top, base, prefix), chosen => Git.thread_wt.add(chosen, carry, top, prefix, b))))
+ 
+ def Git.thread_wt.head(r: P.Ran, +carry: Bool, +top: String, +prefix: String, +b: String) -> IO(String):
+   match r:
+@@ -455,7 +508,8 @@ def Git.thread_wt.top(+top: String, +cwd: String, +carry: Bool, +b: String) -> I
+     Git.and(Git.seq.raw(Git.run(cwd, ["rev-parse", "--show-prefix"]), p => Git.done(String.trim(p))),
+       +prefix => IO.bind(P.Ran, String, Git.run(cwd, ["rev-parse", "--verify", "-q", "HEAD"]), r => Git.thread_wt.head(r, carry, top, prefix, b))))
+ 
+-# a new thread's worktree on a new branch from upstream (Git.upstream), for the project folder
++# a new thread's worktree on a new branch from upstream (Git.upstream),
++# or HEAD when only HEAD contains the project's subdirectory, for the project folder
+ # cwd; carry: bring the folder's uncommitted work along. Answers the
+ # thread's directory, "skip: <why>" when there is no repository to branch
+ # (the thread then works in the folder), or "error: ...".
+@@ -511,11 +565,34 @@ def Git.checkpoint.prev(thread_id: String, n: Nat) -> String:
+ def Git.index_path(gd: String, thread_id: String) -> String:
+   gd ++ "/backplane-" ++ Git.b64url(thread_id) ++ ".index"
+ 
+-# the whole work tree (tracked and untracked, less ignored files) as a tree
+-# object, staged through the thread's own index file; answers the tree id
++# Seed tracked paths and staged blobs from the real index every time.
++# A fresh private index omits cached stat data and optimization flags: its
++# add -A must read today's working files, including ignored tracked paths.
++# Git reads split indexes itself; the source index is never rewritten.
++def Git.index.seed.sh() -> String:
++  String.join([
++    "set -eu",
++    "src=$(git rev-parse --path-format=absolute --git-path index)",
++    "if [ ! -f \"$src\" ]; then rm -f \"$1\"; exit 0; fi",
++    "paths=$(mktemp \"$1.paths.XXXXXX\")",
++    "trap 'rm -f \"$paths\"' 0",
++    "git ls-files --full-name --stage -z -- :/ > \"$paths\"",
++    "export GIT_INDEX_FILE=\"$1\"",
++    "rm -f \"$1\"",
++    "git read-tree --empty",
++    "git -c core.ignorestat=false update-index -z --index-info < \"$paths\""
++  ], "\n")
++
++def Git.index.seed(cwd: String, idx: String) -> IO(P.Ran):
++  P.Proc.run("sh", ["-c", Git.index.seed.sh(), "sh", idx], cwd)
++
++# the whole work tree (tracked, including ignored tracked files, and
++# untracked non-ignored files) as a tree object; answers the tree id
++# without changing the real index or its staged contents.
+ def Git.snapshot.k(+cwd: String, +idx: String) -> IO(String):
+-  Git.seq(Git.run.idx(cwd, idx, ["add", "-A"]), _ =>
+-    Git.seq(Git.run.idx(cwd, idx, ["write-tree"]), Git.done))
++  Git.seq(Git.index.seed(cwd, idx), _ =>
++    Git.seq(Git.run.idx(cwd, idx, ["add", "-A"]), _ =>
++      Git.seq(Git.run.idx(cwd, idx, ["write-tree"]), Git.done)))
+ 
+ def Git.snapshot(+cwd: String, thread_id: String) -> IO(String):
+   Git.seq(Git.run(cwd, ["rev-parse", "--absolute-git-dir"]), gd => Git.snapshot.k(cwd, Git.index_path(gd, thread_id)))
+@@ -556,11 +633,12 @@ def Git.checkpoint.diff_worktree(+cwd: String, +thread_id: String, n: Nat) -> IO
+ 
+ def Git.revert.k(+cwd: String, +idx: String, r: String) -> IO(String):
+   Git.seq(Git.run(cwd, ["rev-parse", "--verify", r ++ "^{tree}"]), tree =>
+-    Git.seq(Git.run.idx(cwd, idx, ["add", "-A"]), _ =>
+-      Git.seq(Git.run.idx(cwd, idx, ["read-tree", "-u", "--reset", tree]), _ => Git.done(""))))
++    Git.seq(Git.index.seed(cwd, idx), _ =>
++      Git.seq(Git.run.idx(cwd, idx, ["add", "-A"]), _ =>
++        Git.seq(Git.run.idx(cwd, idx, ["read-tree", "-u", "--reset", tree]), _ => Git.done("")))))
+ 
+ # put the work tree back exactly as checkpoint n had it: changed files are
+-# restored, files it did not have are removed, ignored files are left alone.
++# restored, files it did not have are removed; ignored untracked files stay.
+ # HEAD, the branch and the real index do not move. "" when done.
+ def Git.checkpoint.revert(+cwd: String, +thread_id: String, n: Nat) -> IO(String):
+   Git.seq(Git.run(cwd, ["rev-parse", "--absolute-git-dir"]), gd =>
+diff --git a/src/server/logread.bend b/src/server/logread.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..4efbffa0a32fcaca77298ad0a852a098ea0d050f
+--- /dev/null
++++ b/src/server/logread.bend
+@@ -0,0 +1,85 @@
++import Base
++
++# The event log must be read completely before the hub may append to it.
++# Optional caches may use Files.read's empty fallback; persisted history may
++# not. Only ENOENT means a new home with no log yet.
++
++def LogRead.missing(code: U32) -> Bool:
++  U32.is_eq(code, 2)
++
++# Base's native File.read_bytes caps one read at INT32_MAX. Refuse a larger
++# file before allocating rather than silently replaying only its prefix.
++def LogRead.supported(size: U32) -> Bool:
++  U32.is_le(size, 2147483647)
++
++def LogRead.complete(size: U32, bytes: Nat) -> Bool:
++  Nat.is_eq(U32.to_nat(size), bytes)
++
++# Base's List.length is not tail-recursive. Logs may contain millions of
++# bytes, so count once with an accumulator rather than growing the stack.
++def LogRead.count(bytes: List<&2, U32>, acc: Nat) -> Nat:
++  match bytes:
++    case Nil{}:
++      acc
++    case _ <> rest:
++      LogRead.count(rest, 1n+acc)
++
++def LogRead.error(path: String, op: String, code: U32, msg: String) -> IO(List<&2, U32>):
++  IO.die(List<&2, U32>, 1, "could not read event log " ++ path ++ " (" ++ op ++ "): " ++ U32.show(code) ++ ": " ++ msg)
++
++def LogRead.failed(file: File, path: String, op: String, code: U32, msg: String) -> IO(List<&2, U32>):
++  do IO<List<&2, U32>>:
++    File.close(file)
++    LogRead.error(path, op, code, msg)
++
++def LogRead.checked(complete: Bool, path: String, size: U32, actual: Nat, bytes: List<&2, U32>) -> IO(List<&2, U32>):
++  match complete:
++    case True{}:
++      IO.pure(List<&2, U32>, bytes)
++    case False{}:
++      IO.die(List<&2, U32>, 1, "could not read event log " ++ path ++ ": incomplete read (expected " ++ U32.show(size) ++ " bytes, got " ++ Nat.show(actual) ++ ")")
++
++def LogRead.read(r: File & Result<&1, &1, U32 & String, List<&2, U32>>, +path: String, +size: U32) -> IO(List<&2, U32>):
++  (file, got) = r
++  match got:
++    case Fail{(code, msg)}:
++      LogRead.failed(file, path, "read", code, msg)
++    case Done{+bytes}:
++      do IO<List<&2, U32>>:
++        File.close(file)
++        +actual : Nat = LogRead.count(bytes, 0n)
++        LogRead.checked(LogRead.complete(size, actual), path, size, actual, bytes)
++
++def LogRead.allowed(supported: Bool, file: File, +path: String, +size: U32) -> IO(List<&2, U32>):
++  match supported:
++    case True{}:
++      IO.bind(File & Result<&1, &1, U32 & String, List<&2, U32>>, List<&2, U32>, File.read_bytes(file, size), r => LogRead.read(r, path, size))
++    case False{}:
++      do IO<List<&2, U32>>:
++        File.close(file)
++        IO.die(List<&2, U32>, 1, "could not read event log " ++ path ++ ": file exceeds the complete-read limit of 2147483647 bytes")
++
++def LogRead.sized(r: File & Result<&1, &1, U32 & String, U32>, +path: String) -> IO(List<&2, U32>):
++  (file, got) = r
++  match got:
++    case Fail{(code, msg)}:
++      LogRead.failed(file, path, "size", code, msg)
++    case Done{+size}:
++      LogRead.allowed(LogRead.supported(size), file, path, size)
++
++def LogRead.absent(missing: Bool, path: String, code: U32, msg: String) -> IO(List<&2, U32>):
++  match missing:
++    case True{}:
++      IO.pure(List<&2, U32>, Nil{})
++    case False{}:
++      LogRead.error(path, "open", code, msg)
++
++def LogRead.opened(r: Result<&1, &1, U32 & String, File>, +path: String) -> IO(List<&2, U32>):
++  match r:
++    case Fail{(+code, msg)}:
++      LogRead.absent(LogRead.missing(code), path, code, msg)
++    case Done{file}:
++      IO.bind(File & Result<&1, &1, U32 & String, U32>, List<&2, U32>, File.size(file), r => LogRead.sized(r, path))
++
++def LogRead.bytes(+path: String) -> IO(List<&2, U32>):
++  IO.bind(Result<&1, &1, U32 & String, File>, List<&2, U32>, File.open(path, "r"), r => LogRead.opened(r, path))
+diff --git a/src/server/server.bend b/src/server/server.bend
+index fcb7a654ec2445910e888a86d976632e0882c7e0..6be975c684562b9116f8adf468f712e731862c8f 100644
+--- a/src/server/server.bend
++++ b/src/server/server.bend
+@@ -54,6 +54,7 @@ import ../core/attach.bend as AT
+ import ../core/sha1.bend as SH
+ import ../core/boot.bend as BT
+ import ../core/store.bend as ST
++import ./logread.bend as LOG
+ import ./botnet.bend as BN
+ import ../core/far.bend as FR
+ import ../core/fview.bend as FV
+@@ -14133,7 +14134,7 @@ def Main.boot(cfg: Cfg, need: Bool, front: Chan(Msg) -> IO(Unit)) -> IO(Unit):
+         H.Env.put("BACKPLANE_HOME", home)
+         Agents.only(home)
+         t0 : U32 <- PS.Perf.us()
+-        +bs : List<&2, U32> <- Files.read(Store.path(home))
++        +bs : List<&2, U32> <- LOG.LogRead.bytes(Store.path(home))
+         t1 : U32 <- PS.Perf.span("boot.read", t0)
+         +ld : ST.Loaded = ST.Store.load(Store.lines(bs), ST.Loaded{M.State.empty(), Nil{}})
+         +st : M.State = ST.Loaded.st(ld)
+diff --git a/test/fixtures/outbox/index.html b/test/fixtures/outbox/index.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2bc03e2afefeb24e81adc5a321e968732383c6c
+--- /dev/null
++++ b/test/fixtures/outbox/index.html
+@@ -0,0 +1,2 @@
++<!doctype html>
++<script type="module" src="./probe.js"></script>
+diff --git a/test/fixtures/outbox/probe.bend b/test/fixtures/outbox/probe.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..847655dd45d848c231287d8556214a03fdd400c4
+--- /dev/null
++++ b/test/fixtures/outbox/probe.bend
+@@ -0,0 +1,58 @@
++import Base
++import ../../../src/core/client.bend as U
++import ../../../src/core/model.bend as M
++import ../../../src/core/json.bend as J
++
++# The emitted JS uses the same client functions as the web and phones.
++# Only the starting request counter is set directly, to exercise digit
++# boundaries without manufacturing unrelated actions.
++def counter(u: U.Ui, rid: Nat) -> U.Ui:
++  match u:
++    case U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, _, w, er, note, nf, ob, tr}:
++      U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, er, note, nf, ob, tr}
++
++def json(s: String) -> J.Json:
++  Maybe.default(&2, J.Json, J.Json.parse(s), J.Null{})
++
++def seed(+start: Nat, +thread: String) -> U.Ui:
++  counter(U.Ui.select.k(U.Ui.set_cid(U.Ui.fold([
++    M.ProjectCreated{"p-outbox", "Example", "/tmp/outbox-example", 1n},
++    M.ThreadCreated{thread, "p-outbox", "Offline messages", M.Local{}, "", "", "claude", "", 2n}], U.Ui.init(10n)), "outbox-e2e"), thread), start)
++
++def first(+start: Nat, +thread: String) -> U.Act:
++  U.Ui.send.rpc(seed(start, thread), "first " ++ thread, "steer")
++
++def second(+start: Nat, +thread: String) -> U.Act:
++  U.Ui.send.rpc(U.Act.ui(first(start, thread)), "second " ++ thread, "steer")
++
++def sends(cs: List<&2, U.Cmd>) -> List<&2, J.Json>:
++  match cs:
++    case Nil{}:
++      Nil{}
++    case U.Send{text} <> t:
++      J.Str{text} <> sends(t)
++    case _ <> t:
++      sends(t)
++
++def strings(xs: List<&2, String>) -> List<&2, J.Json>:
++  match xs:
++    case Nil{}:
++      Nil{}
++    case x <> t:
++      J.Str{x} <> strings(t)
++
++def joined(u: U.Ui) -> U.Act:
++  U.Ui.recv_act(u, json("{\"t\":\"log\",\"since\":0,\"origin\":\"outbox-origin\",\"info\":{},\"items\":[]}"))
++
++def acknowledged(u: U.Ui, id: Nat) -> U.Ui:
++  U.Ui.recv(u, J.Json.obj([J.KV{"t", J.Str{"reply"}}, J.KV{"id", J.Num{Nat.show(id)}}, J.KV{"ok", J.Flag{True{}}}]))
++
++def scenario(+start: Nat, +thread: String) -> String:
++  J.Json.show(J.Json.obj([
++    J.KV{"original", J.Json.arr(List.append(&2, J.Json, sends(U.Act.cmds(first(start, thread))), sends(U.Act.cmds(second(start, thread)))))},
++    J.KV{"resend", J.Json.arr(sends(U.Act.cmds(joined(U.Act.ui(second(start, thread))))))},
++    J.KV{"again", J.Json.arr(sends(U.Act.cmds(joined(U.Act.ui(joined(U.Act.ui(second(start, thread))))))))},
++    J.KV{"pending", J.Json.arr(strings(U.Ui.pending(U.Act.ui(second(start, thread)), thread)))},
++    J.KV{"afterFirstAck", J.Json.arr(sends(U.Ui.outbox(acknowledged(U.Act.ui(second(start, thread)), start))))},
++    J.KV{"afterSecondAck", J.Json.arr(sends(U.Ui.outbox(acknowledged(U.Act.ui(second(start, thread)), 1n+start))))},
++    J.KV{"afterBoth", J.Json.arr(sends(U.Ui.outbox(acknowledged(acknowledged(U.Act.ui(second(start, thread)), 1n+start), start))))}]))
+diff --git a/test/fixtures/outbox/probe.js b/test/fixtures/outbox/probe.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..30c5452a71f2215fc71a8fc5a493522d38d1c110
+--- /dev/null
++++ b/test/fixtures/outbox/probe.js
+@@ -0,0 +1,7 @@
++// Test exports from the real shared client; no replacement sorting here.
++import P from "./probe.bend";
++import "../../wire/wire.js";
++
++globalThis.OutboxFixture = {
++  scenario: (start, thread) => JSON.parse(P.scenario(BigInt(start), thread)),
++};
+diff --git a/test/native/checkpoint_ignored_test.bend b/test/native/checkpoint_ignored_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..a986affc47d264c5385eaee21d1f1ae4324905e1
+--- /dev/null
++++ b/test/native/checkpoint_ignored_test.bend
+@@ -0,0 +1,177 @@
++import Base
++import ../check.bend as C
++import ../../src/server/proc.bend as P
++import ../../src/server/git.bend as G
++import ../../src/server/host.bend as H
++
++# Actual checkpoint and worktree APIs against isolated temporary repositories.
++# Run with scripts/build-app.sh, then the emitted native executable.
++
++def out(r: P.Ran) -> String:
++  match r:
++    case P.Ran{_, text}: String.trim(text)
++
++def code(r: P.Ran) -> String:
++  match r:
++    case P.Ran{c, _}: U32.show(c)
++
++def sh(cwd: String, script: String) -> IO(P.Ran):
++  P.Proc.run("sh", ["-c", "set -eu\n" ++ script], cwd)
++
++def git(cwd: String, args: List<&2, String>) -> IO(String):
++  IO.bind(P.Ran, String, P.Proc.run("git", args, cwd), r => IO.pure(String, out(r)))
++
++def chk(name: String, +got: String, +want: String) -> IO(Bool):
++  do IO<Bool>:
++    IO.print(C.Check.pick(String.eq(got, want), name, got, want))
++    return String.eq(got, want)
++
++def shell(cwd: String, name: String, script: String) -> IO(Bool):
++  IO.bind(P.Ran, Bool, sh(cwd, script), +r => chk(name, code(r) ++ out(r), "0"))
++
++def all(bs: List<&2, Bool>) -> Bool:
++  match bs:
++    case Nil{}: True{}
++    case b <> t: Bool.and(b, all(t))
++
++def finish(ok: Bool) -> IO(Unit):
++  match ok:
++    case True{}: IO.print("all ok")
++    case False{}: IO.die(Unit, 1, "checkpoint_ignored_test failed")
++
++def Cases.capture(+root: String) -> IO(Bool):
++  +repo = root ++ "/capture"
++  do IO<Bool>:
++    b0 : Bool <- shell(repo, "capture fixture initializes", "git init -q -b main .\ngit config user.email checkpoint@example.invalid\ngit config user.name Checkpoint\ngit config commit.gpgsign false\nprintf '*.log\\n' > .gitignore\nprintf 'v1\\n' > board.log\nprintf 'gone\\n' > removed.log\nprintf 'ordinary old\\n' > ordinary.txt\ngit add -A\ngit add -f board.log removed.log\ngit commit -qm initial\nprintf 'staged\\n' > board.log\ngit add board.log\nprintf 'v2\\n' > board.log\ngit rm -q removed.log\nprintf 'ordinary new\\n' > ordinary.txt\nprintf 'new file\\n' > new.txt\nprintf 'ignored cache\\n' > cache.log\ncp .git/index ../capture.index")
++    +snap : String <- G.Git.checkpoint.capture(repo, "capture", 0n)
++    a : Bool <- chk("capture returns a commit", Nat.show(String.length(snap)), "40")
++    b3 : Bool <- shell(repo, "tracked ignored working contents captured", "test \"$(git show refs/backplane/checkpoints/Y2FwdHVyZQ/turn/0:board.log)\" = v2")
++    b4 : Bool <- shell(repo, "tracked deletion stays absent", "! git cat-file -e refs/backplane/checkpoints/Y2FwdHVyZQ/turn/0:removed.log 2>/dev/null")
++    b5 : Bool <- shell(repo, "nonignored working changes captured", "test \"$(git show refs/backplane/checkpoints/Y2FwdHVyZQ/turn/0:ordinary.txt)\" = 'ordinary new'\ntest \"$(git show refs/backplane/checkpoints/Y2FwdHVyZQ/turn/0:new.txt)\" = 'new file'")
++    b6 : Bool <- shell(repo, "ignored untracked file excluded", "! git cat-file -e refs/backplane/checkpoints/Y2FwdHVyZQ/turn/0:cache.log 2>/dev/null")
++    b7 : Bool <- shell(repo, "capture preserves real index bytes", "cmp .git/index ../capture.index")
++    b8 : Bool <- shell(repo, "stage later ignored file", "printf 'later staged\\n' > later.log\ngit add -f later.log\nprintf 'later working\\n' > later.log\ncp .git/index ../capture.index")
++    again : String <- G.Git.snapshot(repo, "capture")
++    b : Bool <- chk("repeated snapshot succeeds", Bool.show(G.Git.is_error(again)), "False")
++    b11 : Bool <- shell(repo, "reused private index learns current tracking", "tree=$(git rev-parse --git-path backplane-Y2FwdHVyZQ.index)\ntest \"$(GIT_INDEX_FILE=\"$PWD/$tree\" git show :later.log)\" = 'later working'\ncmp .git/index ../capture.index")
++    diff : String <- G.Git.checkpoint.diff_worktree(repo, "capture", 0n)
++    c : Bool <- chk("working diff contains newly tracked ignored path", Bool.show(String.contains(diff, "later.log")), "True")
++    b14 : Bool <- shell(repo, "prepare fresh private revert index", "rm -f .git/backplane-Y2FwdHVyZQ.index\nprintf 'v3\\n' > board.log\nprintf 'later ignored\\n' > cache.log\nprintf 'extra\\n' > extra.txt\ncp .git/index ../capture.index")
++    revert : String <- G.Git.checkpoint.revert(repo, "capture", 0n)
++    d : Bool <- chk("fresh-index revert succeeds", revert, "")
++    b17 : Bool <- shell(repo, "fresh-index revert restores ignored tracked contents", "test \"$(cat board.log)\" = v2")
++    b18 : Bool <- shell(repo, "revert removes tracked ignored path absent at checkpoint", "test ! -e later.log")
++    b19 : Bool <- shell(repo, "revert leaves ignored untracked contents", "test \"$(cat cache.log)\" = 'later ignored'")
++    b20 : Bool <- shell(repo, "revert removes ordinary file added since checkpoint", "test ! -e extra.txt")
++    b21 : Bool <- shell(repo, "revert preserves staged deletion and real index bytes", "test ! -e removed.log\ncmp .git/index ../capture.index\ntest \"$(git show :board.log)\" = staged\ntest \"$(git show HEAD:board.log)\" = v1")
++    return all([a, b, c, d, b0, b3, b4, b5, b6, b7, b8, b11, b14, b17, b18, b19, b20, b21])
++
++def Cases.unborn(+root: String) -> IO(Bool):
++  +repo = root ++ "/unborn"
++  do IO<Bool>:
++    b0 : Bool <- shell(repo, "unborn fixture initializes without a real index", "git init -q -b main .\nprintf '*.log\\n' > .gitignore\nprintf 'ordinary\\n' > ordinary.txt\nprintf 'cache\\n' > ignored.log\ntest ! -e .git/index")
++    +snap : String <- G.Git.checkpoint.capture(repo, "unborn", 0n)
++    a : Bool <- chk("unborn checkpoint has a commit", Nat.show(String.length(snap)), "40")
++    b3 : Bool <- shell(repo, "unborn checkpoint captures files without creating real index", "test \"$(git show refs/backplane/checkpoints/dW5ib3Ju/turn/0:ordinary.txt)\" = ordinary\n! git cat-file -e refs/backplane/checkpoints/dW5ib3Ju/turn/0:ignored.log 2>/dev/null\ntest ! -e .git/index\n! git rev-parse --verify HEAD >/dev/null 2>&1")
++    b4 : Bool <- shell(repo, "unborn repository can stage ignored file after first capture", "printf 'staged\\n' > tracked.log\ngit add -f tracked.log\nprintf 'working\\n' > tracked.log\ncp .git/index ../unborn.index")
++    again : String <- G.Git.checkpoint.capture(repo, "unborn", 1n)
++    b : Bool <- chk("second unborn checkpoint succeeds", Bool.show(G.Git.is_error(again)), "False")
++    b7 : Bool <- shell(repo, "unborn later tracking uses current working contents", "test \"$(git show refs/backplane/checkpoints/dW5ib3Ju/turn/1:tracked.log)\" = working\ncmp .git/index ../unborn.index")
++    b8 : Bool <- shell(repo, "remove real index but retain old private index", "rm .git/index\nrm tracked.log\nprintf 'untracked cache\\n' > tracked.log")
++    last : String <- G.Git.checkpoint.capture(repo, "unborn", 2n)
++    c : Bool <- chk("snapshot after removing real index succeeds", Bool.show(G.Git.is_error(last)), "False")
++    b11 : Bool <- shell(repo, "missing real index discards stale private tracking", "! git cat-file -e refs/backplane/checkpoints/dW5ib3Ju/turn/2:tracked.log 2>/dev/null\ntest ! -e .git/index")
++    return all([a, b, c, b0, b3, b4, b7, b8, b11])
++
++def Cases.split(+root: String) -> IO(Bool):
++  +repo = root ++ "/split"
++  do IO<Bool>:
++    b0 : Bool <- shell(repo, "split-index fixture initializes", "git init -q -b main .\ngit config user.email checkpoint@example.invalid\ngit config user.name Checkpoint\ngit config commit.gpgsign false\nprintf '*.log\\n' > .gitignore\nprintf 'original\\n' > tracked.log\ngit add .gitignore\ngit add -f tracked.log\ngit commit -qm initial\ngit update-index --split-index\nprintf 'working split\\n' > tracked.log\ncp .git/index ../split.index")
++    +snap : String <- G.Git.checkpoint.capture(repo, "split", 0n)
++    a : Bool <- chk("split-index snapshot succeeds", Bool.show(G.Git.is_error(snap)), "False")
++    b3 : Bool <- shell(repo, "split-index references work in private index", "test \"$(git show refs/backplane/checkpoints/c3BsaXQ/turn/0:tracked.log)\" = 'working split'\ncmp .git/index ../split.index\ntest -n \"$(git rev-parse --shared-index-path)\"")
++    revert : String <- G.Git.checkpoint.revert(repo, "split", 0n)
++    b : Bool <- chk("split-index revert succeeds", revert, "")
++    b6 : Bool <- shell(repo, "split-index revert keeps real index bytes", "cmp .git/index ../split.index")
++    return all([a, b, b0, b3, b6])
++
++def Cases.flags(+root: String) -> IO(Bool):
++  +repo = root ++ "/flags\n"
++  do IO<Bool>:
++    a : Bool <- shell(repo, "optimization flags fixture initializes", "git init -q -b main .\ngit config user.email checkpoint@example.invalid\ngit config user.name Checkpoint\ngit config commit.gpgsign false\nmkdir sub\nprintf 'v1' > ordinary.txt\nprintf 'v1' > sub/skipped.txt\nprintf 'v1' > 'line\nbreak.txt'\ngit add -A\ngit commit -qm initial\ngit config core.ignorestat true\ngit update-index --assume-unchanged ordinary.txt 'line\nbreak.txt'\ngit update-index --skip-worktree sub/skipped.txt\nprintf 'v2' > ordinary.txt\nprintf 'v2' > sub/skipped.txt\nprintf 'v2' > 'line\nbreak.txt'\ncp .git/index ../flags.index")
++    snap : String <- G.Git.checkpoint.capture(repo ++ "/sub", "flags", 0n)
++    b : Bool <- chk("subfolder flagged snapshot succeeds", Bool.show(G.Git.failed(snap)), "False")
++    c : Bool <- shell(repo, "private index refreshes flags throughout repository", "test \"$(git show refs/backplane/checkpoints/ZmxhZ3M/turn/0:ordinary.txt)\" = v2\ntest \"$(git show refs/backplane/checkpoints/ZmxhZ3M/turn/0:sub/skipped.txt)\" = v2\ntest \"$(git show 'refs/backplane/checkpoints/ZmxhZ3M/turn/0:line\nbreak.txt')\" = v2")
++    d : Bool <- shell(repo, "snapshot leaves real flags and index bytes unchanged", "cmp .git/index ../flags.index\ngit ls-files -v ordinary.txt | grep -q '^h ' \ngit ls-files -v sub/skipped.txt | grep -q '^S '")
++    return all([a, b, c, d])
++
++
++def Cases.stat(+root: String) -> IO(Bool):
++  +repo = root ++ "/stat"
++  do IO<Bool>:
++    a : Bool <- shell(repo, "same-stat fixture initializes", "git init -q -b main .\ngit config user.email checkpoint@example.invalid\ngit config user.name Checkpoint\ngit config commit.gpgsign false\ngit config core.trustctime false\nprintf '*.log\\n' > .gitignore\nprintf 'v1' > board.log\ngit add .gitignore\ngit add -f board.log\ngit commit -qm initial\ntouch -r board.log ../stat.time\nprintf 'v2' > board.log\ntouch -r ../stat.time board.log\ntouch -t 203001010000 .git/index\ncp .git/index ../stat.index")
++    snap : String <- G.Git.checkpoint.capture(repo, "stat", 0n)
++    b : Bool <- chk("same-stat checkpoint succeeds", Bool.show(G.Git.failed(snap)), "False")
++    c : Bool <- shell(repo, "same-stat working contents are always read", "test \"$(git show refs/backplane/checkpoints/c3RhdA/turn/0:board.log)\" = v2\ncmp .git/index ../stat.index")
++    return all([a, b, c])
++
++def Cases.records(+root: String) -> IO(Bool):
++  +repo = root ++ "/records"
++  do IO<Bool>:
++    a : Bool <- shell(repo, "index records fixture initializes", "git init -q -b main .\ngit config user.email checkpoint@example.invalid\ngit config user.name Checkpoint\ngit config commit.gpgsign false\nprintf original > conflict.txt\nprintf '#!/bin/sh\\n' > executable.sh\nchmod +x executable.sh\nln -s executable.sh link\ngit add -A\ngit commit -qm initial\nmkdir vendor\ngit -C vendor init -q -b main .\ngit -C vendor config user.email checkpoint@example.invalid\ngit -C vendor config user.name Checkpoint\ngit -C vendor config commit.gpgsign false\nprintf vendored > vendor/part.txt\ngit -C vendor add -A\ngit -C vendor commit -qm vendor\ngit add vendor 2>/dev/null\ngit update-index --force-remove conflict.txt\none=$(printf original | git hash-object -w --stdin)\ntwo=$(printf ours | git hash-object -w --stdin)\nthree=$(printf theirs | git hash-object -w --stdin)\nprintf '100644 %s 1\\tconflict.txt\\n100644 %s 2\\tconflict.txt\\n100644 %s 3\\tconflict.txt\\n' \"$one\" \"$two\" \"$three\" | git update-index --index-info\nprintf resolved > conflict.txt\ncp .git/index ../records.index")
++    snap : String <- G.Git.checkpoint.capture(repo, "records", 0n)
++    b : Bool <- chk("unmerged and gitlink index snapshot succeeds", Bool.show(G.Git.failed(snap)), "False")
++    c : Bool <- shell(repo, "private snapshot resolves only its conflict records", "test \"$(git show refs/backplane/checkpoints/cmVjb3Jkcw/turn/0:conflict.txt)\" = resolved\ntest \"$(git ls-files -u | wc -l | tr -d ' ')\" = 3\ncmp .git/index ../records.index")
++    d : Bool <- shell(repo, "gitlink and file modes survive checkpoint seeding", "ref=refs/backplane/checkpoints/cmVjb3Jkcw/turn/0\ntest \"$(git ls-tree \"$ref\" vendor | cut -c1-6)\" = 160000\ntest \"$(git ls-tree \"$ref\" executable.sh | cut -c1-6)\" = 100755\ntest \"$(git ls-tree \"$ref\" link | cut -c1-6)\" = 120000\ntest \"$(git show \"$ref:link\")\" = executable.sh")
++    return all([a, b, c, d])
++
++def Cases.lifecycle(+root: String) -> IO(Bool):
++  +repo = root ++ "/lifecycle"
++  do IO<Bool>:
++    a0 : Bool <- shell(repo, "revival fixture initializes", "git init -q -b main .\ngit config user.email checkpoint@example.invalid\ngit config user.name Checkpoint\ngit config commit.gpgsign false\nprintf '*.log\\n' > .gitignore\nprintf 'v1\\n' > board.log\ngit add .gitignore\ngit add -f board.log\ngit commit -qm initial")
++    +wt : String <- G.Git.thread_wt(repo, False{}, "backplane/checkpoint")
++    a1 : Bool <- chk("thread worktree created", Bool.show(G.Git.failed(wt)), "False")
++    a2 : Bool <- shell(wt, "edit ignored tracked board in thread", "printf 'v2\\n' > board.log\ncp \"$(git rev-parse --git-path index)\" \"$PWD/../../../../lifecycle.index\"")
++    snap : String <- G.Git.checkpoint.capture(wt, "revive", 0n)
++    a3 : Bool <- chk("thread checkpoint created", Bool.show(G.Git.failed(snap)), "False")
++    a4 : Bool <- shell(wt, "worktree checkpoint preserves real index bytes", "cmp \"$(git rev-parse --git-path index)\" \"$PWD/../../../../lifecycle.index\"")
++    removed : String <- G.Git.worktree.remove_force(repo, wt)
++    a5 : Bool <- chk("modified thread worktree removed", removed, "")
++    +revived : String <- G.Git.thread_wt.again(repo, "backplane/checkpoint")
++    a6 : Bool <- chk("thread worktree revived", revived, wt)
++    restored : String <- G.Git.checkpoint.revert(revived, "revive", 0n)
++    a7 : Bool <- chk("removed thread checkpoint restored", restored, "")
++    a8 : Bool <- shell(revived, "revival recovers v2 instead of silently reverting to v1", "test \"$(cat board.log)\" = v2\ntest \"$(git show HEAD:board.log)\" = v1\ntest \"$(git show :board.log)\" = v1")
++    return all([a0, a1, a2, a3, a4, a5, a6, a7, a8])
++
++def run(+root: String) -> IO(Unit):
++  do IO<Unit>:
++    dirs : P.Ran <- P.Proc.run("mkdir", ["-p", root ++ "/user", root ++ "/empty-templates", root ++ "/capture", root ++ "/unborn", root ++ "/split", root ++ "/lifecycle", root ++ "/flags\n", root ++ "/stat", root ++ "/records"], "/tmp")
++    H.Env.put("HOME", root ++ "/user")
++    H.Env.put("BACKPLANE_HOME", root ++ "/backplane")
++    H.Env.put("GIT_CONFIG_NOSYSTEM", "1")
++    H.Env.put("GIT_CONFIG_GLOBAL", "/dev/null")
++    H.Env.put("GIT_CONFIG_COUNT", "0")
++    H.Env.put("GIT_CONFIG_PARAMETERS", "")
++    H.Env.put("GIT_TEMPLATE_DIR", root ++ "/empty-templates")
++    H.Env.put("GIT_TERMINAL_PROMPT", "0")
++    # Keep host.c's existing CBOR helper linked in this standalone fixture.
++    frame : List<&2, U32> <- H.Json.cbor_frame("null", "", "")
++    linked : Bool <- chk("host effect linkage frame", Nat.show(List.length(&2, U32, frame)), "3")
++    a : Bool <- Cases.capture(root)
++    b : Bool <- Cases.unborn(root)
++    c : Bool <- Cases.split(root)
++    d : Bool <- Cases.lifecycle(root)
++    e : Bool <- Cases.flags(root)
++    f : Bool <- Cases.stat(root)
++    g : Bool <- Cases.records(root)
++    removed : P.Ran <- P.Proc.run("rm", ["-rf", root], "/tmp")
++    finish(all([linked, a, b, c, d, e, f, g]))
++
++def created(r: P.Ran) -> IO(Unit):
++  match r:
++    case P.Ran{0, root}: run(String.trim(root))
++    case P.Ran{_, error}: IO.die(Unit, 1, "cannot create test directory: " ++ error)
++
++def main() -> IO(Unit):
++  IO.bind(P.Ran, Unit, P.Proc.run("mktemp", ["-d", "/tmp/bp-checkpoint-ignored.XXXXXX"], "/tmp"), created)
+diff --git a/test/native/git_test.bend b/test/native/git_test.bend
+index 9994bc6f4638c91805d1eea184a646ac0443405c..6d1a68846c8e93ab2344299cba637181cfbb6b9c 100644
+--- a/test/native/git_test.bend
++++ b/test/native/git_test.bend
+@@ -247,7 +247,7 @@ def thread_wt_checks(+root: String) -> IO(Bool):
+     rv : String <- G.Git.checkpoint.revert(p2, "tw-thread", 0n)
+     p3 : String <- cat(p2 ++ "/board.kicad_pcb")
+     b7 : Bool <- chk("state restored", rv ++ p3, "v3")
+-    s2 : P.Ran <- sh(root, "git init -q --bare twr.git && git -C tw remote add origin ../twr.git && git -C tw push -q origin main && git clone -q twr.git twc && cd twc && git config user.email t@t && git config user.name t && printf 'u\\n' > up.txt && git add up.txt && git commit -q -m up && git push -q origin main")
++    s2 : P.Ran <- sh(root, "git init -q --bare -b main twr.git && git -C tw remote add origin ../twr.git && git -C tw push -q origin main && git clone -q twr.git twc && cd twc && git config user.email t@t && git config user.name t && printf 'u\\n' > up.txt && git add up.txt && git commit -q -m up && git push -q origin main")
+     +up : String <- G.Git.thread_wt(repo, False{}, "backplane/up")
+     uf : String <- exists(up ++ "/up.txt")
+     c1 : Bool <- chk("starts from upstream main", uf, "True")
+@@ -258,6 +258,53 @@ def thread_wt_checks(+root: String) -> IO(Bool):
+     c3 : Bool <- chk("carried work stays on HEAD", hf, "False")
+     return all([a1, a2, a3, a4, a5, a6, a7, a8, a9, b1, b2, b3, b4, b5, b6, b7, c1, c2, c3])
+ 
++# A project added only on the checked-out branch must exist in the new
++# thread too. A newer origin/main remains preferred when it has that
++# directory; a same-named blob is not a project directory.
++def prefix_setup() -> String:
++  "git init -q --bare -b main prefix-origin.git && git init -q -b main prefix && cd prefix && git config user.email t@t && git config user.name t && git config commit.gpgsign false && mkdir existing && printf 'main\\n' > existing/board.kicad_pro && printf 'blob\\n' > collision && git add -A && git commit -qm base && git remote add origin ../prefix-origin.git && git push -qu origin main && git checkout -qb local-feature && mkdir 'feature only' 'design $(touch injected); pieces' && printf 'feature\\n' > 'feature only/board.kicad_pro' && printf 'special\\n' > 'design $(touch injected); pieces/board.kicad_pro' && rm collision && mkdir collision && printf 'directory\\n' > collision/board.kicad_pro && git add -A && git commit -qm projects && git checkout -qb upstream-source main && printf 'upstream\\n' > existing/board.kicad_pro && git add -A && git commit -qm upstream && git push -q origin HEAD:main && git checkout -q local-feature"
++
++def thread_prefix_checks(+root: String) -> IO(Bool):
++  +repo = root ++ "/prefix"
++  do IO<Bool>:
++    +s0 : P.Ran <- sh(root, prefix_setup())
++    a0 : Bool <- chk("prefix fixture setup", code(s0) ++ out(s0), "0")
++    +head : String <- git(repo, ["rev-parse", "HEAD"])
++    +upstream : String <- git(repo, ["rev-parse", "origin/main"])
++    a1 : Bool <- chk("prefix fixture commits differ", Bool.show(String.eq(head, upstream)), "False")
++    +fresh : String <- G.Git.thread_wt(repo ++ "/feature only", False{}, "backplane/prefix-new")
++    a2 : Bool <- IO.bind(String, Bool, exists(fresh), v => chk("feature-only project directory exists", v, "True"))
++    a3 : Bool <- IO.bind(String, Bool, cat(fresh ++ "/board.kicad_pro"), v => chk("feature-only project files", v, "feature"))
++    a4 : Bool <- IO.bind(String, Bool, git(fresh, ["rev-parse", "HEAD"]), v => chk("feature-only project starts at HEAD", v, head))
++    a5 : Bool <- IO.bind(String, Bool, git(fresh, ["config", "--get", "branch.backplane/prefix-new.remote"]), v => chk("fallback branch tracks nothing", v, ""))
++    +blob : String <- G.Git.thread_wt(repo ++ "/collision", False{}, "backplane/prefix-blob")
++    b1 : Bool <- IO.bind(String, Bool, cat(blob ++ "/board.kicad_pro"), v => chk("upstream file does not replace project directory", v, "directory"))
++    b2 : Bool <- IO.bind(String, Bool, git(blob, ["rev-parse", "HEAD"]), v => chk("file collision starts at HEAD", v, head))
++    +special : String <- G.Git.thread_wt(repo ++ "/design $(touch injected); pieces", False{}, "backplane/prefix-special")
++    b3 : Bool <- IO.bind(String, Bool, cat(special ++ "/board.kicad_pro"), v => chk("project path keeps spaces and shell characters", v, "special"))
++    b4 : Bool <- IO.bind(String, Bool, exists(repo ++ "/injected"), v => chk("project path is not evaluated by a shell", v, "False"))
++    +normal : String <- G.Git.thread_wt(repo ++ "/existing", False{}, "backplane/prefix-normal")
++    c1 : Bool <- IO.bind(String, Bool, cat(normal ++ "/board.kicad_pro"), v => chk("existing project uses upstream files", v, "upstream"))
++    c2 : Bool <- IO.bind(String, Bool, git(normal, ["rev-parse", "HEAD"]), v => chk("existing project keeps origin base", v, upstream))
++    c3 : Bool <- IO.bind(String, Bool, git(normal, ["config", "--get", "branch.backplane/prefix-normal.remote"]), v => chk("upstream-based branch tracks nothing", v, ""))
++    s1 : P.Ran <- sh(repo, "mkdir untracked-only && printf 'new\\n' > untracked-only/board.kicad_pro")
++    +absent : String <- G.Git.thread_wt(repo ++ "/untracked-only", False{}, "backplane/prefix-untracked")
++    d1 : Bool <- chk("uncommitted-only project has a useful error", Bool.show(Bool.and(G.Git.failed(absent), String.contains(absent, "untracked-only"))), "True")
++    d2 : Bool <- IO.bind(String, Bool, exists(G.Git.thread_wt.path(repo, "backplane/prefix-untracked")), v => chk("missing project does not create a worktree", v, "False"))
++    d3 : Bool <- IO.bind(String, Bool, git(repo, ["branch", "--list", "backplane/prefix-untracked"]), v => chk("missing project does not create a branch", v, ""))
++    +untracked : String <- G.Git.thread_wt(repo ++ "/untracked-only", True{}, "backplane/prefix-untracked-carry")
++    d4 : Bool <- IO.bind(String, Bool, cat(untracked ++ "/board.kicad_pro"), v => chk("uncommitted-only project can be carried", untracked ++ "\n" ++ v, G.Git.thread_wt.path(repo, "backplane/prefix-untracked-carry") ++ "/untracked-only\nnew"))
++    d5 : Bool <- IO.bind(String, Bool, git(untracked, ["rev-parse", "HEAD"]), v => chk("carried uncommitted-only project keeps HEAD base", v, head))
++    s2 : P.Ran <- sh(repo, "printf 'dirty\\n' > existing/board.kicad_pro")
++    +carried : String <- G.Git.thread_wt(repo ++ "/existing", True{}, "backplane/prefix-carry")
++    e1 : Bool <- IO.bind(String, Bool, cat(carried ++ "/board.kicad_pro"), v => chk("carried project keeps uncommitted edits", v, "dirty"))
++    e2 : Bool <- IO.bind(String, Bool, git(carried, ["rev-parse", "HEAD"]), v => chk("carried project keeps HEAD base", v, head))
++    s3 : P.Ran <- sh(repo, "git remote remove origin")
++    +local : String <- G.Git.thread_wt(repo ++ "/feature only", False{}, "backplane/prefix-local")
++    f1 : Bool <- IO.bind(String, Bool, cat(local ++ "/board.kicad_pro"), v => chk("project without origin stays usable", v, "feature"))
++    f2 : Bool <- IO.bind(String, Bool, git(local, ["rev-parse", "HEAD"]), v => chk("project without origin keeps HEAD base", v, head))
++    return all([a0, a1, a2, a3, a4, a5, b1, b2, b3, b4, c1, c2, c3, d1, d2, d3, d4, d5, e1, e2, f1, f2])
++
+ def act_checks(+root: String) -> IO(Bool):
+   +repo = root ++ "/repo"
+   do IO<Bool>:
+@@ -291,5 +338,6 @@ def main() -> IO(Unit):
+     c : Bool <- worktree_checks(root)
+     d : Bool <- act_checks(root)
+     e : Bool <- thread_wt_checks(root)
++    f : Bool <- thread_prefix_checks(root)
+     x : P.Ran <- P.Proc.run("rm", ["-rf", root], "")
+-    finish(all([a, b, c, d, e]))
++    finish(all([a, b, c, d, e, f]))
+diff --git a/test/native/log_read.bend b/test/native/log_read.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef5a14cb60c6ac883bf2abc84fc120fc6df0b9ae
+--- /dev/null
++++ b/test/native/log_read.bend
+@@ -0,0 +1,39 @@
++import Base
++import ../../src/server/argv.bend as A
++import ../../src/server/logread.bend as L
++
++# A small native entry for the strict history reader. Each failing case
++# runs in its own process, so its fatal status and diagnostic can be checked.
++#   build/log_read PATH
++#   build/log_read --count PATH
++#   build/log_read --short-read PATH
++
++def Probe.words(bs: List<&2, U32>, acc: List<&2, String>) -> String:
++  match bs:
++    case Nil{}:
++      String.join(List.reverse(&2, String, acc), ",")
++    case b <> t:
++      Probe.words(t, U32.show(b) <> acc)
++
++def Probe.show(+bs: List<&2, U32>) -> IO(Unit):
++  do IO<Unit>:
++    IO.print("read " ++ Nat.show(L.LogRead.count(bs, 0n)))
++    IO.print(Probe.words(bs, Nil{}))
++
++def Probe.count(bs: List<&2, U32>) -> IO(Unit):
++  IO.print("read " ++ Nat.show(L.LogRead.count(bs, 0n)))
++
++def Probe.args(xs: List<String>) -> IO(Unit):
++  match xs:
++    case "--short-read" <> +path <> Nil{}:
++      IO.bind(List<&2, U32>, Unit,
++        L.LogRead.checked(L.LogRead.complete(4, 3n), path, 4, 3n, [65, 66, 67]), bs => Probe.show(bs))
++    case "--count" <> +path <> Nil{}:
++      IO.bind(List<&2, U32>, Unit, L.LogRead.bytes(path), Probe.count)
++    case +path <> Nil{}:
++      IO.bind(List<&2, U32>, Unit, L.LogRead.bytes(path), bs => Probe.show(bs))
++    case _:
++      IO.die(Unit, 2, "usage: log_read [--count | --short-read] PATH")
++
++def main() -> IO(Unit):
++  IO.bind(List<String>, Unit, A.Argv.args(), Probe.args)
+diff --git a/test/native/worktree_carry_test.bend b/test/native/worktree_carry_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..be2e4f22bd63317b0ddba0d74d153a4f189f8b3b
+--- /dev/null
++++ b/test/native/worktree_carry_test.bend
+@@ -0,0 +1,215 @@
++import Base
++import ../check.bend as C
++import ../../src/server/proc.bend as P
++import ../../src/server/git.bend as G
++import ../../src/server/host.bend as H
++
++# Native Git regression, with only temporary repositories and a local bare
++# remote. The source's index must not change; the destination gets the
++# working files' current contents, whether an edit was staged or not.
++# scripts/build-app.sh test/native/worktree_carry_test.bend build/worktree_carry_test
++# build/worktree_carry_test
++
++def out(r: P.Ran) -> String:
++  match r:
++    case P.Ran{_, text}: String.trim(text)
++
++def code(r: P.Ran) -> String:
++  match r:
++    case P.Ran{c, _}: U32.show(c)
++
++def sh(cwd: String, script: String) -> IO(P.Ran):
++  P.Proc.run("sh", ["-c", script], cwd)
++
++def git(cwd: String, args: List<&2, String>) -> IO(String):
++  IO.bind(P.Ran, String, P.Proc.run("git", args, cwd), r => IO.pure(String, out(r)))
++
++def cat(path: String) -> IO(String):
++  IO.bind(P.Ran, String, P.Proc.run("cat", [path], "/"), r => IO.pure(String, out(r)))
++
++def exists(path: String) -> IO(String):
++  IO.bind(P.Ran, String, P.Proc.run("test", ["-e", path], "/"), r => IO.pure(String, Bool.show(String.eq(code(r), "0"))))
++
++def chk(name: String, +got: String, +want: String) -> IO(Bool):
++  do IO<Bool>:
++    IO.print(C.Check.pick(String.eq(got, want), name, got, want))
++    return String.eq(got, want)
++
++def all(bs: List<&2, Bool>) -> Bool:
++  match bs:
++    case Nil{}: True{}
++    case b <> t: Bool.and(b, all(t))
++
++def finish(ok: Bool) -> IO(Unit):
++  match ok:
++    case True{}: IO.print("all ok")
++    case False{}: IO.die(Unit, 1, "worktree_carry_test failed")
++
++def setup() -> String:
++  String.join([
++    "set -eu",
++    "git init -q -b main source",
++    "cd source",
++    "git config user.email carry@example.invalid",
++    "git config user.name 'Carry test'",
++    "git config commit.gpgsign false",
++    "printf '*.log\\n' > .gitignore",
++    "printf 'board\\n' > board.kicad_pcb",
++    "for f in 'staged edit.txt' 'staged delete.txt' 'rename old.txt' mixed.txt cancelled.txt unstaged.txt recreated.txt recreated-link.txt; do printf 'old\\n' > \"$f\"; done",
++    "printf 'old tracked\\n' > tracked.log",
++    "git add -A",
++    "git add -f tracked.log",
++    "git commit -qm initial",
++    "git init -q --bare -b main ../remote.git",
++    "git remote add origin ../remote.git",
++    "git push -q -u origin main",
++    "git clone -q ../remote.git ../staged-only",
++    "git clone -q ../remote.git ../peer",
++    "git -C ../peer config user.email carry@example.invalid",
++    "git -C ../peer config user.name 'Carry test'",
++    "git -C ../peer config commit.gpgsign false",
++    "printf 'upstream\\n' > ../peer/remote-only.txt",
++    "git -C ../peer add remote-only.txt",
++    "git -C ../peer commit -qm upstream",
++    "git -C ../peer push -q origin main",
++    "git worktree add -q -b carry-target ../carried",
++    "printf 'staged edit\\n' > 'staged edit.txt'",
++    "printf 'staged addition\\n' > 'staged add.kicad_sch'",
++    "git rm -q 'staged delete.txt'",
++    "git rm -q recreated.txt recreated-link.txt",
++    "git mv 'rename old.txt' 'rename new.txt'",
++    "printf 'staged intermediate\\n' > mixed.txt",
++    "printf 'staged intermediate\\n' > cancelled.txt",
++    "printf 'new tracked\\n' > tracked.log",
++    "n=$(printf 'line\\nbreak.kicad_sch'); printf 'newline name\\n' > \"$n\"",
++    "printf 'dash name\\n' > ./-option.kicad_sch",
++    "mkdir board-backups",
++    "printf 'backup\\n' > board-backups/staged.zip",
++    "printf 'lock\\n' > staged.lck",
++    "printf 'autosave\\n' > _autosave-staged.kicad_pcb",
++    "printf 'cache\\n' > fp-info-cache",
++    "git add -A",
++    "printf 'working mixed\\n' > mixed.txt",
++    "printf 'old\\n' > cancelled.txt",
++    "printf 'unstaged edit\\n' > unstaged.txt",
++    "printf 'untracked\\n' > 'untracked file.kicad_sym'",
++    "printf 'recreated\\n' > recreated.txt",
++    "ln -s missing-target recreated-link.txt",
++    "printf 'ignored\\n' > ignored.log",
++    "cd ../staged-only",
++    "printf 'only staged edit\\n' > 'staged edit.txt'",
++    "printf 'only staged add\\n' > only-added.txt",
++    "git rm -q 'staged delete.txt'",
++    "git add -A"
++  ], "\n")
++
++def checks(+root: String) -> IO(Bool):
++  +source = root ++ "/source"
++  +dest = root ++ "/carried"
++  +only = root ++ "/staged-only"
++  do IO<Bool>:
++    s : P.Ran <- sh(root, setup())
++    a0 : Bool <- chk("isolated staged carry repositories initialize", code(s), "0")
++    +index : String <- git(source, ["diff", "--cached", "--binary"])
++    +work : String <- git(source, ["diff", "--binary"])
++    +head : String <- git(source, ["rev-parse", "HEAD"])
++    result : String <- G.Git.carry(source, dest)
++    a1 : Bool <- chk("staged carry reports success", result, "")
++    modified : String <- cat(dest ++ "/staged edit.txt")
++    a2 : Bool <- chk("carries fully staged modified contents", modified, "staged edit")
++    added : String <- cat(dest ++ "/staged add.kicad_sch")
++    a3 : Bool <- chk("carries fully staged added file", added, "staged addition")
++    deleted : String <- exists(dest ++ "/staged delete.txt")
++    a4 : Bool <- chk("carries fully staged deletion", deleted, "False")
++    renamed : String <- cat(dest ++ "/rename new.txt")
++    a5 : Bool <- chk("carries fully staged rename destination", renamed, "old")
++    old_name : String <- exists(dest ++ "/rename old.txt")
++    a6 : Bool <- chk("removes fully staged rename source", old_name, "False")
++    mixed : String <- cat(dest ++ "/mixed.txt")
++    a7 : Bool <- chk("staged plus unstaged edit carries working contents", mixed, "working mixed")
++    cancelled : String <- cat(dest ++ "/cancelled.txt")
++    a8 : Bool <- chk("unstaged reversal of staged edit carries working contents", cancelled, "old")
++    unstage : String <- cat(dest ++ "/unstaged.txt")
++    a9 : Bool <- chk("still carries unstaged modified contents", unstage, "unstaged edit")
++    untracked : String <- cat(dest ++ "/untracked file.kicad_sym")
++    b0 : Bool <- chk("still carries untracked files", untracked, "untracked")
++    tracked : String <- cat(dest ++ "/tracked.log")
++    b1 : Bool <- chk("staged tracked ignored file still carries", tracked, "new tracked")
++    newline : String <- cat(dest ++ "/line\nbreak.kicad_sch")
++    b2 : Bool <- chk("staged newline filename is preserved", newline, "newline name")
++    dash : String <- cat(dest ++ "/-option.kicad_sch")
++    b3 : Bool <- chk("staged leading dash filename is preserved", dash, "dash name")
++    recreated : String <- cat(dest ++ "/recreated.txt")
++    r0 : Bool <- chk("staged deletion with recreated untracked file keeps its contents", recreated, "recreated")
++    recreated_link : P.Ran <- P.Proc.run("readlink", [dest ++ "/recreated-link.txt"], "/")
++    r1 : Bool <- chk("staged deletion with recreated broken symlink keeps its target", out(recreated_link), "missing-target")
++    ignored : String <- exists(dest ++ "/ignored.log")
++    b4 : Bool <- chk("still leaves ignored untracked files behind", ignored, "False")
++    backups : String <- exists(dest ++ "/board-backups")
++    b5 : Bool <- chk("staged KiCad backups stay behind", backups, "False")
++    lock : String <- exists(dest ++ "/staged.lck")
++    b6 : Bool <- chk("staged KiCad locks stay behind", lock, "False")
++    autosave : String <- exists(dest ++ "/_autosave-staged.kicad_pcb")
++    b7 : Bool <- chk("staged KiCad autosaves stay behind", autosave, "False")
++    cache : String <- exists(dest ++ "/fp-info-cache")
++    b8 : Bool <- chk("staged KiCad footprint cache stays behind", cache, "False")
++    index_after : String <- git(source, ["diff", "--cached", "--binary"])
++    b9 : Bool <- chk("carry never changes the source index", index_after, index)
++    work_after : String <- git(source, ["diff", "--binary"])
++    c0 : Bool <- chk("carry never changes the source working files", work_after, work)
++    source_head : String <- git(source, ["rev-parse", "HEAD"])
++    c1 : Bool <- chk("carry never changes source HEAD", source_head, head)
++    dest_index : String <- git(dest, ["diff", "--cached", "--name-only"])
++    c2 : Bool <- chk("carry leaves destination index at its base", dest_index, "")
++    again : String <- G.Git.carry(source, dest)
++    c3 : Bool <- chk("repeated carry succeeds", again, "")
++    repeated : String <- cat(dest ++ "/mixed.txt")
++    c4 : Bool <- chk("repeated carry keeps working contents", repeated, "working mixed")
++    +only_index : String <- git(only, ["diff", "--cached", "--binary"])
++    +only_head : String <- git(only, ["rev-parse", "HEAD"])
++    +base : String <- G.Git.upstream(True{}, only)
++    d0 : Bool <- chk("fully staged work selects HEAD instead of newer upstream", base, "")
++    +wt : String <- G.Git.thread_wt(only, True{}, "backplane/staged")
++    d1 : Bool <- chk("fully staged worktree creation succeeds", Bool.show(G.Git.failed(wt)), "False")
++    wt_head : String <- git(wt, ["rev-parse", "HEAD"])
++    d2 : Bool <- chk("fully staged worktree actually starts at source HEAD", wt_head, only_head)
++    upstream_file : String <- exists(wt ++ "/remote-only.txt")
++    d3 : Bool <- chk("fully staged work never mixes with newer upstream files", upstream_file, "False")
++    wt_edit : String <- cat(wt ++ "/staged edit.txt")
++    d4 : Bool <- chk("thread worktree includes fully staged edit", wt_edit, "only staged edit")
++    wt_add : String <- cat(wt ++ "/only-added.txt")
++    d5 : Bool <- chk("thread worktree includes fully staged addition", wt_add, "only staged add")
++    wt_del : String <- exists(wt ++ "/staged delete.txt")
++    d6 : Bool <- chk("thread worktree includes fully staged deletion", wt_del, "False")
++    only_after : String <- git(only, ["diff", "--cached", "--binary"])
++    d7 : Bool <- chk("thread worktree creation keeps source staging intact", only_after, only_index)
++    clean_base : String <- G.Git.upstream(False{}, only)
++    d8 : Bool <- chk("non-carrying worktree still selects upstream", clean_base, "origin/main")
++    return all([a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, b0, b1, b2, b3, r0, r1, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, d0, d1, d2, d3, d4, d5, d6, d7, d8])
++
++def run(+root: String) -> IO(Unit):
++  do IO<Unit>:
++    directories : P.Ran <- P.Proc.run("mkdir", ["-p", root ++ "/user", root ++ "/empty-templates"], "/tmp")
++    H.Env.put("HOME", root ++ "/user")
++    H.Env.put("BACKPLANE_HOME", root ++ "/backplane")
++    H.Env.put("GIT_CONFIG_NOSYSTEM", "1")
++    H.Env.put("GIT_CONFIG_GLOBAL", "/dev/null")
++    H.Env.put("GIT_CONFIG_COUNT", "0")
++    H.Env.put("GIT_CONFIG_PARAMETERS", "")
++    H.Env.put("GIT_TEMPLATE_DIR", root ++ "/empty-templates")
++    H.Env.put("GIT_TERMINAL_PROMPT", "0")
++    # Link host.c's existing CBOR buffer in this small native program, as
++    # native/mailstore_test.bend does. This opens no socket or hub.
++    frame : List<&2, U32> <- H.Json.cbor_frame("null", "", "")
++    linked : Bool <- chk("host effect linkage frame", Nat.show(List.length(&2, U32, frame)), "3")
++    ok : Bool <- checks(root)
++    removed : P.Ran <- P.Proc.run("rm", ["-rf", root], "/tmp")
++    finish(Bool.and(linked, ok))
++
++def created(r: P.Ran) -> IO(Unit):
++  match r:
++    case P.Ran{0, root}: run(String.trim(root))
++    case P.Ran{_, error}: IO.die(Unit, 1, "cannot create test directory: " ++ error)
++
++def main() -> IO(Unit):
++  IO.bind(P.Ran, Unit, P.Proc.run("mktemp", ["-d", "/tmp/bp-worktree-carry.XXXXXX"], "/tmp"), created)
+diff --git a/test/native/worktree_lifecycle_test.bend b/test/native/worktree_lifecycle_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..e08ded7e713f02ddb036c818357328644717c71b
+--- /dev/null
++++ b/test/native/worktree_lifecycle_test.bend
+@@ -0,0 +1,67 @@
++import Base
++import ./checkpoint_ignored_test.bend as T
++import ../../src/server/proc.bend as P
++import ../../src/server/git.bend as G
++import ../../src/server/host.bend as H
++
++# The interaction between project subfolders, staged carry, checkpoint
++# tracking and retirement. Exact bytes include NUL, Unicode and no newline.
++# Individual components retain their existing broader regression suites.
++
++def checks(+root: String) -> IO(Bool):
++  +repo = root ++ "/source"
++  +project = repo ++ "/feature/hardware"
++  do IO<Bool>:
++    a : Bool <- T.shell(root, "isolated lifecycle fixture initializes", "mkdir source\ncd source\ngit init -q -b main\ngit config user.email lifecycle@example.invalid\ngit config user.name Lifecycle\ngit config commit.gpgsign false\nprintf '*.log\\n' > .gitignore\ngit add -A\ngit commit -qm base\ngit init -q --bare -b main ../remote.git\ngit remote add origin ../remote.git\ngit push -q -u origin main\ngit switch -qc feature\nmkdir -p feature/hardware\nprintf base > feature/hardware/board.kicad_pcb\nprintf old > feature/hardware/tracked.log\ngit add -A\ngit add -f feature/hardware/tracked.log\ngit commit -qm feature\nprintf 'staged\\000board' > feature/hardware/board.kicad_pcb\nprintf 'staged\\000new' > feature/hardware/new.log\ngit add feature/hardware/board.kicad_pcb\ngit add -f feature/hardware/new.log\nprintf 'working\\000board 日本語' > feature/hardware/board.kicad_pcb\nprintf 'working\\000new 日本語' > feature/hardware/new.log\nprintf 'working\\000tracked' > feature/hardware/tracked.log\nprintf 'untracked\\000part' > feature/hardware/new.kicad_sym\nprintf 'ignored cache' > feature/hardware/cache.log\ncp .git/index ../source.index")
++    +wt : String <- G.Git.thread_wt(project, True{}, "backplane/lifecycle")
++    b : Bool <- T.chk("feature subfolder worktree creates with staged carry", Bool.show(G.Git.failed(wt)), "False")
++    c : Bool <- T.shell(root, "carry preserves all working bytes and source index", "dest=source/.backplane/worktrees/backplane-lifecycle/feature/hardware\nfor f in board.kicad_pcb tracked.log new.log new.kicad_sym; do cmp \"source/feature/hardware/$f\" \"$dest/$f\"; done\ncmp source/.git/index source.index\ntest ! -e \"$dest/cache.log\"\ntest -z \"$(git -C \"$dest\" diff --cached --name-only)\"")
++    +snap : String <- G.Git.checkpoint.capture(wt, "lifecycle", 0n)
++    d : Bool <- T.chk("carried feature checkpoint succeeds", Nat.show(String.length(snap)), "40")
++    e : Bool <- T.shell(root, "checkpoint retains exact staged ignored addition", "git -C source show refs/backplane/checkpoints/bGlmZWN5Y2xl/turn/0:feature/hardware/new.log > captured\ncmp captured source/feature/hardware/new.log")
++    +child : String <- G.Git.thread_wt(wt, True{}, "backplane/lifecycle-child")
++    childok : Bool <- T.chk("carried intent-to-add can be carried again", Bool.show(G.Git.failed(child)), "False")
++    +childsnap : String <- G.Git.checkpoint.capture(child, "lifecycle-child", 0n)
++    childcapture : Bool <- T.chk("second carry checkpoint succeeds", Nat.show(String.length(childsnap)), "40")
++    childbytes : Bool <- T.shell(root, "second carry retains ignored intent-to-add bytes", "git -C source show refs/backplane/checkpoints/bGlmZWN5Y2xlLWNoaWxk/turn/0:feature/hardware/new.log > child-captured\ncmp child-captured source/feature/hardware/new.log\ncmp source/.git/index source.index")
++    childroot : String <- G.Git.root(child)
++    childremoved : String <- G.Git.worktree.remove_force(project, childroot)
++    childgone : Bool <- T.chk("second worktree retires independently", childremoved, "")
++    +top : String <- G.Git.root(wt)
++    rootok : Bool <- T.chk("worktree API resolves repository root", top, repo ++ "/.backplane/worktrees/backplane-lifecycle")
++    removed : String <- G.Git.worktree.remove_force(project, top)
++    f : Bool <- T.chk("retirement removes worktree after checkpoint", removed, "")
++    +revived : String <- G.Git.thread_wt.again(project, "backplane/lifecycle")
++    g : Bool <- T.chk("revival returns the same project subfolder", revived, wt)
++    restored : String <- G.Git.checkpoint.revert(revived, "lifecycle", 0n)
++    h : Bool <- T.chk("revival restores checkpoint", restored, "")
++    i : Bool <- T.shell(root, "retirement and revival preserve exact bytes and source staging", "dest=source/.backplane/worktrees/backplane-lifecycle/feature/hardware\nfor f in board.kicad_pcb tracked.log new.log new.kicad_sym; do cmp \"source/feature/hardware/$f\" \"$dest/$f\"; done\ncmp source/.git/index source.index\ntest ! -e \"$dest/cache.log\"\ntest \"$(git -C source branch --show-current)\" = feature")
++    bad : String <- G.Git.carry(repo, root ++ "/missing")
++    j : Bool <- T.chk("copy failure is a visible error", Bool.show(G.Git.failed(bad)), "True")
++    k : Bool <- T.shell(root, "failed carry preserves source index and bytes", "cmp source/.git/index source.index\ncmp captured source/feature/hardware/new.log")
++    return T.all([a, b, c, d, e, f, g, h, i, j, k, rootok, childok, childcapture, childbytes, childgone])
++
++def run(+root: String) -> IO(Unit):
++  do IO<Unit>:
++    dirs : P.Ran <- P.Proc.run("mkdir", ["-p", root ++ "/user", root ++ "/empty-templates"], "/tmp")
++    H.Env.put("HOME", root ++ "/user")
++    H.Env.put("BACKPLANE_HOME", root ++ "/backplane")
++    H.Env.put("GIT_CONFIG_NOSYSTEM", "1")
++    H.Env.put("GIT_CONFIG_GLOBAL", "/dev/null")
++    H.Env.put("GIT_CONFIG_COUNT", "0")
++    H.Env.put("GIT_CONFIG_PARAMETERS", "")
++    H.Env.put("GIT_TEMPLATE_DIR", root ++ "/empty-templates")
++    H.Env.put("GIT_TERMINAL_PROMPT", "0")
++    frame : List<&2, U32> <- H.Json.cbor_frame("null", "", "")
++    linked : Bool <- T.chk("host effect linkage frame", Nat.show(List.length(&2, U32, frame)), "3")
++    ok : Bool <- checks(root)
++    removed : P.Ran <- P.Proc.run("rm", ["-rf", root], "/tmp")
++    T.finish(Bool.and(linked, ok))
++
++def created(r: P.Ran) -> IO(Unit):
++  match r:
++    case P.Ran{0, root}: run(String.trim(root))
++    case P.Ran{_, error}: IO.die(Unit, 1, "cannot create test directory: " ++ error)
++
++def main() -> IO(Unit):
++  IO.bind(P.Ran, Unit, P.Proc.run("mktemp", ["-d", "/tmp/bp-worktree-lifecycle.XXXXXX"], "/tmp"), created)
+diff --git a/test/nui_recv_test.bend b/test/nui_recv_test.bend
+index 784db4e5f9b1babad74f25e9378c331495446b2e..41b17e5ea0717ce34db44b6ae70d975dd49e8f33 100644
+--- a/test/nui_recv_test.bend
++++ b/test/nui_recv_test.bend
+@@ -49,15 +49,60 @@ def log() -> J.Json:
+ def waiting() -> N.Nui:
+   N.Nui.init(U.Act.ui(U.Ui.rpc.keep(U.Ui.init(0n), "turn.start", [J.KV{"thread", J.Str{"t1"}}, J.KV{"text", J.Str{"hi"}}, J.KV{"msg", J.Str{"c1"}}])), 800, 600)
+ 
++def at(u: U.Ui, n: Nat) -> U.Ui:
++  match u:
++    case U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, _, w, er, note, nf, ob, tr}:
++      U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, n, w, er, note, nf, ob, tr}
++
++def keep(u: U.Ui, text: String, msg: String) -> U.Ui:
++  U.Act.ui(U.Ui.rpc.keep(u, "turn.start", [J.KV{"thread", J.Str{"t1"}}, J.KV{"text", J.Str{text}}, J.KV{"msg", J.Str{msg}}]))
++
++def ordered_waiting() -> N.Nui:
++  N.Nui.init(keep(keep(at(U.Ui.init(0n), 9n), "first", "c9"), "second", "c10"), 800, 600)
++
++def ids(cs: List<&2, N.NCmd>) -> String:
++  match cs:
++    case Nil{}: ""
++    case N.NSend{x} <> t:
++      J.Json.as_raw(J.Json.get(json(x), "id"), "") ++ "," ++ ids(t)
++    case _ <> t: ids(t)
++
++def messages(cs: List<&2, N.NCmd>) -> String:
++  match cs:
++    case Nil{}: ""
++    case N.NSend{x} <> t:
++      J.Json.get_str(J.Json.get_obj(json(x), "p"), "msg", "") ++ "," ++ messages(t)
++    case _ <> t: messages(t)
++
++def wire(cs: List<&2, N.NCmd>) -> String:
++  match cs:
++    case Nil{}: ""
++    case N.NSend{x} <> t: x ++ "\n" ++ wire(t)
++    case _ <> t: wire(t)
++
+ def main() -> IO(Unit):
+   +note = N.Nui.hear(N.Nui.init(U.Ui.init(0n), 800, 600), json("{\"t\":\"notify\",\"thread\":\"t1\",\"title\":\"Board\",\"body\":\"Finished\",\"key\":\"k\"}"))
+   +joined = N.Nui.hear(waiting(), log())
+   +answered = N.Nui.hear(nui(joined), json("{\"t\":\"reply\",\"id\":0,\"ok\":true}"))
+   +again = N.Nui.hear(nui(answered), log())
+   +adopted = N.Nui.adopt.step(waiting(), M.State.empty(), log())
++  +ordered = N.Nui.hear(ordered_waiting(), log())
++  +repeated = N.Nui.hear(nui(ordered), log())
++  +one_answered = N.Nui.hear(nui(repeated), json("{\"t\":\"reply\",\"id\":9,\"ok\":true}"))
++  +remaining = N.Nui.hear(nui(one_answered), log())
++  +ordered_adopted = N.Nui.adopt.step(ordered_waiting(), M.State.empty(), log())
+   do IO<Unit>:
+     C.Check.str("a notify message notifies", notifies(cmds(note)), "t1|Board")
+     C.Check.str("a reconnect's log sends the outbox again", Nat.show(sends(cmds(joined))), "1")
+     C.Check.str("an answered request is not sent again", Nat.show(sends(cmds(again))), "0")
+     C.Check.str("the hub's own window sends the outbox on adopting", Nat.show(sends(cmds(adopted))), "1")
+     C.Check.str("a changes message sends nothing", Nat.show(sends(cmds(N.Nui.hear(waiting(), json("{\"t\":\"changes\",\"items\":[]}"))))), "0")
++    C.Check.str("native reconnect resends 9 before 10", ids(cmds(ordered)), "9,10,")
++    C.Check.str("native repeated reconnect keeps request order", ids(cmds(repeated)), "9,10,")
++    C.Check.str("native repeated reconnect keeps exact request bytes", wire(cmds(repeated)), wire(cmds(ordered)))
++    C.Check.str("native reconnect retains message IDs", messages(cmds(ordered)), "c9,c10,")
++    C.Check.str("native reply itself does not resend", ids(cmds(one_answered)), "")
++    C.Check.str("native reconnect excludes the answered request", ids(cmds(remaining)), "10,")
++    C.Check.str("native adoption resends 9 before 10", ids(cmds(ordered_adopted)), "9,10,")
++    C.Check.str("native adoption preserves the same request bytes", wire(cmds(ordered_adopted)), wire(cmds(ordered)))
++    C.Check.str("native adoption retains message IDs", messages(cmds(ordered_adopted)), "c9,c10,")
+diff --git a/test/outbox_test.bend b/test/outbox_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..47a0cd635fad6a07deab0c147fdf4be3f0dae11d
+--- /dev/null
++++ b/test/outbox_test.bend
+@@ -0,0 +1,215 @@
++import Base
++import ./check.bend as C
++import ../src/core/client.bend as U
++import ../src/core/model.bend as M
++import ../src/core/json.bend as J
++
++# Exercise the public client actions: the same test runs against the old
++# client, without importing the new ordering helper.
++type Batch is Data:
++  Batch{ui: U.Ui, sent: List<&2, String>}
++
++def json(s: String) -> J.Json:
++  Maybe.default(&2, J.Json, J.Json.parse(s), J.Null{})
++
++def at(u: U.Ui, n: Nat) -> U.Ui:
++  match u:
++    case U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, _, w, er, note, nf, ob, tr}:
++      U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, n, w, er, note, nf, ob, tr}
++
++def legacy(u: U.Ui, key: String) -> U.Ui:
++  match u:
++    case U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, er, note, nf, ob, tr}:
++      U.Ui{st, sel, dr, live, op, on, now, ad, pa, v, rid, w, er, note, nf, Map.set(&2, String, ob, key, ""), tr}
++
++def size(u: U.Ui) -> String:
++  match u:
++    case U.Ui{_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, ob, _}:
++      Nat.show(Map.size(&2, String, ob))
++
++def error(u: U.Ui) -> String:
++  match u:
++    case U.Ui{_, _, _, _, _, _, _, _, _, _, _, _, er, _, _, _, _}: er
++
++def texts(cs: List<&2, U.Cmd>) -> List<&2, String>:
++  match cs:
++    case Nil{}: Nil{}
++    case U.Send{x} <> t: x <> texts(t)
++    case _ <> t: texts(t)
++
++def field(xs: List<&2, String>, +key: String) -> List<&2, String>:
++  match xs:
++    case Nil{}: Nil{}
++    case x <> t: J.Json.as_raw(J.Json.get(json(x), key), "") <> field(t, key)
++
++def msgs(xs: List<&2, String>) -> List<&2, String>:
++  match xs:
++    case Nil{}: Nil{}
++    case x <> t: J.Json.get_str(J.Json.get_obj(json(x), "p"), "msg", "") <> msgs(t)
++
++def wire(cs: List<&2, U.Cmd>) -> String:
++  String.join(texts(cs), "\n")
++
++def ids(cs: List<&2, U.Cmd>) -> String:
++  String.join(field(texts(cs), "id"), ",")
++
++def batch_ui(b: Batch) -> U.Ui:
++  match b:
++    case Batch{u, _}: u
++
++def original(b: Batch) -> String:
++  match b:
++    case Batch{_, sent}: String.join(sent, "\n")
++
++def capture(a: U.Act, sent: List<&2, String>) -> Batch:
++  match a:
++    case U.Act{u, cs}: Batch{u, List.append(&2, String, sent, texts(cs))}
++
++def add(b: Batch, thread: String, text: String, msg: String) -> Batch:
++  match b:
++    case Batch{u, sent}:
++      capture(U.Ui.rpc.keep(u, "turn.start", [J.KV{"thread", J.Str{thread}}, J.KV{"text", J.Str{text}}, J.KV{"msg", J.Str{msg}}]), sent)
++
++def start(n: Nat) -> Batch:
++  Batch{at(U.Ui.set_cid(U.Ui.init(123n), "offline-test"), n), Nil{}}
++
++def four(n: Nat) -> Batch:
++  add(add(add(add(start(n), "t1", "first", "m-first"), "t1", "second", "m-second"), "t1", "third", "m-third"), "t1", "fourth", "m-fourth")
++
++def skip(b: Batch) -> Batch:
++  match b:
++    case Batch{u, sent}: Batch{U.Act.ui(U.Ui.rpc(u, "status", Nil{})), sent}
++
++def gapped() -> Batch:
++  add(add(skip(add(start(8n), "t1", "first", "m-first")), "t1", "second", "m-second"), "t1", "third", "m-third")
++
++def jump(b: Batch, n: Nat) -> Batch:
++  match b:
++    case Batch{u, sent}: Batch{at(u, n), sent}
++
++# Nat holds 48 bits, but each source literal must fit in 32 bits.
++def near_limit() -> Nat:
++  Nat.add(Nat.mul(4294967295n, 65536n), 65533n)
++
++def sparse() -> Batch:
++  add(add(jump(add(skip(add(start(4294967294n), "t1", "first", "m-first")), "t1", "second", "m-second"), near_limit()), "t1", "third", "m-third"), "t1", "fourth", "m-fourth")
++
++def reply(+id: String, ok: Bool) -> J.Json:
++  J.Json.obj([J.KV{"t", J.Str{"reply"}}, J.KV{"id", J.Num{id}}, J.KV{"ok", J.Flag{ok}}, J.KV{"error", J.Str{"request failed"}}])
++
++def ack(u: U.Ui, id: String) -> U.Ui:
++  U.Ui.recv(u, reply(id, True{}))
++
++def log() -> J.Json:
++  json("{\"t\":\"log\",\"since\":0,\"origin\":\"test-hub\",\"info\":{},\"items\":[]}")
++
++def stored(u: U.Ui) -> U.Ui:
++  U.Ui.fold([M.ThreadCreated{"t1", "", "First", M.Local{}, "", "", "claude", "", 1n},
++    M.ThreadCreated{"t2", "", "Other", M.Local{}, "", "", "claude", "", 1n},
++    M.MessagePosted{"t1", "m-second", M.User{}, "second", 2n}], u)
++
++def pending(u: U.Ui, thread: String) -> String:
++  String.join(U.Ui.pending(u, thread), "|")
++
++# Closed scenarios keep large client values out of C IO continuations.
++def Cases.ten() -> Batch:
++  four(8n)
++
++def Cases.hundred() -> Batch:
++  four(98n)
++
++def Cases.gap() -> Batch:
++  gapped()
++
++def Cases.large() -> Batch:
++  sparse()
++
++def Cases.u() -> U.Ui:
++  batch_ui(Cases.ten())
++
++def Cases.middle() -> U.Ui:
++  ack(Cases.u(), "10")
++
++def Cases.removed() -> U.Ui:
++  ack(Cases.middle(), "8")
++
++def Cases.duplicate() -> U.Ui:
++  ack(Cases.removed(), "10")
++
++def Cases.unknown() -> U.Ui:
++  ack(Cases.duplicate(), "500")
++
++def Cases.finished() -> U.Ui:
++  ack(ack(Cases.unknown(), "11"), "9")
++
++def Cases.ordinary() -> U.Ui:
++  ack(batch_ui(Cases.gap()), "9")
++
++def Cases.failed() -> U.Ui:
++  U.Ui.recv(Cases.u(), reply("9", False{}))
++
++def Cases.old() -> U.Ui:
++  legacy(legacy(Cases.u(), "7"), "1000")
++
++def Cases.other() -> U.Ui:
++  batch_ui(add(Cases.ten(), "t2", "elsewhere", "m-other"))
++
++def Cases.joined() -> U.Act:
++  U.Ui.recv_act(Cases.u(), log())
++
++def Cases.again() -> U.Act:
++  U.Ui.recv_act(U.Act.ui(Cases.joined()), log())
++
++def Cases.answered() -> U.Act:
++  U.Ui.recv_act(U.Act.ui(Cases.again()), reply("9", True{}))
++
++def Cases.rejoined() -> U.Act:
++  U.Ui.recv_act(U.Act.ui(Cases.answered()), log())
++
++def Cases.escaped() -> Batch:
++  add(add(start(9n), "t1", "first\n\"quoted\" π", "original-one"), "t1", "second\\end", "original-two")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    C.Check.str("empty outbox has no commands", ids(U.Ui.outbox(U.Ui.init(0n))), "")
++    C.Check.str("empty pending has no texts", pending(U.Ui.init(0n), "t1"), "")
++    C.Check.str("decimal transition 8 through 11 resends oldest first", ids(U.Ui.outbox(Cases.u())), "8,9,10,11")
++    C.Check.str("decimal transition 98 through 101 resends oldest first", ids(U.Ui.outbox(batch_ui(Cases.hundred()))), "98,99,100,101")
++    C.Check.str("decimal transition pending is oldest first", pending(Cases.u(), "t1"), "first|second|third|fourth")
++    C.Check.str("three digit transition pending is oldest first", pending(batch_ui(Cases.hundred()), "t1"), "first|second|third|fourth")
++    C.Check.str("resend preserves initially emitted request bytes", wire(U.Ui.outbox(Cases.u())), original(Cases.ten()))
++    C.Check.str("resend preserves message identity", String.join(msgs(texts(U.Ui.outbox(Cases.u()))), ","), "m-first,m-second,m-third,m-fourth")
++    C.Check.str("resend preserves escaped and unicode payloads", wire(U.Ui.outbox(batch_ui(Cases.escaped()))), original(Cases.escaped()))
++    C.Check.str("ordinary RPC gaps do not change resend order", ids(U.Ui.outbox(batch_ui(Cases.gap()))), "8,10,11")
++    C.Check.str("ordinary RPC gaps do not change pending order", pending(batch_ui(Cases.gap()), "t1"), "first|second|third")
++    C.Check.str("sparse U32 and Nat boundary IDs keep numeric order", ids(U.Ui.outbox(batch_ui(Cases.large()))), "4294967294,4294967296,281474976710653,281474976710654")
++    C.Check.str("sparse IDs retain exact original request bytes", wire(U.Ui.outbox(batch_ui(Cases.large()))), original(Cases.large()))
++    C.Check.str("sparse IDs retain pending order", pending(batch_ui(Cases.large()), "t1"), "first|second|third|fourth")
++    C.Check.str("middle reply removes only its request", ids(U.Ui.outbox(Cases.middle())), "8,9,11")
++    C.Check.str("reply deletes its outbox entry", size(Cases.middle()), "3")
++    C.Check.str("oldest reply leaves chronological survivors", ids(U.Ui.outbox(Cases.removed())), "9,11")
++    C.Check.str("duplicate reply cannot recreate an entry", size(Cases.duplicate()), "2")
++    C.Check.str("duplicate reply preserves outstanding bytes", wire(U.Ui.outbox(Cases.duplicate())), wire(U.Ui.outbox(Cases.removed())))
++    C.Check.str("unknown reply cannot grow the outbox", size(Cases.unknown()), "2")
++    C.Check.str("unknown reply preserves outstanding bytes", wire(U.Ui.outbox(Cases.unknown())), wire(U.Ui.outbox(Cases.removed())))
++    C.Check.str("non-kept reply cannot grow the outbox", size(Cases.ordinary()), "3")
++    C.Check.str("non-kept reply preserves kept requests", wire(U.Ui.outbox(Cases.ordinary())), original(Cases.gap()))
++    C.Check.str("all replies leave no retained entries", size(Cases.finished()), "0")
++    C.Check.str("all replies leave no resend commands", ids(U.Ui.outbox(Cases.finished())), "")
++    C.Check.str("all replies leave no pending messages", pending(Cases.finished(), "t1"), "")
++    C.Check.str("failed reply also removes its request", ids(U.Ui.outbox(Cases.failed())), "8,10,11")
++    C.Check.str("failed reply still reports its error", error(Cases.failed()), "request failed")
++    C.Check.str("legacy empty entries never resend", wire(U.Ui.outbox(Cases.old())), original(Cases.ten()))
++    C.Check.str("legacy empty entries never appear pending", pending(Cases.old(), "t1"), "first|second|third|fourth")
++    C.Check.str("only legacy empty entries have no commands", ids(U.Ui.outbox(legacy(legacy(U.Ui.init(0n), "9"), "10"))), "")
++    C.Check.str("pending ignores other threads", pending(Cases.other(), "t1"), "first|second|third|fourth")
++    C.Check.str("pending selects the other thread", pending(Cases.other(), "t2"), "elsewhere")
++    C.Check.str("stored message is omitted without reordering pending", pending(stored(Cases.other()), "t1"), "first|third|fourth")
++    C.Check.str("stored message does not remove unacknowledged resend", ids(U.Ui.outbox(stored(Cases.other()))), "8,9,10,11,12")
++    C.Check.str("shared reconnect resends oldest first", ids(U.Act.cmds(Cases.joined())), "8,9,10,11")
++    C.Check.str("shared reconnect preserves original request bytes", wire(U.Act.cmds(Cases.joined())), original(Cases.ten()))
++    C.Check.str("repeated reconnect preserves original request bytes", wire(U.Act.cmds(Cases.again())), original(Cases.ten()))
++    C.Check.str("shared reply does not resend requests", ids(U.Act.cmds(Cases.answered())), "")
++    C.Check.str("shared reconnect excludes answered requests", ids(U.Act.cmds(Cases.rejoined())), "8,10,11")
++    C.Check.str("changes frame does not resend requests", ids(U.Act.cmds(U.Ui.recv_act(Cases.u(), json("{\"t\":\"changes\",\"items\":[]}")))), "")
++    C.Check.str("info frame does not resend requests", ids(U.Act.cmds(U.Ui.recv_act(Cases.u(), json("{\"t\":\"info\",\"info\":{}}")))), "")
+diff --git a/test/tools/logread_e2e.ts b/test/tools/logread_e2e.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f8af4998120c9a80354988daf57ca2ec017d187b
+--- /dev/null
++++ b/test/tools/logread_e2e.ts
+@@ -0,0 +1,274 @@
++// An event log that cannot be read must never become an empty history.
++// Both native entry names, isolated homes and ports, generated histories,
++// permission repair, and a sparse >4 GiB file (never read into this process).
++//
++//   bun test/tools/logread_e2e.ts [BINARY] [WIREDIR] [READER_FIXTURE]
++// READER_FIXTURE is test/native/log_read.bend built as a native executable.
++import { chmodSync, closeSync, copyFileSync, existsSync, ftruncateSync, mkdirSync, mkdtempSync, openSync, readFileSync, readSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync, writeSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join, resolve } from "node:path";
++
++const [binary = "build/backplane", wire = "build/wire", reader] = process.argv.slice(2);
++for (const file of readdirSync(wire).filter(file => file.endsWith(".js"))) (0, eval)(readFileSync(join(wire, file), "utf8"));
++const W = (globalThis as any).Wire;
++const root = realpathSync(mkdtempSync(join(tmpdir(), "bp-logread-e2e-")));
++const prefix = join(root, "prefix"), fake = join(root, "bin");
++const children = new Set<ReturnType<typeof Bun.spawn>>();
++let failures = 0, checks = 0, serial = 0;
++function check(name: string, ok: boolean, got?: unknown) {
++  checks++;
++  console.log(ok ? `ok ${name}` : `FAIL ${name}: ${JSON.stringify(got)?.slice(0, 600)}`);
++  if (!ok) failures++;
++}
++const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
++async function within<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
++  let timer: ReturnType<typeof setTimeout> | undefined;
++  try {
++    return await Promise.race([promise, new Promise<undefined>(resolve => { timer = setTimeout(() => resolve(undefined), ms); })]);
++  } finally { if (timer !== undefined) clearTimeout(timer); }
++}
++async function stop(proc: ReturnType<typeof Bun.spawn>): Promise<boolean> {
++  if (proc.exitCode === null) proc.kill("SIGTERM");
++  let code = await within(proc.exited, 3000);
++  if (code === undefined) { proc.kill("SIGKILL"); code = await within(proc.exited, 2000); }
++  if (code !== undefined) children.delete(proc);
++  return code !== undefined;
++}
++function freePort(): number {
++  for (let n = 0; n < 16; n++) {
++    const listener = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } });
++    const port = listener.port; listener.stop(true);
++    if (port >= 3799) return port;
++  }
++  throw new Error("no spare test port above 3798");
++}
++async function listening(port: number): Promise<boolean> {
++  try {
++    const socket = await Bun.connect({ hostname: "127.0.0.1", port, socket: { data() {} } });
++    socket.end(); return true;
++  } catch { return false; }
++}
++function environment(home: string) {
++  const user = join(home, "user"); mkdirSync(user, { recursive: true });
++  // Deliberately do not inherit provider credentials or integration overrides.
++  return {
++    HOME: user, SHELL: "/bin/sh", PATH: `${fake}:/usr/bin:/bin:/usr/sbin:/sbin`, TMPDIR: root,
++    DISPLAY: "", WAYLAND_DISPLAY: "", BACKPLANE_HOME: home, BACKPLANE_AGENTS: fake,
++    XDG_CONFIG_HOME: join(home, "config"), XDG_DATA_HOME: join(home, "data"), XDG_CACHE_HOME: join(home, "cache"), XDG_STATE_HOME: join(home, "state"),
++    BACKPLANE_NO_UPDATE: "1", BACKPLANE_KEYRING_LOCKED: "0", BACKPLANE_PEERS: "", BACKPLANE_GOOGLE_BAKE: "0", BACKPLANE_ADOPT: "0",
++    BACKPLANE_LOCK_DIR: join(home, "locks"), BACKPLANE_DEPLOY_LOCKS: join(home, "deploy-locks"),
++    BP_LOGREAD_PROBES: join(home, "provider-probes"), BP_LOGREAD_LAUNCHES: join(home, "provider-launches"),
++    HTTP_PROXY: "http://127.0.0.1:1", HTTPS_PROXY: "http://127.0.0.1:1", ALL_PROXY: "http://127.0.0.1:1", NO_PROXY: "127.0.0.1,localhost",
++  };
++}
++type Hub = {
++  proc: ReturnType<typeof Bun.spawn>; home: string; port: number;
++  output: Promise<[string, string]>; opened: number;
++};
++function start(name: string, home: string): Hub {
++  const port = freePort();
++  const proc = Bun.spawn([join(prefix, name), "--home", home, "--port", String(port), "--host", "127.0.0.1", "--no-tailscale", "--headless", "--foreground"], {
++    cwd: root, env: environment(home), stdin: "ignore", stdout: "pipe", stderr: "pipe",
++  });
++  children.add(proc);
++  return { proc, home, port, output: Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]), opened: Date.now() };
++}
++async function hello(h: Hub): Promise<any | undefined> {
++  try {
++    const response = await fetch(`http://127.0.0.1:${h.port}/hello`, { signal: AbortSignal.timeout(500) });
++    if (response.ok) return JSON.parse(W.decode(new Uint8Array(await response.arrayBuffer())));
++  } catch {}
++}
++async function ready(h: Hub): Promise<any | undefined> {
++  const end = Date.now() + 20000;
++  while (Date.now() < end && h.proc.exitCode === null) {
++    const value = await hello(h);
++    if (value?.backplane) return value;
++    await sleep(50);
++  }
++}
++async function mcp(h: Hub, tool: string, args: object): Promise<any> {
++  const response = await fetch(`http://127.0.0.1:${h.port}/mcp/t1`, {
++    method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, signal: AbortSignal.timeout(10000),
++    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: tool, arguments: args } }),
++  });
++  const result: any = await response.json();
++  if (!response.ok || result.error || result.result?.isError) throw new Error(`MCP ${tool}: ${JSON.stringify(result)}`);
++  return JSON.parse(result.result.content[0].text);
++}
++function homeFor(name: string, label: string): string {
++  const home = join(root, name, `${++serial}-${label}`); mkdirSync(home, { recursive: true }); return home;
++}
++const title = "Replayed café 工作 🛠️";
++const userText = "Keep the original measurements: 12.5 mm — Δx.";
++const answerText = "Saved the original history. 完了 ✓";
++function history(home: string): Buffer {
++  const project = join(home, "project"); mkdirSync(project, { recursive: true });
++  // These are Change.encode's exact on-disk object shapes (codec.bend),
++  // also used by deploy_main_e2e.ts. No user histories or external fixtures.
++  const event = ($: string, fields: object, at: number) => ({ $, ...fields, at });
++  return Buffer.from([
++    event("ProjectCreated", { id: "p1", title: "Original project", root: project }, 1),
++    event("ThreadCreated", { id: "t1", project: "p1", title, env: "local", branch: "", worktree: "", provider: "claude", model: "" }, 2),
++    event("MessagePosted", { thread: "t1", msg: "original-user", role: "user", text: userText }, 3),
++    event("MessagePosted", { thread: "t1", msg: "original-answer", role: "assistant", text: answerText }, 4),
++    event("TurnChanged", { thread: "t1", state: "completed" }, 5),
++    event("SettingSet", { key: "restart.continue", value: "off" }, 6),
++  ].map(event => JSON.stringify(event)).join("\n") + "\n");
++}
++async function replayed(h: Hub, label: string) {
++  const list = await mcp(h, "thread_list", {});
++  check(`${label} replays the original thread metadata`, Array.isArray(list.threads) && list.threads.some((thread: any) => thread.id === "t1" && thread.title === title && thread.project === "p1"), list);
++  const timeline = await mcp(h, "thread_read", { threadId: "t1", limit: 20 });
++  const messages = (timeline.entries ?? []).filter((entry: any) => entry.text === userText || entry.text === answerText);
++  check(`${label} replays both original non-ASCII messages once and in order`, messages.length === 2 && messages[0].text === userText && messages[1].text === answerText, timeline);
++}
++const launches = (home: string) => existsSync(join(home, "provider-launches")) ? readFileSync(join(home, "provider-launches"), "utf8") : "";
++async function healthy(name: string, label: string, content: "missing" | "empty" | "valid" | "torn") {
++  const home = homeFor(name, label), path = join(home, "events.jsonl");
++  const original = history(home);
++  const bytes = content === "torn" ? Buffer.concat([original, Buffer.from('{"$":"ProjectRem')]) : content === "valid" ? original : Buffer.alloc(0);
++  if (content !== "missing") writeFileSync(path, bytes);
++  const h = start(name, home);
++  try {
++    const info = await ready(h);
++    check(`${name} ${label} starts and serves hub metadata`, !!info?.backplane, info ?? await within(h.output, 100));
++    if (!info) return;
++    if (content === "valid" || content === "torn") await replayed(h, `${name} ${label}`);
++    check(`${name} ${label} preserves the existing log prefix`, readFileSync(path).subarray(0, bytes.length).equals(bytes));
++    if (content === "torn") {
++      // A new commit must start after the torn line; the malformed fragment
++      // remains ignored, and the new change survives another real restart.
++      const changed = await fetch(`http://127.0.0.1:${h.port}/mcp/t1`, {
++        method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, signal: AbortSignal.timeout(10000),
++        body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "thread_update", arguments: { threadId: "t1", title: "After torn tail" } } }),
++      });
++      const response: any = await changed.json();
++      check(`${name} torn tail accepts the next whole event`, changed.ok && !response.error && !response.result?.isError, response);
++      const tail = readFileSync(path).subarray(bytes.length).toString("utf8");
++      check(`${name} torn tail separates the fragment before appending`, tail.startsWith("\n") && tail.split("\n").some(line => { try { const event = JSON.parse(line); return event.$ === "ThreadRenamed" && event.id === "t1" && event.title === "After torn tail"; } catch { return false; } }), tail);
++    }
++    check(`${name} ${label} invokes no provider turn`, launches(home) === "", launches(home));
++  } finally { check(`${name} ${label} captured hub stops`, await stop(h.proc)); }
++  if (content === "torn") {
++    const again = start(name, home);
++    try {
++      check(`${name} repaired torn tail starts again`, !!await ready(again));
++      const list = await mcp(again, "thread_list", {});
++      check(`${name} next event after a torn tail replays on restart`, list.threads?.some((thread: any) => thread.id === "t1" && thread.title === "After torn tail") === true, list);
++      const timeline = await mcp(again, "thread_read", { threadId: "t1", limit: 20 });
++      check(`${name} torn-tail restart retains both original messages`, timeline.entries?.filter((entry: any) => entry.text === userText || entry.text === answerText).length === 2, timeline);
++    } finally { check(`${name} torn-tail restarted hub stops`, await stop(again.proc)); }
++  }
++}
++async function refuses(name: string, label: string, home: string, reason: RegExp) {
++  const path = join(home, "events.jsonl"), h = start(name, home);
++  let bound = false;
++  const end = Date.now() + 12000;
++  while (Date.now() < end && h.proc.exitCode === null) {
++    bound ||= await listening(h.port);
++    if (bound) break;
++    await sleep(25);
++  }
++  const exited = h.proc.exitCode !== null, code = h.proc.exitCode, elapsed = Date.now() - h.opened;
++  check(`${name} ${label} exits nonzero before serving`, exited && code !== 0 && !bound, { exited, code, bound, elapsed });
++  check(`${name} ${label} captured process stops`, await stop(h.proc));
++  const [stdout, stderr] = await within(h.output, 2000) ?? ["", "output pipe did not close"];
++  check(`${name} ${label} names the event log and why it cannot be read`, stderr.includes(path) && reason.test(stderr), { stdout, stderr });
++  check(`${name} ${label} opens no listener`, !bound && !await listening(h.port));
++  check(`${name} ${label} invokes no provider turn`, launches(home) === "", launches(home));
++  return elapsed;
++}
++async function failureCases(name: string) {
++  const home = homeFor(name, "write-only"), path = join(home, "events.jsonl"), bytes = history(home);
++  writeFileSync(path, bytes); chmodSync(path, 0o200);
++  try {
++    // CI runs as an ordinary user. An elevated account can read mode 0200
++    // and cannot meaningfully exercise this regression.
++    let denied = false;
++    try { const fd = openSync(path, "r"); closeSync(fd); } catch { denied = true; }
++    check(`${name} permission fixture actually denies reads`, denied, { uid: process.getuid?.(), mode: statSync(path).mode & 0o777 });
++    if (denied) await refuses(name, "write-only log", home, /permission denied|operation not permitted|EACCES/i);
++    check(`${name} failed read preserves the log permissions`, (statSync(path).mode & 0o777) === 0o200);
++  } finally { chmodSync(path, 0o600); }
++  check(`${name} failed read leaves every original log byte unchanged`, readFileSync(path).equals(bytes));
++  const repaired = start(name, home);
++  try {
++    const info = await ready(repaired);
++    check(`${name} repairing read permission lets the hub start`, !!info?.backplane);
++    if (info) await replayed(repaired, `${name} repaired permission`);
++  } finally { check(`${name} permission-repaired captured hub stops`, await stop(repaired.proc)); }
++
++  const sparseHome = homeFor(name, "oversized"), sparsePath = join(sparseHome, "events.jsonl"), head = history(sparseHome);
++  const last = Buffer.from("original sparse log boundary\n"), size = 0x100000000 + head.length;
++  const fd = openSync(sparsePath, "w");
++  try { writeSync(fd, head, 0, head.length, 0); ftruncateSync(fd, size); writeSync(fd, last, 0, last.length, size - last.length); }
++  finally { closeSync(fd); }
++  const elapsed = await refuses(name, "oversized log", sparseHome, /too (?:big|large)|exceeds|limit|4294967295|4 GiB|4 GB/i);
++  check(`${name} oversized log fails promptly without reading 4 GiB`, elapsed < 12000, elapsed);
++  check(`${name} oversized read preserves the exact log size`, statSync(sparsePath).size === size, statSync(sparsePath).size);
++  const readFd = openSync(sparsePath, "r"), actualHead = Buffer.alloc(head.length), actualLast = Buffer.alloc(last.length);
++  try { readSync(readFd, actualHead, 0, actualHead.length, 0); readSync(readFd, actualLast, 0, actualLast.length, size - last.length); }
++  finally { closeSync(readFd); }
++  check(`${name} oversized read preserves both original boundaries`, actualHead.equals(head) && actualLast.equals(last));
++
++  const directoryHome = homeFor(name, "directory"), directory = join(directoryHome, "events.jsonl");
++  mkdirSync(directory); writeFileSync(join(directory, "keep"), "original directory contents\n");
++  await refuses(name, "directory log", directoryHome, /directory|not a regular file|EISDIR/i);
++  check(`${name} refused directory keeps its contents`, statSync(directory).isDirectory() && readFileSync(join(directory, "keep"), "utf8") === "original directory contents\n");
++}
++
++try {
++  mkdirSync(prefix); mkdirSync(fake);
++  for (const name of ["backplane", "backplane-serve"]) { copyFileSync(resolve(binary), join(prefix, name)); chmodSync(join(prefix, name), 0o755); }
++  // Model catalog/version probes are allowed. Every other invocation is
++  // recorded as a turn and immediately fails, with no real provider fallback.
++  const provider = '#!/bin/sh\nprintf "%s\\t%s\\n" "$0" "$*" >> "$BP_LOGREAD_PROBES"\ncase "$*" in\n  "--version"|"models"|"-p --input-format stream-json --output-format stream-json --verbose"|"serve --no-session-log") exit 1;;\nesac\nprintf "%s\\t%s\\n" "$0" "$*" >> "$BP_LOGREAD_LAUNCHES"\nexit 1\n';
++  for (const name of ["claude", "codex", "grok", "muse", "agy"]) { writeFileSync(join(fake, name), provider); chmodSync(join(fake, name), 0o755); }
++  for (const name of ["tailscale", "curl", "wget", "ssh", "gh", "kicad-cli", "freecad", "FreeCAD", "busctl", "secret-tool"]) { writeFileSync(join(fake, name), "#!/bin/sh\nexit 1\n"); chmodSync(join(fake, name), 0o755); }
++  for (const name of ["backplane-browser", "backplane-kipc"]) { writeFileSync(join(prefix, name), "#!/bin/sh\nexit 1\n"); chmodSync(join(prefix, name), 0o755); }
++  if (reader) {
++    // This fixture exists only with the strict reader. Never pass the
++    // 2 GiB allocation-boundary case to an older full hub binary.
++    const fixtureHome = join(root, "reader-home");
++    async function probe(args: string[]) {
++      const proc = Bun.spawn([resolve(reader!), ...args], { env: environment(fixtureHome), stdout: "pipe", stderr: "pipe" });
++      children.add(proc);
++      const output = Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
++      const code = await within(proc.exited, 15000);
++      check("captured reader fixture stops", await stop(proc));
++      const [stdout, stderr] = await within(output, 2000) ?? ["", "output pipe did not close"];
++      return { code, stdout, stderr };
++    }
++    const unicode = join(root, "unicode-read"), unicodeBytes = Buffer.from("café 工作 🛠️\n"); writeFileSync(unicode, unicodeBytes);
++    const decoded = await probe([unicode]);
++    check("native reader preserves the exact non-ASCII bytes", decoded.code === 0 && decoded.stdout.trim() === `read ${unicodeBytes.length}\n${[...unicodeBytes].join(",")}` && readFileSync(unicode).equals(unicodeBytes), decoded);
++    const large = join(root, "large-read"), bytes = Buffer.alloc(8 * 1024 * 1024, 0x61); writeFileSync(large, bytes);
++    const counted = await probe(["--count", large]);
++    check("native reader counts an 8 MiB file without overflowing the stack", counted.code === 0 && counted.stdout.trim() === `read ${bytes.length}`, counted);
++    const short = await probe(["--short-read", large]);
++    check("native reader rejects a short read with the path and byte counts", short.code === 1 && short.stderr.includes(large) && /incomplete/.test(short.stderr) && /expected 4 bytes, got 3/.test(short.stderr), short);
++    check("large and incomplete native reads preserve every source byte", readFileSync(large).equals(bytes));
++    const capped = join(root, "two-gib-read"), capSize = 0x80000000, marker = Buffer.from("original allocation boundary\n");
++    const fd = openSync(capped, "w");
++    try { writeSync(fd, marker, 0, marker.length, 0); ftruncateSync(fd, capSize); writeSync(fd, marker, 0, marker.length, capSize - marker.length); }
++    finally { closeSync(fd); }
++    const limit = await probe(["--count", capped]);
++    check("native reader refuses the 2 GiB allocation boundary before reading", limit.code === 1 && limit.stderr.includes(capped) && /limit.*2147483647/.test(limit.stderr), limit);
++    const readFd = openSync(capped, "r"), head = Buffer.alloc(marker.length), tail = Buffer.alloc(marker.length);
++    try { readSync(readFd, head, 0, head.length, 0); readSync(readFd, tail, 0, tail.length, capSize - tail.length); }
++    finally { closeSync(readFd); }
++    check("rejected 2 GiB read preserves the size and both boundaries", statSync(capped).size === capSize && head.equals(marker) && tail.equals(marker));
++  }
++  for (const name of ["backplane", "backplane-serve"]) {
++    for (const [label, content] of [["missing log", "missing"], ["empty log", "empty"], ["valid history", "valid"], ["torn tail", "torn"]] as const) {
++      try { await healthy(name, label, content); } catch (error) { check(`${name} ${label} run`, false, String(error)); }
++    }
++    try { await failureCases(name); } catch (error) { check(`${name} failure scenarios`, false, String(error)); }
++  }
++} finally {
++  for (const proc of children) check("captured child stops during final cleanup", await stop(proc));
++  if (children.size === 0) rmSync(root, { recursive: true, force: true });
++}
++console.log(`${checks} checks, ${failures} failures`);
++process.exit(failures ? 1 : 0);
+diff --git a/test/tools/outbox_e2e.ts b/test/tools/outbox_e2e.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..5467f5b75be4c1335caac3de696848e5c04b3ec7
+--- /dev/null
++++ b/test/tools/outbox_e2e.ts
+@@ -0,0 +1,228 @@
++// Shared-client reconnect ordering, followed through a real native hub.
++// All histories, providers, homes and command bytes are generated here.
++//
++//   bend test/fixtures/outbox/index.html -o build/outbox-client
++//   bun test/tools/outbox_e2e.ts [BINARY] [CLIENTDIR] [BRIDGE]
++//   bun test/tools/outbox_e2e.ts --client-only [CLIENTDIR] [BRIDGE]
++//
++// BRIDGE optionally exercises the actual phone save/load/reconnect path.
++import { appendFileSync, chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { dirname, join, resolve } from "node:path";
++import { createInterface } from "node:readline";
++
++// A deterministic Claude stream-json stand-in. It performs no work and
++// finishes every command, including a follow-up sent while it is running.
++if (process.argv[2] === "--agent") {
++  if (process.argv.includes("--version")) { console.log("2.1.286"); process.exit(0); }
++  const session = `outbox-${process.pid}`;
++  const emit = (o: object) => console.log(JSON.stringify(o));
++  const reader = createInterface({ input: process.stdin });
++  for await (const line of reader) {
++    let o: any;
++    try { o = JSON.parse(line); } catch { continue; }
++    if (o.type === "control_request") {
++      if (o.request?.subtype === "initialize") emit({ type: "control_response", request_id: o.request_id, response: { subtype: "success", response: { models: [] } } });
++      continue;
++    }
++    if (o.type !== "user") continue;
++    appendFileSync(process.env.OUTBOX_AGENT_LOG!, JSON.stringify({ pid: process.pid, uuid: o.uuid }) + "\n");
++    emit({ type: "system", subtype: "init", session_id: session, claude_code_version: "2.1.286", capabilities: ["msg_lifecycle_v1"] });
++    emit({ type: "command_lifecycle", command_uuid: o.uuid, state: "queued", session_id: session, uuid: crypto.randomUUID() });
++    emit({ type: "command_lifecycle", command_uuid: o.uuid, state: "started", session_id: session, uuid: crypto.randomUUID() });
++    emit({ type: "result", subtype: "success", is_error: false, result: "done", session_id: session, uuid: crypto.randomUUID() });
++    emit({ type: "command_lifecycle", command_uuid: o.uuid, state: "completed", session_id: session, uuid: crypto.randomUUID() });
++  }
++  process.exit(0);
++}
++
++const args = process.argv.slice(2);
++const clientOnly = args[0] === "--client-only";
++if (clientOnly) args.shift();
++const binary = resolve(clientOnly ? "build/backplane" : (args.shift() ?? "build/backplane"));
++const client = resolve(args.shift() ?? "build/outbox-client");
++const bridge = args.shift();
++// Keep compiler-generated declarations local; only the fixture exports
++// belong on globalThis (a generated name can coincide with a JS global).
++for (const file of readdirSync(client).filter(f => f.endsWith(".js")).sort()) new Function(readFileSync(join(client, file), "utf8"))();
++const W = (globalThis as any).Wire;
++const F = (globalThis as any).OutboxFixture;
++if (!W || !F) throw new Error("build test/fixtures/outbox/index.html first");
++
++let failed = 0;
++let checks = 0;
++function check(label: string, ok: boolean, detail?: unknown) {
++  checks++;
++  console.log(`${ok ? "ok" : "FAIL"} ${label}${ok ? "" : `: ${JSON.stringify(detail)?.slice(0, 500)}`}`);
++  if (!ok) failed++;
++}
++const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
++const turnTexts = (xs: string[]) => xs.filter(text => JSON.parse(text).m === "turn.start");
++const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
++async function until<T>(ms: number, probe: () => T | Promise<T>): Promise<T | undefined> {
++  const end = Date.now() + ms;
++  do {
++    const value = await probe();
++    if (value) return value;
++    await sleep(25);
++  } while (Date.now() < end);
++  return undefined;
++}
++
++const scenarios = [9, 99].map(start => {
++  const thread = `t${start}`;
++  const data = F.scenario(start, thread);
++  const original = turnTexts(data.original);
++  const resend = turnTexts(data.resend);
++  check(`shared ${start}: original request IDs cross a digit boundary`, same(original.map((x: string) => JSON.parse(x).id), [start, start + 1]), original);
++  check(`shared ${start}: reconnect preserves exact request bytes and order`, same(resend, original), resend);
++  check(`shared ${start}: repeated reconnect preserves exact request bytes and order`, same(turnTexts(data.again), original), data.again);
++  check(`shared ${start}: pending messages retain send order`, same(data.pending, [`first ${thread}`, `second ${thread}`]), data.pending);
++  check(`shared ${start}: acknowledging first retains only second`, same(turnTexts(data.afterFirstAck), original.slice(1)), data.afterFirstAck);
++  check(`shared ${start}: acknowledging second retains only first`, same(turnTexts(data.afterSecondAck), original.slice(0, 1)), data.afterSecondAck);
++  check(`shared ${start}: out-of-order acknowledgements empty the outbox`, data.afterBoth.length === 0, data.afterBoth);
++  return { start, thread, original, resend };
++});
++
++// The real phone bridge keeps the client's Map, writes it flat, restores
++// it after a fresh start, and routes replayed commands to their hub.
++if (bridge) {
++  (0, eval)(readFileSync(resolve(bridge), "utf8"));
++  const B = (globalThis as any).Backplane;
++  const key = "127.0.0.1:3799";
++  const frame = {
++    t: "log", since: 0, origin: "outbox-phone-origin", info: {}, items: [
++      { $: "ProjectCreated", id: "p-phone", title: "Example", root: "/tmp/outbox-phone-example", at: 1 },
++      { $: "ThreadCreated", id: "t-phone", project: "p-phone", title: "Offline", env: "local", provider: "claude", at: 2 },
++    ],
++  };
++  const encoded = Buffer.from(W.encode(JSON.stringify(frame))).toString("base64");
++  const sends = (value: string) => (JSON.parse(value).cmds ?? []).filter((c: any) => c.type === "send").map((c: any) => ({ hub: c.hub, text: W.decode(new Uint8Array(Buffer.from(c.data, "base64"))) })).filter((c: any) => JSON.parse(c.text).m === "turn.start");
++  B.start("outbox-phone", "{}");
++  B.hubs([key]);
++  B.recv(key, encoded, false, false);
++  B.act("select", `${key}|t-phone`);
++  const original: { hub: string, text: string }[] = [];
++  for (let i = 0; i < 105; i++) {
++    B.quiet("draft", `offline ${i}`);
++    original.push(...sends(B.act("send", "")));
++  }
++  check("phone: offline sends cross both digit boundaries", original.length === 105 && [9, 10, 99, 100].every(id => original.some(c => JSON.parse(c.text).id === id)), original.map(c => JSON.parse(c.text).id));
++  const kept = B.save();
++  B.start("outbox-phone", "{}");
++  check("phone: kept state loads", !!B.load(kept));
++  const replay = sends(B.recv(key, encoded, false, false));
++  check("phone: save/load reconnect preserves every request byte and hub in send order", same(replay, original), replay.map(c => JSON.parse(c.text).id));
++  check("phone: another reconnect keeps the same send order", same(sends(B.recv(key, encoded, false, false)), original));
++}
++
++if (!clientOnly) {
++  const root = realpathSync(mkdtempSync(join(tmpdir(), "bp-outbox-e2e-")));
++  const quote = (s: string) => "'" + s.replaceAll("'", "'\\''") + "'";
++  async function stop(proc: ReturnType<typeof Bun.spawn>) {
++    // Bun leaves exitCode null for a signal exit; signalCode records it.
++    const stopped = () => proc.exitCode !== null || proc.signalCode !== null;
++    if (stopped()) { await proc.exited; return; }
++    proc.kill("SIGTERM");
++    if (!(await until(4000, stopped))) proc.kill("SIGKILL");
++    if (!(await until(4000, stopped))) throw new Error(`captured hub ${proc.pid} did not exit`);
++    await proc.exited;
++  }
++  function freePort() {
++    for (let i = 0; i < 20; i++) {
++      const server = Bun.listen({ hostname: "127.0.0.1", port: 0, socket: { data() {} } });
++      const port = server.port;
++      server.stop(true);
++      if (port >= 3799) return port;
++    }
++    throw new Error("could not reserve a test port above 3798");
++  }
++  try {
++    for (const entry of ["backplane", "backplane-serve"]) {
++      const dir = join(root, entry);
++      const home = join(dir, "home"), user = join(dir, "user"), fake = join(dir, "fake"), prefix = join(dir, "prefix"), project = join(dir, "project");
++      for (const d of [home, user, fake, prefix, project, join(prefix, "web"), join(user, ".config"), join(user, ".cache"), join(user, ".local", "share")]) mkdirSync(d, { recursive: true });
++      for (const name of ["backplane", "backplane-serve"]) { copyFileSync(binary, join(prefix, name)); chmodSync(join(prefix, name), 0o755); }
++      writeFileSync(join(fake, "claude"), `#!/bin/sh\nexec ${quote(process.execPath)} ${quote(resolve(import.meta.path))} --agent "$@"\n`);
++      chmodSync(join(fake, "claude"), 0o755);
++      for (const name of ["codex", "grok", "muse", "agy", "pi", "gh", "tailscale", "curl", "wget", "ssh", "kicad-cli", "freecad", "busctl"]) {
++        writeFileSync(join(fake, name), "#!/bin/sh\nexit 1\n"); chmodSync(join(fake, name), 0o755);
++      }
++      const event = ($: string, fields: object) => ({ $, ...fields, at: 1 });
++      const seeded = [event("ProjectCreated", { id: "p-outbox", title: "Example", root: project }),
++        ...scenarios.map(s => event("ThreadCreated", { id: s.thread, project: "p-outbox", title: s.thread, env: "local", branch: "", worktree: "", provider: "claude", model: "" })),
++        event("SettingSet", { key: "restart.continue", value: "off" })];
++      const logPath = join(home, "events.jsonl");
++      writeFileSync(logPath, seeded.map(e => JSON.stringify(e)).join("\n") + "\n");
++      const agentLog = join(dir, "agents.jsonl");
++      writeFileSync(agentLog, "");
++      const env = {
++        HOME: user, BACKPLANE_HOME: home, XDG_CONFIG_HOME: join(user, ".config"), XDG_CACHE_HOME: join(user, ".cache"), XDG_DATA_HOME: join(user, ".local", "share"),
++        PATH: `${fake}:${dirname(process.execPath)}:/usr/bin:/bin`, TMPDIR: dir, LANG: "C.UTF-8", DISPLAY: "", WAYLAND_DISPLAY: "",
++        BACKPLANE_AGENTS: fake, BACKPLANE_NO_UPDATE: "1", BACKPLANE_KEYRING_LOCKED: "0", BACKPLANE_PEERS: "", BACKPLANE_GOOGLE_BAKE: "0",
++        BACKPLANE_LOCK_DIR: join(dir, "locks"), BACKPLANE_DEPLOY_LOCKS: join(dir, "deploy-locks"), OUTBOX_AGENT_LOG: agentLog,
++        HTTP_PROXY: "http://127.0.0.1:1", HTTPS_PROXY: "http://127.0.0.1:1", ALL_PROXY: "http://127.0.0.1:1", NO_PROXY: "127.0.0.1,localhost",
++      };
++      const port = freePort();
++      const proc = Bun.spawn([join(prefix, entry), "--home", home, "--port", String(port), "--host", "127.0.0.1", "--no-tailscale", "--headless", "--foreground"], { env, cwd: dir, stdout: "ignore", stderr: "pipe" });
++      const stderr = new Response(proc.stderr).text();
++      const sockets: WebSocket[] = [];
++      const history = () => readFileSync(logPath, "utf8").split("\n").slice(0, -1).filter(Boolean).map(line => JSON.parse(line));
++      const posted = (thread: string) => history().filter(c => c.$ === "MessagePosted" && c.thread === thread && c.role === "user");
++      try {
++        const up = await until(30000, async () => {
++          try { return (await fetch(`http://127.0.0.1:${port}/hello`, { signal: AbortSignal.timeout(500) })).ok; } catch { return false; }
++        });
++        check(`${entry}: isolated hub starts`, !!up, proc.exitCode);
++        if (!up) throw new Error("hub did not become ready");
++        const token = readFileSync(join(home, "token"), "utf8").trim();
++        async function connect() {
++          const frames: any[] = [], replies = new Map<number, any>();
++          let decodeError: string | undefined;
++          const ws = new WebSocket(`ws://127.0.0.1:${port}/ws?token=${encodeURIComponent(token)}&enc=cbor`);
++          sockets.push(ws);
++          ws.binaryType = "arraybuffer";
++          ws.onmessage = e => {
++            try {
++              const frame = JSON.parse(W.decode(new Uint8Array(e.data as ArrayBuffer)));
++              frames.push(frame);
++              if (frame.t === "reply") replies.set(Number(frame.id), frame);
++            } catch (err) { decodeError = String(err); }
++          };
++          const joined = await until(10000, () => frames.some(f => f.t === "log") || decodeError);
++          if (!joined || decodeError) throw new Error(`socket join failed: ${decodeError ?? ws.readyState}`);
++          return { ws, replies };
++        }
++        for (const s of scenarios) {
++          const link = await connect();
++          const send = async (c: Awaited<ReturnType<typeof connect>>) => {
++            for (const text of s.resend) { c.replies.delete(JSON.parse(text).id); c.ws.send(W.encode(text)); }
++            return until(10000, () => s.resend.every(text => c.replies.has(JSON.parse(text).id)));
++          };
++          check(`${entry} ${s.start}: every replayed request is accepted`, !!(await send(link)) && s.resend.every(text => link.replies.get(JSON.parse(text).id)?.ok === true), [...link.replies.values()]);
++          await until(10000, () => posted(s.thread).length >= 2);
++          check(`${entry} ${s.start}: stored user messages retain send order`, same(posted(s.thread).map(c => c.text), [`first ${s.thread}`, `second ${s.thread}`]), posted(s.thread));
++          check(`${entry} ${s.start}: stored user IDs equal original retry IDs`, same(posted(s.thread).map(c => c.msg), s.original.map(text => JSON.parse(text).p.msg)), posted(s.thread));
++          const completed = await until(10000, () => history().some(c => c.$ === "TurnChanged" && c.thread === s.thread && c.state === "completed"));
++          check(`${entry} ${s.start}: fake provider completes a turn`, !!completed, history().filter(c => c.thread === s.thread).map(c => c.$));
++          link.ws.close();
++          const retry = await connect();
++          check(`${entry} ${s.start}: a fresh connection accepts exact retries`, !!(await send(retry)) && s.resend.every(text => retry.replies.get(JSON.parse(text).id)?.ok === true), [...retry.replies.values()]);
++          check(`${entry} ${s.start}: retries append no duplicate user messages`, posted(s.thread).length === 2, posted(s.thread));
++          check(`${entry} ${s.start}: the other thread receives no messages`, posted(scenarios.find(other => other.thread !== s.thread)!.thread).every(c => !String(c.text).includes(s.thread)), history().filter(c => c.$ === "MessagePosted" && c.role === "user"));
++          retry.ws.close();
++        }
++        check(`${entry}: only stand-in providers handled the messages`, readFileSync(agentLog, "utf8").trim().length > 0);
++      } catch (err) {
++        check(`${entry}: integration completes`, false, String(err));
++      } finally {
++        for (const socket of sockets) socket.close();
++        await stop(proc);
++        const output = await stderr;
++        if (failed && output) console.error(output.slice(-3000));
++      }
++    }
++  } finally { rmSync(root, { recursive: true, force: true }); }
++}
++console.log(`${checks} assertions, ${failed} failures`);
++process.exit(failed ? 1 : 0);
