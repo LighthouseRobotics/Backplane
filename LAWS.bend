@@ -1,5 +1,4 @@
 import Base
-import ./src/server/filebytes.bend as FBY
 import ./src/core/pathrecords.bend as PR
 import ./src/core/auth.bend as AUTH
 import ./src/core/http.bend as HTTPAUTH
@@ -89,6 +88,7 @@ import ./src/core/notice.bend as NO
 import ./src/core/codec.bend as C
 import ./src/core/json.bend as J
 import ./src/core/attach.bend as AT
+import ./src/server/filebytes.bend as FBY
 import ./src/gfx/tiles.bend as T
 import ./src/gfx/raster.bend as R
 import ./src/gfx/draw.bend as D
