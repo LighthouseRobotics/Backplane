@@ -243,6 +243,15 @@ jobs:
           bun test/tools/release_exports_e2e.ts build/release-child
         env:
           BUN_JSC_forceRAMSize: "4294967296"
+      - name: Check attachment read failures before the application build
+        run: |
+          mkdir -p build
+          bend test/native/file_bytes.bend -o build/file-bytes
+          bun test/tools/file_bytes.ts build/file-bytes
+          bend test/native/attachment_copy.bend -o build/attachment-copy
+          bun test/tools/attachment_copy.ts build/attachment-copy
+        env:
+          BUN_JSC_forceRAMSize: "4294967296"
       - run: clang --version
       - name: Native reconnect state
         run: |
@@ -261,6 +270,7 @@ jobs:
           bend test/fixtures/outbox/index.html -o build/outbox-client
           bun test/tools/outbox_e2e.ts dist/backplane build/outbox-client
       - run: bun test/tools/release_exports_e2e.ts dist/backplane
+      - run: bun test/tools/attachment_copy.ts dist/backplane --hub
       - uses: actions/upload-artifact@v4
         with:
           name: backplane-${{ matrix.target }}
