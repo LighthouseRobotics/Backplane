@@ -1,7 +1,7 @@
 name: Browser input compatibility
 on:
   push:
-    branches: [main]
+    branches: [main, validation/contributions-20261019]
     paths:
       - 'src/web/**'
       - 'tools/browser/**'
