@@ -55,4 +55,23 @@ with tempfile.TemporaryDirectory(prefix='bp-acceptance-selftest-') as temp:
     hashes=run('python3',str(here/'hash-tree.py'),str(engine))
     assert hashes.returncode==0 and sha((engine/'engine.js').read_bytes()).encode() in hashes.stdout
     assert run('python3',str(here/'hash-tree.py'),str(top/'missing-engine')).returncode!=0
+    # A real-index AM addition is absent from both HEAD and ls-files --others.
+    # Include its current bytes even when ignore rules require forced tracking.
+    task=top/'capture-task';task.mkdir();capture_repo=task/'repo'
+    result=run('git','clone','--shared','-q',str(repo),str(capture_repo));result.check_returncode()
+    added=capture_repo/'ignored-new.bend';(capture_repo/'.git/info/exclude').write_text('ignored-new.bend\n')
+    added.write_text('staged bytes\n')
+    result=run('git','-C',str(capture_repo),'add','-f','--',added.name);result.check_returncode()
+    added.write_text('working bytes\n')
+    index=capture_repo/'.git/index';index_before=index.read_bytes()
+    capture_payload=top/'capture-payload';(capture_payload/'support').mkdir(parents=True)
+    capture_script=capture_payload/'support/capture.py';shutil.copy2(here/'capture.py',capture_script)
+    result=run('python3',str(capture_script),'release','--task-root',str(task),'--base-commit',base)
+    assert result.returncode==0,result.stderr
+    captured=json.loads((capture_payload/'release.files.json').read_text())
+    row=next(x for x in captured if x['path']==added.name)
+    assert row['sha256']==sha(b'working bytes\n'),'AM addition captured stale staged bytes'
+    assert index.read_bytes()==index_before,'capture changed real index'
+    result=run('git','-C',str(capture_repo),'show',':'+added.name)
+    assert result.stdout==b'staged bytes\n','capture changed real staged contents'
 print('PASS: healthy exact-tree receipts; missing/killed proof, failed checks, source drift, missing build and corrupt payload rejected; native artifacts hashed; wrapper preserves status/bytes')

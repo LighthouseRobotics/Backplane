@@ -12,6 +12,14 @@ check, test and Python cache outputs are excluded. Each patch was independently
 applied to a second private index starting at the recorded base commit; its
 resulting tree must equal the captured tree. Real source indexes remain intact.
 
+Capture explicitly includes live paths from the real index as well as HEAD and
+desired untracked paths. A newly staged file modified again in the working tree
+is absent from both HEAD and the untracked list; its current bytes must still be
+included, even when deliberately tracked despite ignore rules. The fake-repo
+selftest covers this case and verifies that real staged bytes remain unchanged.
+The corrected followup matrix runs KiCad only, leaving the original seven
+accepted/ongoing scopes and native build untouched.
+
 The temporary workflow runs only on this named branch in the contributor fork.
 Each isolated Ubuntu job saves the payload outside the checkout, detaches at the
 recorded base, applies one patch with `--index`, and requires the resulting tree

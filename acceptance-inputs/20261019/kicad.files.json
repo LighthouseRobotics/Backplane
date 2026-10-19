@@ -2226,6 +2226,13 @@
     "sha256": "a1a944cf755420864992db79fa0ed20c75494c8a890eb8f77170f96287c71c73"
   },
   {
+    "path": "src/core/kicadcli.bend",
+    "mode": "100644",
+    "git_blob": "4f38bce24a73e5c59fdfd3f2ee465caa4b147281",
+    "bytes": 6529,
+    "sha256": "8b6ccc45e7cf1087bbebbfd51805eafe4553bb584937493e366cf8d0eeac2e8b"
+  },
+  {
     "path": "src/core/kihealth.bend",
     "mode": "100644",
     "git_blob": "e959aa5071b0f14564791208caa4a5670c2da7f7",
