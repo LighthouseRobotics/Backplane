@@ -1,0 +1,44 @@
+name: File path regression control
+on:
+  push:
+    branches: [ci/file-paths-control]
+permissions:
+  contents: read
+concurrency:
+  group: file-paths-control-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  SOURCE_REV: d2623b81daf94fddb3ede87605f401895789a0fe
+jobs:
+  control:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          fetch-depth: 0
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Confirm fixed client and record tests
+        run: |
+          set -o pipefail
+          mkdir -p build
+          bend test/pathrecords_test.bend | tee build/records.log
+          test "$(grep -c '^ok ' build/records.log)" = 9
+          if grep -q '^FAIL' build/records.log; then exit 1; fi
+          bend test/file_paths_client_test.bend | tee build/client-fixed.log
+          test "$(grep -c '^ok ' build/client-fixed.log)" = 10
+          if grep -q '^FAIL' build/client-fixed.log; then exit 1; fi
+      - name: Confirm the original client loses record framing
+        run: |
+          set -o pipefail
+          git show 30884966ef59c383581bcd1b7653f8f739cf009e:src/core/client.bend > src/core/client.bend
+          bend test/file_paths_client_test.bend | tee build/client-original.log
+          test "$(grep -c '^ok ' build/client-original.log)" = 8
+          test "$(grep -c '^FAIL ' build/client-original.log)" = 2
+          grep -q '^FAIL file reply marks the lossless record format' build/client-original.log
+          grep -q '^FAIL a newline filename is one palette payload' build/client-original.log
