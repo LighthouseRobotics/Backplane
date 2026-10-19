@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 env:
-  SOURCE_REV: be3e7bf02187470e4e6cc5c89eabca6966a924df
+  SOURCE_REV: 82aba1f555d38b7249e00499fd2d37977b5a703c
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 
 jobs:
@@ -41,6 +41,10 @@ jobs:
           bend test/files_state_test.bend | tee "$RUNNER_TEMP/files-fixed.log"
           ! grep -q '^FAIL ' "$RUNNER_TEMP/files-fixed.log"
           test "$(grep -c '^ok ' "$RUNNER_TEMP/files-fixed.log")" = 38
+          bend_check test/files_native_test.bend
+          bend test/files_native_test.bend | tee "$RUNNER_TEMP/files-native-fixed.log"
+          ! grep -q '^FAIL ' "$RUNNER_TEMP/files-native-fixed.log"
+          test "$(grep -c '^ok ' "$RUNNER_TEMP/files-native-fixed.log")" = 14
           bend test/files_test.bend | tee "$RUNNER_TEMP/files-existing-fixed.log"
           ! grep -q '^FAIL ' "$RUNNER_TEMP/files-existing-fixed.log"
           test "$(grep -c '^ok ' "$RUNNER_TEMP/files-existing-fixed.log")" = 13
@@ -51,6 +55,7 @@ jobs:
           git fetch --no-tags --depth=1 origin "$BASE_REV"
           git worktree add --detach "$RUNNER_TEMP/files-baseline" "$BASE_REV"
           cp test/files_state_test.bend "$RUNNER_TEMP/files-baseline/test/files_state_test.bend"
+          cp test/files_native_test.bend "$RUNNER_TEMP/files-baseline/test/files_native_test.bend"
           cd "$RUNNER_TEMP/files-baseline"
           test "$(git rev-parse HEAD)" = "$BASE_REV"
           . scripts/bendok.sh
@@ -68,6 +73,14 @@ jobs:
           grep -Fq 'FAIL same path old generation cannot replace new listing:' "$RUNNER_TEMP/files-baseline.log"
           grep -Fq 'FAIL root reconnect sends one new listing request:' "$RUNNER_TEMP/files-baseline.log"
           grep -Fq 'FAIL late failure cannot show an obsolete error:' "$RUNNER_TEMP/files-baseline.log"
+          bend_check test/files_native_test.bend
+          bend test/files_native_test.bend | tee "$RUNNER_TEMP/files-native-baseline.log"
+          test "$(grep -Ec '^(ok|FAIL) ' "$RUNNER_TEMP/files-native-baseline.log")" = 14
+          grep -Fq 'ok native unused Files tab is not requested' "$RUNNER_TEMP/files-native-baseline.log"
+          grep -Fq 'ok native ordinary changes cause no relist loop' "$RUNNER_TEMP/files-native-baseline.log"
+          grep -Fq 'FAIL native adoption refreshes a retained project root:' "$RUNNER_TEMP/files-native-baseline.log"
+          grep -Fq 'FAIL native adoption refreshes a retained child folder:' "$RUNNER_TEMP/files-native-baseline.log"
+          grep -Fq 'FAIL native adopted root accepts an empty reply:' "$RUNNER_TEMP/files-native-baseline.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -201,6 +214,11 @@ jobs:
           build/files-state-test | tee build/files-state-test.log
           ! grep -q '^FAIL ' build/files-state-test.log
           test "$(grep -c '^ok ' build/files-state-test.log)" = 38
+          bend_check test/files_native_test.bend
+          scripts/build-app.sh test/files_native_test.bend build/files-native-test
+          build/files-native-test | tee build/files-native-test.log
+          ! grep -q '^FAIL ' build/files-native-test.log
+          test "$(grep -c '^ok ' build/files-native-test.log)" = 14
       - run: clang --version
       - run: scripts/build.sh
         env:
