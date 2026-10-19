@@ -1,0 +1,5 @@
++ python3 scripts/fetch-cad-fixture.py
++ scripts/build-wire.sh
++ bun test/tools/review_e2e.ts /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane build/wire
++ bun test/tools/hist_e2e.ts /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane build/wire
+pass: /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/final-real-cad/validation/real-cad/result.json

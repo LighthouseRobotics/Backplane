@@ -1,0 +1,186 @@
+{
+  "limits_ms": {
+    "frame_p99": 8,
+    "streaming_input": 16,
+    "open": 50,
+    "agent_line_p99": 2
+  },
+  "experiments": {
+    "glyph-original": {
+      "directory": "evidence/native-app-perf-final-20261019",
+      "summary_result": "incomplete_or_fail",
+      "independent_reference_comparisons": {
+        "input": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "60fd25b36281394dbf77d06e00daa69eeeb8df5566c8bf40c4fd0ca8b70b9a75"
+        },
+        "title": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "4a2c1d75570388dc6b131c100968424f08cd3f72c9c5291c77f1b02e859386ef"
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "normal_frame_p99_ms": 158.156,
+          "typing_frame_p99_ms": 70.122,
+          "displayed_input_p99_ms": 522.1230749999959,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 66.31,
+          "cold_processing_open_max_ms": 186.932,
+          "warm_displayed_open_max_ms": 136.6537160000007,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48"
+        },
+        "candidate": {
+          "normal_frame_p99_ms": 164.75,
+          "typing_frame_p99_ms": 105.419,
+          "displayed_input_p99_ms": 823.4914100000024,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 58.358,
+          "cold_processing_open_max_ms": 185.281,
+          "warm_displayed_open_max_ms": 163.90762999998697,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "470e92153fbf700eff31ec16d92bcf66af1e989c96c53e7c8061d77cd73bc210"
+        }
+      }
+    },
+    "main-only": {
+      "directory": "evidence/native-app-perf-main-only-20261019",
+      "summary_result": "incomplete_or_fail",
+      "independent_reference_comparisons": {
+        "input": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "9767dfef132e7f8f90793a8592bd99612c4bfe787e31b5949b4ca0aa649a1de5"
+        },
+        "title": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "0baef81212d470f50ddca7804b9efdee26b774afa68c3fdc8ec6247676fa9785"
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "normal_frame_p99_ms": 163.815,
+          "typing_frame_p99_ms": 66.972,
+          "displayed_input_p99_ms": 650.3914020000011,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 62.898,
+          "cold_processing_open_max_ms": 213.021,
+          "warm_displayed_open_max_ms": 162.07747899999958,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48"
+        },
+        "candidate": {
+          "normal_frame_p99_ms": 171.035,
+          "typing_frame_p99_ms": 85.52,
+          "displayed_input_p99_ms": 515.9989159999968,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 73.779,
+          "cold_processing_open_max_ms": 207.693,
+          "warm_displayed_open_max_ms": 178.37596000000485,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "f48159d3e70d7bffbbb52afd61bcaea1f08b0a419cf386be2f292c9fb5f3b39c"
+        }
+      }
+    },
+    "integrated-attempt2": {
+      "directory": "evidence/native-app-perf-integrated-retry2-20261019",
+      "summary_result": "incomplete_or_fail",
+      "independent_reference_comparisons": {
+        "input": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "f8463343601c8c893392232951c8d6c0b310a37aa971ba683b12820a0eeb7985"
+        },
+        "title": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "ef509b5b63a7591c43d51fe809eba83289ff2c0484352dbff8e3c01320372e36"
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "normal_frame_p99_ms": 207.818,
+          "typing_frame_p99_ms": 101.702,
+          "displayed_input_p99_ms": 520.7069210000045,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 63.698,
+          "cold_processing_open_max_ms": 259.27,
+          "warm_displayed_open_max_ms": 176.39582600000722,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48"
+        },
+        "candidate": {
+          "normal_frame_p99_ms": 241.419,
+          "typing_frame_p99_ms": 92.145,
+          "displayed_input_p99_ms": 620.6588860000047,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 71.864,
+          "cold_processing_open_max_ms": 340.715,
+          "warm_displayed_open_max_ms": 208.9734940000053,
+          "warm_open_count": 10,
+          "cold_status": "EXECUTION_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+        }
+      }
+    },
+    "integrated-repeat3": {
+      "directory": "evidence/native-app-perf-integrated-repeat3-20261019",
+      "summary_result": "incomplete_or_fail",
+      "independent_reference_comparisons": {
+        "input": {
+          "status": "FAIL",
+          "error": "comparison exited 1"
+        },
+        "title": {
+          "status": "PASS",
+          "exit": 0,
+          "report_sha256": "ef509b5b63a7591c43d51fe809eba83289ff2c0484352dbff8e3c01320372e36"
+        }
+      },
+      "measurements": {
+        "baseline": {
+          "normal_frame_p99_ms": 237.451,
+          "typing_frame_p99_ms": 82.032,
+          "displayed_input_p99_ms": 852.2110329999996,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 55.73,
+          "cold_processing_open_max_ms": 316.069,
+          "warm_displayed_open_max_ms": 173.37550999999803,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48"
+        },
+        "candidate": {
+          "normal_frame_p99_ms": 385.42,
+          "typing_frame_p99_ms": 90.456,
+          "displayed_input_p99_ms": 759.2655689999956,
+          "displayed_input_count": 132,
+          "normal_agent_line_p99_ms": 64.062,
+          "cold_processing_open_max_ms": 202.976,
+          "warm_displayed_open_max_ms": 149.02886099999887,
+          "warm_open_count": 10,
+          "cold_status": "TARGET_FAIL",
+          "warm_status": "TARGET_FAIL",
+          "binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+        }
+      }
+    }
+  },
+  "interpretation": "No overall app latency improvement established. Every budget failure, execution/workload failure, and failed comparison is preserved. Diagnostic empty-placeholder blink equivalence does not change the original strict comparison verdict."
+}

@@ -1,0 +1,15 @@
+ok legacy fixture misses normal room and uberbot prerequisites
+ok upgraded fixture preserves every original history byte
+ok upgraded fixture provides a real mapped uberbot thread
+ok upgraded fixture has two known local bot room participants
+ok upgraded fixture keeps all twelve non-bot history threads
+ok fixture contains only inert persisted event kinds
+ok every fixture thread requests the controlled Claude protocol
+ok fixture keeps restart continuation disabled
+ok production stand-in binding prepares private executable blocks
+ok production stand-in protocol exits with no turn or provider on empty input
+ok missing provider cannot fall through to a later executable
+ok production client codec replays both added BotSet events
+ok production client codec retains room and uberbot identity
+ok production decode negative control rejects unknown bot event
+14 fixture/isolation/production-decode controls passed

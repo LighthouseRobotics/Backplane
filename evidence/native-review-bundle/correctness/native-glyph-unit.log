@@ -1,0 +1,96 @@
+ok summary contains ASCII key
+ok summary contains nonASCII key
+ok summary excludes unused key
+ok delta includes newly resolving key
+ok delta includes removed key
+ok delta includes replacement mask
+ok fast guard accepts unused extension
+ok fast guard rejects changed used mask
+ok semantic table diff ignores tree shape
+ok layout emits keys directly
+ok keyed resolution recovers original ops
+ok keyed tiles preserve original RGlyph bytes
+ok table extension reuses every unchanged tile
+ok table extension preserves original bytes
+ok adding a formerly missing used key redraws
+ok formerly missing used key becomes visible
+ok same ops and ids, replacement masks draw fresh
+ok replacement actually changes pixels
+ok same ops and ids, missing entry draws fresh
+ok missing entries remove old pixels
+ok cold stream requests ASCII and nonASCII
+ok partial stream requests only missing nonASCII
+ok warm stream has no wants
+ok warm nonASCII table preserves bytes
+ok native maximum face id fits packed id
+ok maximum scalar survives packed id
+ok invalid UTF8 does not introduce oversized cp
+bend 2.0.37 is available: run bend update
+ok settings en
+ok settings ja
+ok sidebar en
+ok sidebar ja
+ok thread chrome en
+ok thread chrome ja
+ok composer en
+ok composer ja
+ok menu en
+ok menu ja
+ok approval menu en
+ok approval menu ja
+ok bots en
+ok bots ja
+ok forms en
+ok forms ja
+ok viewer en
+ok viewer ja
+ok viewer content retained
+ok viewer error en
+ok viewer error ja
+ok asked en
+ok asked ja
+ok link reason en
+ok link reason ja
+ok remote refusal en
+ok remote away en
+ok footer update en
+ok footer update ja
+ok footer hub words kept
+ok header en
+ok header en wrapper
+ok header ja
+ok inspector field en
+ok inspector field ja
+ok inspector unknown field kept
+ok inspector pad en
+ok inspector pad ja
+ok inspector kind ja
+ok settings pair width en
+ok files range en
+ok bots routine en
+ok bots routine ja
+ok bots hook en
+ok bots hook ja
+ok bots memory en
+ok picker en default
+ok picker ja default
+ok picker model retained
+ok pane en
+ok pane ja
+ok ungrouped count en
+ok ungrouped count ja
+ok voice en
+ok voice ja
+ok provider en
+ok provider ja
+ok settings draws Japanese
+ok settings draws thread card
+ok settings hit retained
+ok right aligned Japanese chip
+ok IPC chips right aligned
+ok thread title retained
+ok thread draws Japanese composer
+ok thread retains message
+ok thread header translated
+ok thread send hit
+bend 2.0.37 is available: run bend update

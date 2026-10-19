@@ -1,0 +1,9 @@
+{
+  "verdict": "pass",
+  "controls": [
+    "report-set append preserves failed comparator log bytes",
+    "missing comparison JSON remains absent with exit1",
+    "staged verifier sees exact failed outcome"
+  ],
+  "app_or_build_execution": false
+}

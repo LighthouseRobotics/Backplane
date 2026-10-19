@@ -1,0 +1,15 @@
+{
+  "result": "pass",
+  "scope": "Lightweight isolated manifest/archive controls; no apps, builds or Git writes",
+  "controls": [
+    "healthy refresh verifies before producing archive",
+    "append preserves every previous origin and records source hash",
+    "changed original is rejected and archive bytes preserved",
+    "failing verifier cannot replace archive",
+    "overwriting an original destination is rejected",
+    "report-set whitelist excludes temporary homes and tokens",
+    "symlink source rejected without touching archive",
+    "credential-pattern input rejected before archive replacement"
+  ],
+  "count": 8
+}

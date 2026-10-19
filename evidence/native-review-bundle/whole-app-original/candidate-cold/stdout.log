@@ -1,0 +1,96 @@
+
+perf_load: /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-candidate/artifacts/dist/backplane
+  log /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture-bots.jsonl (1548 lines; sha256 ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543), 10 agents, 1 bot rooms, 5 s phases, port 3892, display :92
+  ms; frame = ui.frame n p50/p99/max >8/>16; input = ui.input; key>frame = ui.msg.win + ui.input; open = the slowest thread open, Return to frame; line = hub.agent_line n p50/p99/max; hub% = hub.* span time / wall; cpu% = whole app process
+phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 raster p50/p99 blink p50/p99 input p50/p99 key>frame  open   line  p50/p99/max   mcp99  hub%  cpu%  rssMB
+normal  26.8s   261  40.4/  165/  225  261/ 261  18.7/ 50.8  13.3/  140   1.6/ 85.3  44.9/  193  56.5/  220   109   6555  0.5/ 58.4/  265     -  95.2   146   212
+idle     5.2s     1   7.3/  7.3/  7.3    0/   0   4.8/  4.8   1.8/  1.8   2.9/  3.3   7.6/  7.6   8.3/  8.3     -      0    -/    -/    -     -   0.0   2.1   167
+bg       5.0s    17  20.7/ 25.6/ 25.6   17/  13   8.9/ 15.3   9.9/ 12.9   3.2/  4.0     -/    -     -/    -     -   1307  0.4/  6.9/ 33.5     -  31.4  84.3   171
+fg       5.1s    53  49.7/ 73.6/ 73.6   53/  53  14.5/ 23.7  30.6/ 46.9   3.2/  5.2     -/    -     -/    -     -   1316  0.4/  7.3/ 90.9     -  43.1   228   176
+type    10.9s   132  43.6/  105/  125  132/ 131  16.4/ 36.9  26.0/ 55.9  18.8/ 60.6  41.0/  245  56.7/  267     -   2652  0.4/ 48.7/  344     -  87.2   198   180
+input-display 25.7s   254  52.6/  155/  170  254/ 254  22.2/ 50.3  28.9/ 81.0   2.2/  200  44.8/  112  56.5/  171     -   5458  0.5/ 80.9/  346     -   126   177   191
+open    16.4s   142  18.0/  220/  249  142/ 102  10.1/ 30.8   5.4/  195   1.4/ 10.5  87.2/  249  88.8/  250   185   4783  0.4/ 11.9/  357     -  66.4   177   203
+
+targets: frame p99<=8, no frame>16 from streaming (idle/bg), typing input p99<=16, thread open<=50, agent_line p99<=2
+normal  all agents streaming:PASS Status tab observed:n/a frame p99<=8ms:FAIL input p99<=16ms:FAIL key>frame p99<=16ms:FAIL open<=50ms:FAIL agent_line p99<=2ms:FAIL
+idle    frame p99<=8ms:PASS no frame>16ms:PASS
+bg      all agents streaming:PASS frame p99<=8ms:FAIL no frame>16ms:FAIL agent_line p99<=2ms:FAIL
+fg      all agents streaming:PASS frame p99<=8ms:FAIL agent_line p99<=2ms:FAIL
+type    all agents streaming:PASS frame p99<=8ms:FAIL input p99<=16ms:FAIL key>frame p99<=16ms:FAIL agent_line p99<=2ms:FAIL
+input-display all displayed input events observed:PASS displayed input p99<=16ms:FAIL all agents streaming:PASS frame p99<=8ms:FAIL agent_line p99<=2ms:FAIL
+open    all agents streaming:PASS all ten opens sampled:PASS frame p99<=8ms:FAIL open<=50ms:FAIL agent_line p99<=2ms:FAIL
+warm displayed input: n=132 p50=118ms p99=823ms max=951ms (X-server composer glyph readback; caret colors normalized; includes observer overhead)
+
+normal: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                         14706.9    181    81.25      217
+  hub.agent_line                 13860.3   6555     2.11    265.4
+  ui.frame                       12002.7    261    45.99    225.4
+  ui.msg.frame                   11357.4    641    17.72    236.5
+  hub.step.commit                10764.4   6583     1.64    264.5
+  ui.input                        6318.2    114    55.42    225.9
+  ui.layout                       5469.6    261    20.96     88.5
+  ui.raster                       5421.6    261    20.77    182.3
+  notes: Uberbot selection observed through desk.look; Status tab itself is unverified (strict coverage check remains n/a).
+
+idle: heaviest spans (total ms in phase, n, mean, max)
+  ui.msg.blink                      28.8     10     2.88      3.3
+  ui.blink                          14.6     10     1.46      1.8
+  ui.msg.frame                       8.8      1      8.8      8.8
+  ui.input                           7.6      1      7.6      7.6
+  ui.frame                           7.3      1     7.26      7.3
+  ui.present                         7.3     11     0.66      0.8
+  ui.win.fill                        5.4     11     0.49      0.7
+  ui.layout.mm.miss                  4.8      1     4.77      4.8
+
+bg: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                          1818.2     18   101.01    227.1
+  ui.msg.tick                     1149.7     70    16.42     27.5
+  hub.agent_line                   992.3   1307     0.76     33.5
+  ui.cats                          922.7     62    14.88     23.4
+  ui.msg.hub                       786.5    705     1.12      3.4
+  hub.step.commit                  446.4   1309     0.34     32.5
+  ui.msg.frame                       414    156     2.65     30.8
+  ui.frame                         340.1     17    20.01     25.6
+
+fg: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                          3118.3     53    58.84      114
+  ui.msg.frame                    2809.1    132    21.28     80.5
+  ui.frame                        2553.7     53    48.18     73.6
+  ui.raster                       1567.2     53    29.57     46.9
+  hub.agent_line                  1299.6   1316     0.99     90.9
+  ui.draw                          947.2     53    17.87     31.7
+  hub.step.commit                    760   1324     0.57       89
+  ui.layout.mm.miss                740.4     53    13.97     23.8
+
+type: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                          7439.4    107    69.53    244.4
+  ui.msg.frame                    6151.7    254    24.22    147.9
+  ui.frame                        5975.7    132    45.27    125.5
+  hub.agent_line                  5207.9   2652     1.96    344.2
+  ui.input                        4143.9     79    52.45    245.4
+  hub.step.commit                 3961.3   2658     1.49    342.9
+  ui.raster                       3112.5    132    23.58     61.4
+  ui.layout.mm.miss               2225.2    132    16.86     42.6
+
+input-display: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                           18048    214    84.34    278.1
+  hub.agent_line                 16987.9   5458     3.11    345.9
+  ui.msg.frame                   14415.3    538    26.79    174.6
+  hub.step.commit                14136.2   5485     2.58    344.6
+  ui.frame                         14118    254    55.58    169.7
+  ui.raster                       6993.7    254    27.53    106.8
+  ui.input                        6584.9    132    49.89    154.4
+  ui.layout.mm.miss                 5704    254    22.46     56.4
+
+open: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                          8412.7     62   135.69    287.3
+  ui.msg.frame                    6326.8    605    10.46      259
+  hub.agent_line                  6254.5   4783     1.31      357
+  ui.frame                        5881.3    142    41.42    248.5
+  hub.step.commit                 4044.7   4816     0.84    356.2
+  ui.input                          3610     30   120.33      249
+  ui.raster                       3281.5    142    23.11    203.2
+  ui.msg.hub                      3165.2   2335     1.36      8.1
+
+raw JSON: /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-final-20261019/candidate-cold/raw.json
+kept /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-final-20261019/candidate-cold/tmp/bp-perfload-le8NdW

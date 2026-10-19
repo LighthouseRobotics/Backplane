@@ -1,0 +1,259 @@
+{
+  "schema": 1,
+  "base_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "scopes": {
+    "release": {
+      "source_worktree": "repo",
+      "source_head": "830c421bbdd983bc86d777d27fa9ceba33d774da",
+      "source_branch": "overnight/release-transaction",
+      "source_status": [
+        " M LAWS.bend",
+        " M PROOF.bend",
+        " M docs/design-review.md",
+        " M src/core/checks.bend",
+        " M src/core/release.bend",
+        " M src/server/review.bend",
+        " M test/native/release_child.bend",
+        "?? test/release_transaction_test.bend",
+        "?? test/tools/release_transaction_e2e.ts"
+      ],
+      "source_index_sha256_before": "a2a61e98f16abe2f8755ff847bba64ceeae5692045cbcd4bd1fa86db77add089",
+      "source_index_sha256_after": "a2a61e98f16abe2f8755ff847bba64ceeae5692045cbcd4bd1fa86db77add089",
+      "included_untracked": [
+        "test/release_transaction_test.bend",
+        "test/tools/release_transaction_e2e.ts"
+      ],
+      "excluded_untracked": [],
+      "expected_tree": "4237befeaf8dcee0849e9bf5a0c78df79574fbcf",
+      "patch": "release.patch",
+      "patch_bytes": 75775,
+      "patch_sha256": "a57a0cdc5dbff39f24cd834dfe5c752c7ad91b6a3e7e691398992848b1db1e4a",
+      "files": "release.files.json",
+      "files_sha256": "a2b0761e782e1d48fa15ccee1ea7eb0346434be5636d7368d37027bf56ddd4cc",
+      "file_count": 974,
+      "roundtrip_tree": "4237befeaf8dcee0849e9bf5a0c78df79574fbcf",
+      "roundtrip": "pass"
+    },
+    "lifecycle": {
+      "source_worktree": "lifecycle",
+      "source_head": "78810ff2c6f5c68ea03e70c03ee805354c4ae733",
+      "source_branch": "overnight/thread-lifecycle",
+      "source_status": [
+        " M .github/workflows/ci.yml",
+        " M docs/git.md",
+        " M src/server/git.bend",
+        "?? test/native/worktree_lifecycle_test.bend"
+      ],
+      "source_index_sha256_before": "eb323792307c5be61907fc923a3dd477a9ee62f4a544ec2441612807135bfe83",
+      "source_index_sha256_after": "eb323792307c5be61907fc923a3dd477a9ee62f4a544ec2441612807135bfe83",
+      "included_untracked": [
+        "test/native/worktree_lifecycle_test.bend"
+      ],
+      "excluded_untracked": [],
+      "expected_tree": "5c9a67d0bfe8d0958cfd51ea7fdb7c4700df7226",
+      "patch": "lifecycle.patch",
+      "patch_bytes": 132601,
+      "patch_sha256": "db326bcae6299d679b1fdd63e5a5dddd78ee5ea909228c193696d6c6a28d3f26",
+      "files": "lifecycle.files.json",
+      "files_sha256": "9c55cc86e3d044d248353ed3456240015124355f5284c073af1987e5f9a0af3e",
+      "file_count": 982,
+      "roundtrip_tree": "5c9a67d0bfe8d0958cfd51ea7fdb7c4700df7226",
+      "roundtrip": "pass"
+    },
+    "history": {
+      "source_worktree": "viewers",
+      "source_head": "05779f2626503e9720348bef7313388e0945268b",
+      "source_branch": "overnight/schematic-history",
+      "source_status": [
+        " M src/core/client.bend",
+        " M src/core/hier.bend",
+        " M src/mobile/view.bend",
+        " M src/web/view.bend",
+        "?? docs/schematic-performance.md",
+        "?? test/tools/hier_bench.mjs",
+        "?? test/tools/history_render.bend",
+        "?? test/tools/history_render.mjs"
+      ],
+      "source_index_sha256_before": "82ef6a1f4c4747227f7d2b61653effc942d8840f2ab2dd704aa0ee25593529fa",
+      "source_index_sha256_after": "82ef6a1f4c4747227f7d2b61653effc942d8840f2ab2dd704aa0ee25593529fa",
+      "included_untracked": [
+        "docs/schematic-performance.md",
+        "test/tools/hier_bench.mjs",
+        "test/tools/history_render.bend",
+        "test/tools/history_render.mjs"
+      ],
+      "excluded_untracked": [],
+      "expected_tree": "bdded705ab1e2010d2ba2abf8bcc3f234f64b555",
+      "patch": "history.patch",
+      "patch_bytes": 28433,
+      "patch_sha256": "9805bf31ea1a7913e9ed2fe242dc728e68d7d411969bedf154987fefee0f1e88",
+      "files": "history.files.json",
+      "files_sha256": "f8482a1a792a4e12f5d2b07e55478725cd17e657a6c251f2e723b9a661868eed",
+      "file_count": 974,
+      "roundtrip_tree": "bdded705ab1e2010d2ba2abf8bcc3f234f64b555",
+      "roundtrip": "pass"
+    },
+    "orientation": {
+      "source_worktree": "orientation",
+      "source_head": "b3fcc672ed2a0180663ea985ef0f6a168ac76568",
+      "source_branch": "overnight/solid-orientation",
+      "source_status": [
+        "?? docs/solid-orientation.md",
+        "?? test/tools/solid_browser.mjs",
+        "?? test/tools/solid_roundtrip.bend",
+        "?? test/tools/solid_roundtrip.mjs"
+      ],
+      "source_index_sha256_before": "6cf2ca80557e200229230c4a3ca23e765d6fdf6ac4ec9d751135b94431b1fa37",
+      "source_index_sha256_after": "6cf2ca80557e200229230c4a3ca23e765d6fdf6ac4ec9d751135b94431b1fa37",
+      "included_untracked": [
+        "docs/solid-orientation.md",
+        "test/tools/solid_browser.mjs",
+        "test/tools/solid_roundtrip.bend",
+        "test/tools/solid_roundtrip.mjs"
+      ],
+      "excluded_untracked": [],
+      "expected_tree": "3b5979df91e483fe4e50eaff941ecd2c41ca625f",
+      "patch": "orientation.patch",
+      "patch_bytes": 20249,
+      "patch_sha256": "421ea1db5ef4d4e21b2a386451d9499067ac93b9708f7ed00bddd303358f076e",
+      "files": "orientation.files.json",
+      "files_sha256": "5bb1579a85110c7fc7714aa68714d5212514dfd28fb8e0cc9ed9cf49ede06962",
+      "file_count": 975,
+      "roundtrip_tree": "3b5979df91e483fe4e50eaff941ecd2c41ca625f",
+      "roundtrip": "pass"
+    },
+    "native": {
+      "source_worktree": "native-glyph",
+      "source_head": "ebd9a118b0fe1d41876ff08499d1fb766e3edd92",
+      "source_branch": "overnight/native-glyph",
+      "source_status": [
+        " M docs/perf-bench.md",
+        " M src/app/main.bend",
+        " M test/glyph_table_test.bend",
+        " M test/tools/perf_load.ts",
+        " M test/tools/xpoke.c",
+        "?? scripts/validate-native-glyph.sh",
+        "?? test/tools/__pycache__/glyph_bench_report.cpython-312.pyc",
+        "?? test/tools/glyph_bench_report.py",
+        "?? test/tools/native_display.ts",
+        "?? test/tools/native_display_compare.ts",
+        "?? test/tools/native_display_compare_test.ts",
+        "?? test/tools/native_display_readback_test.ts",
+        "?? test/tools/native_display_test.ts",
+        "?? test/tools/perf_fixture.ts",
+        "?? test/tools/present_observer_fixture.c"
+      ],
+      "source_index_sha256_before": "7bbab37fea52192fe2ccd91461f16042b7b371f6bbf99e62c0fcf493acd3d159",
+      "source_index_sha256_after": "7bbab37fea52192fe2ccd91461f16042b7b371f6bbf99e62c0fcf493acd3d159",
+      "included_untracked": [
+        "scripts/validate-native-glyph.sh",
+        "test/tools/glyph_bench_report.py",
+        "test/tools/native_display.ts",
+        "test/tools/native_display_compare.ts",
+        "test/tools/native_display_compare_test.ts",
+        "test/tools/native_display_readback_test.ts",
+        "test/tools/native_display_test.ts",
+        "test/tools/perf_fixture.ts",
+        "test/tools/present_observer_fixture.c"
+      ],
+      "excluded_untracked": [
+        "test/tools/__pycache__/glyph_bench_report.cpython-312.pyc"
+      ],
+      "expected_tree": "19b386b54d5cca154bcb6976bf20cd1c39178912",
+      "patch": "native.patch",
+      "patch_bytes": 343608,
+      "patch_sha256": "9140dbbd4de99bd629522160fdc6239cead4188c39853bdb91796838082b2be5",
+      "files": "native.files.json",
+      "files_sha256": "9240cc884ee6308718cbe0e28c483166b6cffba3ea68d9529471b135a43f924d",
+      "file_count": 981,
+      "roundtrip_tree": "19b386b54d5cca154bcb6976bf20cd1c39178912",
+      "roundtrip": "pass"
+    },
+    "ios": {
+      "source_worktree": "ios-lifecycle",
+      "source_head": "b841368e862fd9228c8450feba7c2c1a0dd7fa7c",
+      "source_branch": "overnight/ios-lifecycle",
+      "source_status": [
+        " M src/mobile/app.bend",
+        " M src/mobile/bridge.js",
+        " M src/mobile/recent.js",
+        " M src/mobile/session.bend",
+        " M test/ios_session_test.bend",
+        " M test/tools/ios_recent_bridge_test.ts",
+        " M test/tools/ios_recent_fixture.bend",
+        " M test/tools/ios_recent_test.ts"
+      ],
+      "source_index_sha256_before": "02a92fc4c23ec3018c576a3132446d119dfc50c8b91bf343f80b324453e2e5e0",
+      "source_index_sha256_after": "02a92fc4c23ec3018c576a3132446d119dfc50c8b91bf343f80b324453e2e5e0",
+      "included_untracked": [],
+      "excluded_untracked": [],
+      "expected_tree": "64ebe7ebb1b569db9049c8afd46505d4e5358982",
+      "patch": "ios.patch",
+      "patch_bytes": 906704,
+      "patch_sha256": "655d3fde15c6388cb7a05face94d50c332e3c1a4656b906320f46a8a102e61eb",
+      "files": "ios.files.json",
+      "files_sha256": "e2c1a363465958cee2cfa57e5ef374a02791595c7089c2db987998e12b5a691b",
+      "file_count": 1010,
+      "roundtrip_tree": "64ebe7ebb1b569db9049c8afd46505d4e5358982",
+      "roundtrip": "pass"
+    },
+    "browser": {
+      "source_worktree": "browser-takeover",
+      "source_head": "4890567c4af6d85f40c739d5aad677901b51cf3c",
+      "source_branch": "overnight/browser-takeover",
+      "source_status": [
+        " M src/web/browser-input.js",
+        " M tools/browser/test/input.ts"
+      ],
+      "source_index_sha256_before": "5bce42ea1fd14c012137eebcc0109246518f96c5fbcdc880f9df107f0d159063",
+      "source_index_sha256_after": "5bce42ea1fd14c012137eebcc0109246518f96c5fbcdc880f9df107f0d159063",
+      "included_untracked": [],
+      "excluded_untracked": [],
+      "expected_tree": "e8294f1ee74805f57a28e9fb881481f899087e05",
+      "patch": "browser.patch",
+      "patch_bytes": 68887,
+      "patch_sha256": "3d9bc09e1b7131c315a66b3ae86d5ddb4b51f7f8aec61ff551ad6cbadf7a5851",
+      "files": "browser.files.json",
+      "files_sha256": "c013f91c5a58e87c945e1cffc6380fb0a93c194ffeaf523c95ac028567bd374e",
+      "file_count": 973,
+      "roundtrip_tree": "e8294f1ee74805f57a28e9fb881481f899087e05",
+      "roundtrip": "pass"
+    },
+    "kicad": {
+      "source_worktree": "kicad",
+      "source_head": "7a82e8a7a24f3e8ea18b37ffe285ec59770983b7",
+      "source_branch": "overnight/kicad-platform",
+      "source_status": [
+        "MM LAWS.bend",
+        "MM PROOF.bend",
+        " M docs/kicad-ipc.md",
+        "AM src/core/kicadcli.bend",
+        " M src/server/kicad.bend",
+        " M src/server/kserve.bend",
+        " M tools/kipc/src/main.ts",
+        "?? test/kicadcli_test.bend",
+        "?? test/kipc_protocol_test.bend",
+        "?? test/native/kicad_platform.bend",
+        "?? test/tools/kicad_platform_e2e.ts"
+      ],
+      "source_index_sha256_before": "c0b2ffa1775aed446e2ddfa838a2fd2e144c13a0d249e2cbac7c160f9adc7f25",
+      "source_index_sha256_after": "c0b2ffa1775aed446e2ddfa838a2fd2e144c13a0d249e2cbac7c160f9adc7f25",
+      "included_untracked": [
+        "test/kicadcli_test.bend",
+        "test/kipc_protocol_test.bend",
+        "test/native/kicad_platform.bend",
+        "test/tools/kicad_platform_e2e.ts"
+      ],
+      "excluded_untracked": [],
+      "expected_tree": "d8c0aec910a3f6bfd3e9ad9cf06fb695e74e2421",
+      "patch": "kicad.patch",
+      "patch_bytes": 68539,
+      "patch_sha256": "439fa6903053166e1d79eb81cc52824c4631fd40e881c2397a31e2e858a67b24",
+      "files": "kicad.files.json",
+      "files_sha256": "8a57c62f3dc02ce98335e7b29db0f8e8ac522bb8f8b962ad4b273e59ff98a678",
+      "file_count": 976,
+      "roundtrip_tree": "d8c0aec910a3f6bfd3e9ad9cf06fb695e74e2421",
+      "roundtrip": "pass"
+    }
+  }
+}

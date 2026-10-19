@@ -1,0 +1,9 @@
+{
+  "checkout_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "input_commit": "96f32a75b1290336686d491bf6b82e1c4cafa140",
+  "scope": "native",
+  "applied_tree": "19b386b54d5cca154bcb6976bf20cd1c39178912",
+  "patch_sha256": "9140dbbd4de99bd629522160fdc6239cead4188c39853bdb91796838082b2be5",
+  "verified_files": 981,
+  "index_is_intentionally_staged": true
+}

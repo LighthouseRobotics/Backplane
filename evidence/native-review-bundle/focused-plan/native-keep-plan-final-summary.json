@@ -1,0 +1,22 @@
+{
+  "scope": "Same-binary real-font whole tile-plan microbenchmark; not whole app acceptance",
+  "samples": 100,
+  "quantile": "empirical nearest rank",
+  "old_reference_us": {
+    "p50": 1064,
+    "p99": 1675,
+    "min": 912,
+    "max": 1700
+  },
+  "fused_us": {
+    "p50": 820,
+    "p99": 1304,
+    "min": 720,
+    "max": 1326
+  },
+  "checks_passed": 49,
+  "changed_tiles_both": 6,
+  "whole_app_result": "PENDING new candidate; existing official comparison shows no gain; all budgets remain failed",
+  "benchmark_sha256": "d225a78c1bdabb1b3d846bfe5aa2cc59fa95c67140cc5981bfceac2090b9dcde",
+  "binary_sha256": "74b91ce9d19f47b520e21814dda07f9df0f80a9a82d1d420c3797c7333c19dc8"
+}

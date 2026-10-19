@@ -1,0 +1,2 @@
+lock_pid=2494435
+lock=/tmp/bp-wt-build.lock

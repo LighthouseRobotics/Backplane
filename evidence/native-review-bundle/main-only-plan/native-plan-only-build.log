@@ -1,0 +1,20 @@
+bend 2.0.37 is available: run bend update
+cc   build/cc/keep_plan_bench/u0.c
+cc   build/cc/keep_plan_bench/u10.c
+cc   build/cc/keep_plan_bench/u1.c
+cc   build/cc/keep_plan_bench/u5.c
+cc   build/cc/keep_plan_bench/u4.c
+cc   build/cc/keep_plan_bench/u8.c
+cc   build/cc/keep_plan_bench/u15.c
+cc   build/cc/keep_plan_bench/u14.c
+cc   build/cc/keep_plan_bench/u7.c
+cc   build/cc/keep_plan_bench/u13.c
+cc   build/cc/keep_plan_bench/u6.c
+cc   build/cc/keep_plan_bench/u9.c
+cc   build/cc/keep_plan_bench/u11.c
+cc   build/cc/keep_plan_bench/u12.c
+cc   build/cc/keep_plan_bench/u3.c
+cc   build/cc/keep_plan_bench/u2.c
+cc   build/cc/keep_plan_bench/u16.c
+stages: emit (fresh) 5.4s split 0.2s cc 16.0s link 0.1s total 21.7s | objects hit 0 miss 17 | peak RSS: emit 0.41G, largest single cc 0.13G, this build's compiles together (sampled) 0.13G, cgroup all-together -
+build/keep_plan_bench (17 units, 1 jobs)

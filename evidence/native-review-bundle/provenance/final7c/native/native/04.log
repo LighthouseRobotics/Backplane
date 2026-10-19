@@ -1,0 +1,18 @@
+ok host effect linkage frame
+ok isolated lifecycle fixture initializes
+ok feature subfolder worktree creates with staged carry
+ok carry preserves all working bytes and source index
+ok carried feature checkpoint succeeds
+ok checkpoint retains exact staged ignored addition
+ok carried intent-to-add can be carried again
+ok second carry checkpoint succeeds
+ok second carry retains ignored intent-to-add bytes
+ok second worktree retires independently
+ok worktree API resolves repository root
+ok retirement removes worktree after checkpoint
+ok revival returns the same project subfolder
+ok revival restores checkpoint
+ok retirement and revival preserve exact bytes and source staging
+ok copy failure is a visible error
+ok failed carry preserves source index and bytes
+all ok

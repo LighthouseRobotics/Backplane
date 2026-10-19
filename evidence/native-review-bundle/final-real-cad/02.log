@@ -1,0 +1,46 @@
+ok   the thread's folder
+ok   review.bom answers a report
+ok   the working copy's BOM: 11 parts
+ok   with R4's new value
+ok   and no empty MPN column
+     (a BOM in 101 ms)
+ok   the change since v1: one part
+ok   R4 47K → 56K
+ok   HEAD against the working copy: no change
+     (checks in 9042 ms)
+ok   review.checks answers a report
+ok   with KiCad's ERC and DRC
+ok   and the custom check that failed
+ok   which fails the gate
+ok   the default checklist, nothing ticked
+ok   checks on v1 run that commit (no custom check yet)
+ok   and leave no folder behind
+ok   a box ticked
+ok   into the thread's .backplane/checklist.md
+ok   and cleared again
+ok   a person's comment is taken
+ok   logged as a review Act
+ok   an empty comment is refused
+ok   the agent reads it
+ok   the agent answers it
+ok   as a reply by the agent
+ok   resolved by the person
+ok   and the agent sees none open
+ok   dirty snapshot is refused even with force
+ok   dirty refusal creates no tag or release outputs
+ok   a release is refused while the checks fail
+ok   and makes no tag
+     (a release in 10624 ms)
+ok   forced, the release is made
+ok   with its tag
+ok   notes and a manifest
+ok   Gerbers and drill files
+ok   CPL, BOM, STEP and PDFs
+ok   notes name the tag before and the BOM change
+ok   and nothing is published
+ok   a completed release is refused without replacing its outputs
+ok   completed release preserves every output byte and its tag object
+ok   a bad tag name is refused
+ok   a commit like an option is refused
+/tmp/bp-final-cad.6u7gxB/bp-review-zMN5bU
+all ok

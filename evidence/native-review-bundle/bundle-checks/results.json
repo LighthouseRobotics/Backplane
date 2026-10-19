@@ -1,0 +1,31 @@
+{
+  "scope": "Offline report comparisons and lightweight synthetic controls; no apps/builds launched",
+  "checks": [
+    {
+      "name": "independent-input-recomparison",
+      "exit": 0,
+      "log": "bundle-checks/independent-input-recomparison.log"
+    },
+    {
+      "name": "independent-title-recomparison",
+      "exit": 0,
+      "log": "bundle-checks/independent-title-recomparison.log"
+    },
+    {
+      "name": "observer-controls",
+      "exit": 0,
+      "log": "bundle-checks/observer-controls.log"
+    },
+    {
+      "name": "comparison-controls",
+      "exit": 0,
+      "log": "bundle-checks/comparison-controls.log"
+    },
+    {
+      "name": "fixture-controls",
+      "exit": 0,
+      "log": "bundle-checks/fixture-controls.log"
+    }
+  ],
+  "future_app_result": "PENDING"
+}

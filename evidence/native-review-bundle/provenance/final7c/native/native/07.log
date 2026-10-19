@@ -1,0 +1,19 @@
+cc   build/cc/checkpoint_ignored_test/u3.c
+cc   build/cc/checkpoint_ignored_test/u1.c
+cc   build/cc/checkpoint_ignored_test/u2.c
+cc   build/cc/checkpoint_ignored_test/u4.c
+cc   build/cc/checkpoint_ignored_test/u0.c
+cc   build/cc/checkpoint_ignored_test/u6.c
+cc   build/cc/checkpoint_ignored_test/u5.c
+cc   build/cc/checkpoint_ignored_test/u13.c
+cc   build/cc/checkpoint_ignored_test/u14.c
+cc   build/cc/checkpoint_ignored_test/u11.c
+cc   build/cc/checkpoint_ignored_test/u7.c
+cc   build/cc/checkpoint_ignored_test/u9.c
+cc   build/cc/checkpoint_ignored_test/u15.c
+cc   build/cc/checkpoint_ignored_test/u8.c
+cc   build/cc/checkpoint_ignored_test/u12.c
+cc   build/cc/checkpoint_ignored_test/u16.c
+cc   build/cc/checkpoint_ignored_test/u10.c
+stages: emit (fresh) 2.8s split 0.1s cc 2.8s link 0.0s total 5.7s | objects hit 0 miss 17 | peak RSS: emit 0.97G, largest single cc 0.18G, this build's compiles together (sampled) 0.26G, cgroup all-together -
+build/checkpoint_ignored_test (17 units, 2 jobs)

@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "comparisons": [
+    {
+      "id": "main-only-20261019",
+      "state": "completed",
+      "directory": "whole-app-main-only",
+      "verification": "provenance/completed/main-only-full-build-verification.json",
+      "receipt": "provenance/completed/main-only-app-build-receipt.json",
+      "measurement_helper": "reproduction/main-only-native-app-perf-evidence.py",
+      "source_files": 972,
+      "product_commit": "af6527f41f9828ef483dfaae9e5bd3b1884ebf49",
+      "product_tree": "3177124742934fe86aad60c068a6159f136dad34"
+    },
+    {
+      "id": "integrated-retry2-20261019",
+      "state": "completed",
+      "directory": "whole-app-integrated-retry2",
+      "verification": "provenance/completed/integrated-full-build-verification.json",
+      "receipt": "provenance/completed/integrated-app-build-receipt.json",
+      "measurement_helper": "reproduction/integrated-native-app-perf-evidence.py",
+      "source_files": 1069,
+      "product_commit": "f30b5a3d8619b71ae922ca2cea9618726091492f",
+      "product_tree": "829c295f86a8e973d54abed64a689b05bc7e3376",
+      "note": "Collection completed, acceptance failed: candidate cold EXECUTION_FAIL from the unchanged sustained-stream guard; remaining runs TARGET_FAIL. Independent pixel comparisons PASS."
+    },
+    {
+      "id": "integrated-repeat3-20261019",
+      "state": "completed",
+      "directory": "whole-app-integrated-repeat3",
+      "verification": "provenance/completed/integrated-full-build-verification.json",
+      "receipt": "provenance/completed/integrated-app-build-receipt.json",
+      "measurement_helper": "reproduction/integrated-native-app-perf-evidence.py",
+      "source_files": 1069,
+      "product_commit": "f30b5a3d8619b71ae922ca2cea9618726091492f",
+      "product_tree": "829c295f86a8e973d54abed64a689b05bc7e3376",
+      "note": "All four executions exit0 with TARGET_FAIL and healthy streams. Composer reference comparison exits1, emits only an error log and no JSON: empty-prefix hashes differ; eleven nonempty prefixes agree. Title comparison PASS. Separate untimed diagnosis reproduces both empty hashes in both binaries due to placeholder pixels under the blinking caret. Original comparison remains FAIL; no overall acceptance or latency improvement is claimed."
+    }
+  ],
+  "preflight_failures": [
+    {
+      "id": "integrated-first-preflight-20261019",
+      "directory": "failed-integrated-preflight",
+      "app_executions": 0,
+      "measurement_helper": "reproduction/main-only-native-app-perf-evidence.py",
+      "note": "Exact expected baseline build-script SHA rejected the later reviewed script before app launch."
+    }
+  ]
+}

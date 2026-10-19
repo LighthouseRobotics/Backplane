@@ -1,0 +1,23 @@
+
+perf_load: /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane
+  log /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture-bots.jsonl (1548 lines; sha256 ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543), 10 agents, 1 bot rooms, 5 s phases, port 3892, display :92
+  ms; frame = ui.frame n p50/p99/max >8/>16; input = ui.input; key>frame = ui.msg.win + ui.input; open = the slowest thread open, Return to frame; line = hub.agent_line n p50/p99/max; hub% = hub.* span time / wall; cpu% = whole app process
+phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 raster p50/p99 blink p50/p99 input p50/p99 key>frame  open   line  p50/p99/max   mcp99  hub%  cpu%  rssMB
+open    18.1s   127  33.4/  323/  390  127/ 127  16.0/ 35.3   9.6/  277   1.7/ 88.2   147/  397   149/  398   173   5262  0.5/ 30.8/  673     -   113   184   207
+
+targets: frame p99<=8, no frame>16 from streaming (idle/bg), typing input p99<=16, thread open<=50, agent_line p99<=2
+open    all ten displayed opens observed:PASS displayed open<=50ms:FAIL all agents streaming:PASS all ten opens sampled:PASS frame p99<=8ms:FAIL open<=50ms:FAIL agent_line p99<=2ms:FAIL
+warm displayed opens: n=10 p50=166ms p99=209ms max=209ms (X-server readback; includes observer overhead)
+
+open: heaviest spans (total ms in phase, n, mean, max)
+  hub.agent_line                 11269.9   5262     2.14    673.4
+  ui.hub                         10826.3     69    156.9    404.3
+  hub.step.commit                 8505.8   5301      1.6    672.1
+  ui.msg.frame                    8167.4    588    13.89    404.9
+  ui.frame                        8064.5    127     63.5      390
+  ui.input                        5066.6     30   168.89    397.1
+  ui.raster                       4583.3    127    36.09    321.6
+  ui.msg.hub                      3959.4   2473      1.6      6.2
+
+raw JSON: /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/candidate-warm/raw.json
+kept /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/candidate-warm/tmp/bp-perfload-rOOA1h

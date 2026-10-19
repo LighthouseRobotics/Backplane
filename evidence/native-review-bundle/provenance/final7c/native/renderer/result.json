@@ -1,0 +1,569 @@
+{
+  "schema": 2,
+  "lane": "renderer",
+  "started": "2026-10-19T13:37:34.868823+00:00",
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "host": {
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "machine": "x86_64"
+  },
+  "toolchain": [
+    {
+      "command": [
+        "bend",
+        "version"
+      ],
+      "status": 0,
+      "output": "bend 2.0.36"
+    },
+    {
+      "command": [
+        "bun",
+        "--version"
+      ],
+      "status": 0,
+      "output": "1.4.3"
+    },
+    {
+      "command": [
+        "clang",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-19/bin"
+    },
+    {
+      "command": [
+        "git",
+        "--version"
+      ],
+      "status": 0,
+      "output": "git version 2.55.0"
+    },
+    {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Python 3.12.3"
+    },
+    {
+      "command": [
+        "/usr/lib/llvm-19/bin/clang",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-19/bin"
+    }
+  ],
+  "flags": {
+    "CC": null,
+    "BACKPLANE_CFLAGS": null,
+    "BACKPLANE_LOW_MEM": "1",
+    "BACKPLANE_JOBS": "2",
+    "BACKPLANE_CPUS": null,
+    "BACKPLANE_PREBUILT": null,
+    "BACKPLANE_GOOGLE_BAKE": "0",
+    "BACKPLANE_KICAD_CLI": null,
+    "BUN_JSC_forceRAMSize": "4294967296",
+    "BUN_JSC_useJIT": null,
+    "BACKPLANE_CHROME": "/usr/bin/google-chrome",
+    "BACKPLANE_TEST_BROWSERS": "chromium",
+    "BACKPLANE_X11": null,
+    "BACKPLANE_TEST_XVFB": null
+  },
+  "steps": [
+    {
+      "command": [
+        "bun",
+        "test/tools/native_display_test.ts"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.016099279000002298,
+      "reason": "",
+      "log": "00.log",
+      "log_sha256": "03da5486a0f61365c7d28ae5e2eb3723268fab89637915af65c701384b645e85"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/native_display_compare_test.ts"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.06421990599999106,
+      "reason": "",
+      "log": "01.log",
+      "log_sha256": "10bd5b1f59d1c2734eccccf1d47a511338ee62b2cb4955aac0f626a5bc6780c0"
+    },
+    {
+      "command": [
+        "/usr/lib/llvm-19/bin/clang",
+        "-O2",
+        "test/tools/xpoke.c",
+        "-o",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/xpoke",
+        "-lX11"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1.2661139909999974,
+      "reason": "",
+      "log": "02.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/usr/lib/llvm-19/bin/clang",
+        "-O2",
+        "test/tools/present_observer_fixture.c",
+        "-o",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/present_observer_fixture",
+        "-lX11"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.06420975199999646,
+      "reason": "",
+      "log": "03.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/native_display_readback_test.ts",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/xpoke",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/present_observer_fixture",
+        "/usr/bin/Xvfb"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.31514593400000024,
+      "reason": "",
+      "log": "04.log",
+      "log_sha256": "dbcb774abcdc100e5e20298361fc9cbf19a1293c93a3bccbc03e20af31f81f5d",
+      "environment": {
+        "HOME": "/tmp/bp-renderer-home-rsgt0d9t",
+        "XDG_CACHE_HOME": "/tmp/bp-renderer-home-rsgt0d9t/cache",
+        "BACKPLANE_HOME": "/tmp/bp-renderer-home-rsgt0d9t/backplane"
+      }
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/keep_plan_bench.bend",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep_plan_bench"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 6.187513435,
+      "reason": "",
+      "log": "05.log",
+      "log_sha256": "6169af604f0c913a70022b08c3a9c87f3dfd8c5e057c413c8d1b639887bfa50f",
+      "environment": {
+        "CC": "/usr/lib/llvm-19/bin/clang",
+        "BACKPLANE_PREBUILT": "0",
+        "BACKPLANE_EMIT_ONLY": "0",
+        "BACKPLANE_GOOGLE_BAKE": "0"
+      }
+    },
+    {
+      "command": [
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep_plan_bench"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.2682370929999962,
+      "reason": "",
+      "log": "06.log",
+      "log_sha256": "95468a562bc1695fac0bcbfa40fefc7b31af117b20084ac813ad300bf2914d64",
+      "environment": {
+        "HOME": "/tmp/bp-renderer-home-rsgt0d9t",
+        "XDG_CACHE_HOME": "/tmp/bp-renderer-home-rsgt0d9t/cache",
+        "BACKPLANE_HOME": "/tmp/bp-renderer-home-rsgt0d9t/backplane"
+      }
+    },
+    {
+      "command": [
+        "python3",
+        "test/tools/keep_plan_report.py",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/06.log",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep-plan-summary.json"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.031949314000002005,
+      "reason": "",
+      "log": "07.log",
+      "log_sha256": "04b65c11d7c2da45a6111ac0b574c93887112f52eaeabd3aa75c742d4f5613c6"
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/i18n_smoke.bend",
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1.969586942999996,
+      "reason": "",
+      "log": "08.log",
+      "log_sha256": "973cf55d7b768ed86c03385f4d698172ae8b35c9c366bc6d77169260c896ccee",
+      "environment": {
+        "CC": "/usr/lib/llvm-19/bin/clang",
+        "BACKPLANE_PREBUILT": "0",
+        "BACKPLANE_EMIT_ONLY": "0",
+        "BACKPLANE_GOOGLE_BAKE": "0"
+      }
+    },
+    {
+      "command": [
+        "/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.0020241340000097807,
+      "reason": "",
+      "log": "09.log",
+      "log_sha256": "1724f3368b907b4785e8bdcf8fc43ee1a5f49a52d4f680243f72bf20db8bcc6f",
+      "environment": {
+        "HOME": "/tmp/bp-renderer-home-rsgt0d9t",
+        "XDG_CACHE_HOME": "/tmp/bp-renderer-home-rsgt0d9t/cache",
+        "BACKPLANE_HOME": "/tmp/bp-renderer-home-rsgt0d9t/backplane"
+      }
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "build/validation/renderer/keep_plan_bench.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep_plan_bench.c",
+      "bytes": 1395962,
+      "sha256": "8c81bbbdc5ac8d304c43c45e6c00f1a064f920dea9dff70f34752d539d841512",
+      "role": "renderer_emitted_c"
+    },
+    {
+      "path": "build/validation/renderer/i18n_native_smoke.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke.c",
+      "bytes": 231174,
+      "sha256": "715426e60aac4d7d0680951da844e7b64cf0b9e5277b9a4f14833372bf58392d",
+      "role": "renderer_emitted_c"
+    },
+    {
+      "path": "mobile/build/assets/bridge.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/mobile/build/assets/bridge.js",
+      "bytes": 4224028,
+      "sha256": "d4ee8a6cdcd4b210d38840c52fbd6fbce12c5a4ccd4b8b3725745ca4405421ad"
+    },
+    {
+      "path": "/usr/lib/llvm-19/bin/clang",
+      "resolved_path": "/usr/lib/llvm-19/bin/clang",
+      "bytes": 136448,
+      "sha256": "f6d5286a52de10b1e3e8841457c9903a1ea28f222ac0f58cd616697d0dcd9db3",
+      "role": "renderer_cc"
+    },
+    {
+      "path": "/usr/bin/Xvfb",
+      "resolved_path": "/usr/bin/Xvfb",
+      "bytes": 2064864,
+      "sha256": "6b27845931670c8c9b3ce7423696a452ce3cab1c7f316ce5f7ea7f1297fa2f84",
+      "role": "renderer_xvfb"
+    },
+    {
+      "path": "/home/runner/.bun/bin/bun",
+      "resolved_path": "/home/runner/.bun/bin/bun",
+      "bytes": 88979072,
+      "sha256": "7ce7d6b654eddeec20afddf2396317fba6dc19ab52788a27e894e1806bf8f24b",
+      "role": "renderer_bun"
+    },
+    {
+      "path": "/home/runner/.bend/bin/bend",
+      "resolved_path": "/home/runner/.bend/bin/bend",
+      "bytes": 94914688,
+      "sha256": "b2b183bddc3c3fa4bc45d99f6a6bdbb192ebc616e6e697777f49e74c545b1643",
+      "role": "renderer_bend"
+    },
+    {
+      "path": "/usr/bin/fc-match",
+      "resolved_path": "/usr/bin/fc-match",
+      "bytes": 14720,
+      "sha256": "2e0846b0186dedaa7a626267093d668e24f2d7846a877f316de5c90301484780",
+      "role": "renderer_fontconfig"
+    },
+    {
+      "path": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+      "resolved_path": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+      "bytes": 19484784,
+      "sha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+      "role": "renderer_japanese_font"
+    },
+    {
+      "path": "build/validation/renderer/xpoke",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/xpoke",
+      "bytes": 21448,
+      "sha256": "49d75d63996675eff3ff87c7404b79b5d38100fe374d51f19b63b1c050a86816",
+      "role": "renderer_xpoke"
+    },
+    {
+      "path": "build/validation/renderer/present_observer_fixture",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/present_observer_fixture",
+      "bytes": 16664,
+      "sha256": "30d841ba22cb8f29a49e2e3dc6d870bff4821f7a54db92371a77f0b5143ccc32",
+      "role": "renderer_present_observer_fixture"
+    },
+    {
+      "path": "build/validation/renderer/keep_plan_bench",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep_plan_bench",
+      "bytes": 1605232,
+      "sha256": "ec0f07c90b3d89c83fed6fc68189856dde6c0d9c81e8231637978c24e0c6ee77",
+      "role": "renderer_keep_plan_bench"
+    },
+    {
+      "path": "build/cc/keep_plan_bench/all.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/cc/keep_plan_bench/all.c",
+      "bytes": 1395962,
+      "sha256": "8c81bbbdc5ac8d304c43c45e6c00f1a064f920dea9dff70f34752d539d841512",
+      "role": "renderer_keep_plan_bench_emitted_c"
+    },
+    {
+      "path": "build/validation/renderer/i18n_native_smoke",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke",
+      "bytes": 702528,
+      "sha256": "08db951b5f110a727843e80e5493a79a7882dedef868501d264b848f389b298c",
+      "role": "renderer_i18n_native_smoke"
+    },
+    {
+      "path": "build/cc/i18n_native_smoke/all.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/cc/i18n_native_smoke/all.c",
+      "bytes": 231174,
+      "sha256": "715426e60aac4d7d0680951da844e7b64cf0b9e5277b9a4f14833372bf58392d",
+      "role": "renderer_i18n_native_smoke_emitted_c"
+    },
+    {
+      "path": "build/validation/renderer/keep-plan-summary.json",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep-plan-summary.json",
+      "bytes": 6053,
+      "sha256": "3a22351e6adf925c0b1504a961fa48a8aa42877a08fcf6a078d6a5a150a3f20e",
+      "role": "renderer_keep_plan_summary"
+    }
+  ],
+  "consumed": {
+    "renderer_cc": {
+      "path": "/usr/lib/llvm-19/bin/clang",
+      "resolved_path": "/usr/lib/llvm-19/bin/clang",
+      "bytes": 136448,
+      "sha256": "f6d5286a52de10b1e3e8841457c9903a1ea28f222ac0f58cd616697d0dcd9db3",
+      "role": "renderer_cc"
+    },
+    "renderer_xvfb": {
+      "path": "/usr/bin/Xvfb",
+      "resolved_path": "/usr/bin/Xvfb",
+      "bytes": 2064864,
+      "sha256": "6b27845931670c8c9b3ce7423696a452ce3cab1c7f316ce5f7ea7f1297fa2f84",
+      "role": "renderer_xvfb"
+    },
+    "renderer_bun": {
+      "path": "/home/runner/.bun/bin/bun",
+      "resolved_path": "/home/runner/.bun/bin/bun",
+      "bytes": 88979072,
+      "sha256": "7ce7d6b654eddeec20afddf2396317fba6dc19ab52788a27e894e1806bf8f24b",
+      "role": "renderer_bun"
+    },
+    "renderer_bend": {
+      "path": "/home/runner/.bend/bin/bend",
+      "resolved_path": "/home/runner/.bend/bin/bend",
+      "bytes": 94914688,
+      "sha256": "b2b183bddc3c3fa4bc45d99f6a6bdbb192ebc616e6e697777f49e74c545b1643",
+      "role": "renderer_bend"
+    },
+    "renderer_fontconfig": {
+      "path": "/usr/bin/fc-match",
+      "resolved_path": "/usr/bin/fc-match",
+      "bytes": 14720,
+      "sha256": "2e0846b0186dedaa7a626267093d668e24f2d7846a877f316de5c90301484780",
+      "role": "renderer_fontconfig"
+    },
+    "renderer_japanese_font": {
+      "path": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+      "resolved_path": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+      "bytes": 19484784,
+      "sha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+      "role": "renderer_japanese_font"
+    },
+    "renderer_xpoke": {
+      "path": "build/validation/renderer/xpoke",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/xpoke",
+      "bytes": 21448,
+      "sha256": "49d75d63996675eff3ff87c7404b79b5d38100fe374d51f19b63b1c050a86816",
+      "role": "renderer_xpoke"
+    },
+    "renderer_present_observer_fixture": {
+      "path": "build/validation/renderer/present_observer_fixture",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/present_observer_fixture",
+      "bytes": 16664,
+      "sha256": "30d841ba22cb8f29a49e2e3dc6d870bff4821f7a54db92371a77f0b5143ccc32",
+      "role": "renderer_present_observer_fixture"
+    },
+    "renderer_keep_plan_bench": {
+      "path": "build/validation/renderer/keep_plan_bench",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep_plan_bench",
+      "bytes": 1605232,
+      "sha256": "ec0f07c90b3d89c83fed6fc68189856dde6c0d9c81e8231637978c24e0c6ee77",
+      "role": "renderer_keep_plan_bench"
+    },
+    "renderer_keep_plan_bench_emitted_c": {
+      "path": "build/cc/keep_plan_bench/all.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/cc/keep_plan_bench/all.c",
+      "bytes": 1395962,
+      "sha256": "8c81bbbdc5ac8d304c43c45e6c00f1a064f920dea9dff70f34752d539d841512",
+      "role": "renderer_keep_plan_bench_emitted_c"
+    },
+    "renderer_keep_plan_bench_emitted_c_evidence": {
+      "path": "build/validation/renderer/keep_plan_bench.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/keep_plan_bench.c",
+      "bytes": 1395962,
+      "sha256": "8c81bbbdc5ac8d304c43c45e6c00f1a064f920dea9dff70f34752d539d841512",
+      "role": "renderer_keep_plan_bench_emitted_c_evidence"
+    },
+    "renderer_i18n_native_smoke": {
+      "path": "build/validation/renderer/i18n_native_smoke",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke",
+      "bytes": 702528,
+      "sha256": "08db951b5f110a727843e80e5493a79a7882dedef868501d264b848f389b298c",
+      "role": "renderer_i18n_native_smoke"
+    },
+    "renderer_i18n_native_smoke_emitted_c": {
+      "path": "build/cc/i18n_native_smoke/all.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/cc/i18n_native_smoke/all.c",
+      "bytes": 231174,
+      "sha256": "715426e60aac4d7d0680951da844e7b64cf0b9e5277b9a4f14833372bf58392d",
+      "role": "renderer_i18n_native_smoke_emitted_c"
+    },
+    "renderer_i18n_native_smoke_emitted_c_evidence": {
+      "path": "build/validation/renderer/i18n_native_smoke.c",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke.c",
+      "bytes": 231174,
+      "sha256": "715426e60aac4d7d0680951da844e7b64cf0b9e5277b9a4f14833372bf58392d",
+      "role": "renderer_i18n_native_smoke_emitted_c_evidence"
+    }
+  },
+  "provenance": {
+    "bend_version": "2.0.36",
+    "renderer": {
+      "profile": "keep-plan",
+      "required_dependency": "main-only Keep.step native candidate with independent display observer harness",
+      "inputs": [
+        {
+          "path": "test/tools/native_display.ts",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/native_display.ts",
+          "bytes": 3205,
+          "sha256": "4f061be549654f91c210eaa4dc99910a9db828a23316683f01428b6c0d0824fa",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/native_display_test.ts",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/native_display_test.ts",
+          "bytes": 3106,
+          "sha256": "6e3af7d072456204647d3878235e17db510d4c7b12fc4ef6420e1ca26753270d",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/native_display_compare.ts",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/native_display_compare.ts",
+          "bytes": 9869,
+          "sha256": "a0eeacde7a2a765679775f5c6c22f8b307c28796ff5d2e8205e541afab49ce6e",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/native_display_compare_test.ts",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/native_display_compare_test.ts",
+          "bytes": 6698,
+          "sha256": "99a3d8c2734dd02764454dd1ab615b54f4326f5b62f7854a5f4359d6f9e50176",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/native_display_readback_test.ts",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/native_display_readback_test.ts",
+          "bytes": 1648,
+          "sha256": "e59c11c87253557c4da8830120e8622d3351b075e25ba8c933a74d5026ddde71",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/xpoke.c",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/xpoke.c",
+          "bytes": 8412,
+          "sha256": "69b810a94e5f71ffe29f985f21988ea8565261ccc5444070a1a3598d3817ef5b",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/present_observer_fixture.c",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/present_observer_fixture.c",
+          "bytes": 1146,
+          "sha256": "23f0575636df6c77f76f67114da4751863f14476773eb215c37cabf120ed1b48",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/native/i18n_smoke.bend",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/native/i18n_smoke.bend",
+          "bytes": 995,
+          "sha256": "d6966c5a970b28822108580e8ab3f1606310ac79a7ee8647e45450a2c12f33c6",
+          "role": "renderer_source"
+        },
+        {
+          "path": "scripts/build-app.sh",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/scripts/build-app.sh",
+          "bytes": 12313,
+          "sha256": "7b47111aad198e5ecc7f5b5e350ef3d30892643aa4e3431ca47e0370055c7c42",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/tools/keep_plan_report.py",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/tools/keep_plan_report.py",
+          "bytes": 2060,
+          "sha256": "5e7e42ee1cc8fefb5805491f5b523dcf533c94dd17ef36521e6cf9f9bb3e0052",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/native/keep_plan_bench.bend",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/native/keep_plan_bench.bend",
+          "bytes": 4364,
+          "sha256": "613817cfcd392e1fef347a061bb158899f7839292bd58dee0d115d2a5e8385a1",
+          "role": "renderer_source"
+        },
+        {
+          "path": "test/keep_step_test.bend",
+          "resolved_path": "/home/runner/work/Backplane/Backplane/test/keep_step_test.bend",
+          "bytes": 4160,
+          "sha256": "f80db7f1e9ccc5af97c1a125d308bbe14d4b174da874d24f8117fe054ad47ce8",
+          "role": "renderer_source"
+        }
+      ],
+      "japanese_font": {
+        "command": [
+          "/usr/bin/fc-match",
+          "-f",
+          "%{file}\n%{lang}\n",
+          ":lang=ja"
+        ],
+        "status": 0,
+        "output": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc\naa|ay|bg|bi|bin|br|ch|da|de|en|es|eu|fj|fo|fur|fy|gd|gl|gn|gv|haw|ho|ia|ig|id|ie|io|is|it|ja|ki|ko|kum|lb|mg|nb|nds|nl|nn|no|nr|oc|om|os|pt|rm|ru|sel|sm|sma|smj|so|sq|ss|st|sv|sw|tl|to|ts|uz|vo|wa|xh|yap|zh-cn|zh-hk|zh-mo|zh-sg|zh-tw|zu|an|fil|ht|jv|kj|kwm|li|ms|na|ng|pap-an|pap-aw|rn|rw|sc|sg|sn|su|za|agr|ayc|bem|cmn|hak|lij|lzh|mhr|miq|mjw|nan|nhn|niu|tpi|unm|wae|yue|yuw"
+      },
+      "scope": "Native keep-plan correctness and raw microbenchmarks; whole-app display budgets are separate."
+    }
+  },
+  "result": "pass",
+  "renderer_profile": "keep-plan",
+  "source_after": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "finished": "2026-10-19T13:37:48.563782+00:00"
+}

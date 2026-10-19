@@ -1,0 +1,10 @@
+[perf_load] log: 1548 lines kept, 0 dropped; long thread fixture-thread-0 (180 messages); 1 rooms, 2 bots
+[perf_load] Xvfb :92 pid 2605412
+[perf_load] app pid 2605419, home /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/candidate-warm/tmp/bp-perfload-rOOA1h/home
+[perf_load] hub up after 0.6 s
+[perf_load] stand-ins started by the log itself (resumed turns?):
+START 2605528 /
+START 2605537 /
+[perf_load] project p1792418867-1570, 10 threads
+[perf_load] workload ready: all 10 agents delivered streaming deltas
+[perf_load] phase open: streaming; 10 real threads opened one after another (ctrl+k, title, Return)

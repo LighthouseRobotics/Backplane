@@ -1,0 +1,9 @@
+{
+  "verdict": "pass",
+  "original_archive_immutable_members_checked": 117,
+  "all_original_members_and_origins_byte_identical": true,
+  "append_refresh_rule": "Every prior copied/git_blob member is immutable and checked before every append. Generated review documentation and verifier evolve.",
+  "previous_manifest_sha256": "07a66f0ef1bb140e5143f4ee4d8159c37ee0af08e060c95ceba9ab62cce7fe66",
+  "prior_immutable_members_checked_by_refresh": 348,
+  "scope": "No history rewritten, failed outcomes deleted, application artifacts included or product source changed."
+}

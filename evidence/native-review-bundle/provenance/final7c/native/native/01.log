@@ -1,0 +1,31 @@
+ok failure 1 identifies first failed step
+ok failure 1 retains exit code and diagnostic
+ok failure 1 stops later exports
+ok failure 1 has no success payload
+ok failure 1 writes no success metadata
+ok case 1 removes extracted source
+ok case 1 preserves original tag
+ok failure 4 identifies first failed step
+ok failure 4 retains exit code and diagnostic
+ok failure 4 stops later exports
+ok failure 4 has no success payload
+ok failure 4 writes no success metadata
+ok case 4 removes extracted source
+ok case 4 preserves original tag
+ok failure 7 identifies first failed step
+ok failure 7 retains exit code and diagnostic
+ok failure 7 stops later exports
+ok failure 7 has no success payload
+ok failure 7 writes no success metadata
+ok case 7 removes extracted source
+ok case 7 preserves original tag
+ok successful exports retain success payload
+ok successful release runs all seven exports
+ok success lists actual output files
+ok success manifest matches outputs
+ok success notes match result
+ok case 0 removes extracted source
+ok case 0 preserves original tag
+ok failed child result reaches release error report
+ok no failed release attempts to publish
+30 release export assertions passed

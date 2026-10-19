@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "complete": false,
+  "execution_status": "failed",
+  "phases": [],
+  "root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-observer-failure-cleanup/tmp/bp-perfload-PPbKjG",
+  "bin": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-baseline/dist/backplane",
+  "source_sha_declared": "unspecified",
+  "build_flags_declared": "unspecified",
+  "display": ":93",
+  "port": 3893,
+  "trace": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-observer-failure-cleanup/tmp/bp-perfload-PPbKjG/trace.json",
+  "demand_journal": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-observer-failure-cleanup/tmp/bp-perfload-PPbKjG/display-demands.jsonl",
+  "input_targets": {
+    "": "806d60184c3de046d5e0ba628a683c195ef0c33573db71572e70b2c36b707fc6"
+  },
+  "title_targets": {},
+  "demands": [],
+  "calibration": {
+    "surface": "composer",
+    "draft": "B"
+  },
+  "error": "Error: calibration timed out: changed/expected pixels never became stable",
+  "stack": "Error: calibration timed out: changed/expected pixels never became stable\n    at calibrateDisplay (/home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/native_display.ts:61:13)\n    at async <anonymous> (/home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/perf_load.ts:531:24)\n    at async calibratedComposer (/home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/perf_load.ts:538:111)\n    at async main (/home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/perf_load.ts:714:66)"
+}

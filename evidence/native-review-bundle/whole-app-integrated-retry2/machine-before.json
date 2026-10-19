@@ -1,0 +1,16 @@
+{
+  "uname": {
+    "system": "Linux",
+    "node": "the-one-Latitude-7490",
+    "release": "7.0.0-38-generic",
+    "version": "#38~24.04.4-Ubuntu SMP PREEMPT_DYNAMIC Mon Sep 14 16:37:11 UTC 2",
+    "machine": "x86_64",
+    "processor": "x86_64"
+  },
+  "cpu_count": 8,
+  "load": [
+    1.67919921875,
+    2.2421875,
+    1.92724609375
+  ]
+}

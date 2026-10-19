@@ -1,0 +1,49 @@
+{
+  "scope": "Untimed diagnostic only; exact pinned observer normalization",
+  "records": [
+    {
+      "name": "empty-before-0",
+      "sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+    },
+    {
+      "name": "empty-before-1",
+      "sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+    },
+    {
+      "name": "empty-before-2",
+      "sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+    },
+    {
+      "name": "empty-before-3",
+      "sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+    },
+    {
+      "name": "empty-before-4",
+      "sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+    },
+    {
+      "name": "text",
+      "sha256": "b66c26cd5e7dc3662ab0612652dbbca9dfe1ad69d73b897d785bff6c9c073d96"
+    },
+    {
+      "name": "empty-after-0",
+      "sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+    },
+    {
+      "name": "empty-after-1",
+      "sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+    },
+    {
+      "name": "empty-after-2",
+      "sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+    },
+    {
+      "name": "empty-after-3",
+      "sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+    },
+    {
+      "name": "empty-after-4",
+      "sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+    }
+  ]
+}

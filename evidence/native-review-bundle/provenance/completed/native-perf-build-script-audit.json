@@ -1,0 +1,27 @@
+{
+  "result": "pass",
+  "baseline": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "candidate": "f30b5a3d8619b71ae922ca2cea9618726091492f",
+  "files": {
+    "scripts/build-app.sh": {
+      "baseline_sha256": "27c35f277dbd4fbd38cc10f50d5bd0aa2978e62320d4115e4d3de1dc63846a64",
+      "candidate_sha256": "7b47111aad198e5ecc7f5b5e350ef3d30892643aa4e3431ca47e0370055c7c42",
+      "diff": "diff --git a/scripts/build-app.sh b/scripts/build-app.sh\nindex 287120341..cf6bf37c6 100755\n--- a/scripts/build-app.sh\n+++ b/scripts/build-app.sh\n@@ -46,8 +46,13 @@ set -eu\n held() {\n   p=$$\n   while [ -n \"$p\" ] && [ \"$p\" -gt 1 ]; do\n-    case $(tr '\\0' ' ' < \"/proc/$p/cmdline\" 2>/dev/null) in\n-      *flock*bp-wt-build.lock*) return 0 ;;\n+    # Inspect argv[0] and the lock argument separately. Matching the whole\n+    # command line also matches an ancestor's shell script text, which can\n+    # mention a future flock command without holding any lock at all.\n+    cmd=$(tr '\\0' '\\n' < \"/proc/$p/cmdline\" 2>/dev/null | head -n 1)\n+    case ${cmd##*/} in\n+      flock)\n+        if tr '\\0' '\\n' < \"/proc/$p/cmdline\" 2>/dev/null | grep -Fxq /tmp/bp-wt-build.lock; then return 0; fi ;;\n     esac\n     p=$(awk '{print $4}' \"/proc/$p/stat\" 2>/dev/null)\n   done\n@@ -96,8 +101,18 @@ fi\n work=\"build/cc/$(basename \"$out\")\"\n mkdir -p \"$work\"\n # stage clocks (ms) and peak RSS (KB) via /usr/bin/time when it is there\n-now_ms() { echo $(( $(date +%s%N) / 1000000 )); }\n-rss_cmd() { f=$1; shift; if [ -x /usr/bin/time ]; then /usr/bin/time -f %M -o \"$f\" \"$@\"; else \"$@\"; fi; }\n+now_ms() {\n+  case $(date +%N) in\n+    *[!0-9]*|\"\") perl -MTime::HiRes=time -e 'printf \"%.0f\\n\", time * 1000' ;;\n+    *) echo $(( $(date +%s%N) / 1000000 )) ;;\n+  esac\n+}\n+rss_cmd() {\n+  f=$1; shift\n+  if [ \"$(uname -s)\" = Darwin ]; then scripts/mac-rss.sh \"$f\" \"$@\"\n+  elif [ -x /usr/bin/time ]; then /usr/bin/time -f %M -o \"$f\" \"$@\"\n+  else \"$@\"; fi\n+}\n t_start=$(now_ms)\n rm -f \"$work/emit.rss\"\n # bend's own emit runs on every core; keep it polite too. Its C is the\n"
+    },
+    "scripts/cc-unit.sh": {
+      "baseline_sha256": "95338589f40df48185f0404eefd5a867546f7c6a224b6f8f02c46f0c39b811e3",
+      "candidate_sha256": "96bef276b95c04def5c526e18173f3bc9467dcb21a212f03407a5cd937ce45d4",
+      "diff": "diff --git a/scripts/cc-unit.sh b/scripts/cc-unit.sh\nindex cf19f5b95..68c69ec04 100755\n--- a/scripts/cc-unit.sh\n+++ b/scripts/cc-unit.sh\n@@ -32,7 +32,9 @@ if [ -n \"$dir\" ] && [ $secret = 0 ]; then\n fi\n # shellcheck disable=SC2086\n # (its peak RSS, KB, beside the object when /usr/bin/time is there)\n-if [ -x /usr/bin/time ]; then\n+if [ \"$(uname -s)\" = Darwin ]; then\n+  scripts/mac-rss.sh \"$o.rss\" \"$CC\" -std=c11 $BP_CFLAGS -w -c \"$c\" -o \"$o\" || { echo \"cc failed: $c\" >&2; exit 255; }\n+elif [ -x /usr/bin/time ]; then\n   /usr/bin/time -f %M -o \"$o.rss\" \"$CC\" -std=c11 $BP_CFLAGS -w -c \"$c\" -o \"$o\" || { echo \"cc failed: $c\" >&2; exit 255; }\n else\n   \"$CC\" -std=c11 $BP_CFLAGS -w -c \"$c\" -o \"$o\" || { echo \"cc failed: $c\" >&2; exit 255; }\n"
+    },
+    "scripts/build.sh": {
+      "baseline_sha256": "05da064c42758dcc653a79658abdbcfbcfcb3db4792510e24e3a6355486ea91d",
+      "candidate_sha256": "05da064c42758dcc653a79658abdbcfbcfcb3db4792510e24e3a6355486ea91d",
+      "diff": ""
+    }
+  },
+  "review": "build-app.sh changes lock ancestry detection and portable time/RSS wrappers; cc-unit.sh adds Darwin RSS branch. The existing Linux compiler invocation and O3 default are unchanged; build.sh is byte-identical. Only two exact audited build-app.sh SHA256 values are accepted. Unknown scripts and changed/overridden flags are refused.",
+  "historical_main_only_helper_sha256": "1cef2aa2e9f58a1bbe8c3644083b1e1aade2fd24a76d99e0872f3ab49468f31c",
+  "failed_integrated_preflight": "evidence/native-app-perf-integrated-20261019/provenance.log",
+  "failed_attempt_app_executions": 0,
+  "controls_log": "evidence/native-app-perf-integrated-helper-controls.log"
+}

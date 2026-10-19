@@ -1,0 +1,6 @@
+verified 0ab45f4f8c90ac877e3313a1888d875107f2be3fc2b2f40cfb7927873b35260c build/fixtures/ecc83/ecc83-pp.kicad_pcb
+verified 8a2d0359a0f3e647378034d84ab72b09dd7aa42f8b1f5e7fa0ff28ae369beee9 build/fixtures/ecc83/ecc83-pp.kicad_sch
+verified 8a943fac4b0cc3ed4fa83ccc83a6e15b9326178845ada0aa906df63f0672e975 build/fixtures/ecc83/ecc83-pp.kicad_pro
+verified 05ed7ad379869c36a12a7c3702cc37e620d75c8532943ce9cf577b9b04a7f270 build/fixtures/ecc83/LICENSE.README
+verified 00ba11b9a22d453aed299954eaca389d8efef441a4673d84e2dc4ae10ebc7ca5 build/fixtures/ecc83/LICENSE.CC-BY-SA-4.0
+KiCad ecc83 demo, CC BY-SA 4.0; attribution and license are beside the fixture.

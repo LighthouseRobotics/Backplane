@@ -1,0 +1,70 @@
+ok a bot to teach
+ok ordinary browser thread created
+ok ordinary thread takes control
+ok ordinary agent cannot race user input
+ok ordinary input acknowledges execution
+ok input failures reach the viewer
+ok click typing and Tab stay ordered
+ok handback disables ordinary input
+ok the bot sees the task tools
+ok input is refused while the bot drives
+ok the bot drives at first
+ok teach starts
+ok teach: info says recording
+ok teach: the person drives
+ok preview is refused while teaching
+ok a navigate is recorded
+ok the typed value is recorded
+ok the password is a secret step with its label
+ok a click is recorded with its target
+ok steps are numbered from 1
+ok the password is nowhere in the draft
+ok a note joins the draft
+ok stop: review
+ok the draft is mirrored to a file
+ok save needs a name
+ok save is accepted
+ok a TaskSet is logged
+ok the task has the parameter
+ok the marked value is {{order}}
+ok the task starts at the site
+ok a copy is in the bot's folder
+ok the teach state is cleared
+ok the draft is cleared
+ok the bot is woken to learn it
+ok the bot may drive again
+ok task_list
+ok task_get
+ok task_save merges
+ok task_save keeps the steps
+ok task_run names a missing parameter
+ok task_run answers a run and the plan
+ok the run has a folder
+ok the run is logged as an Act of tone task
+ok task_step
+ok a step's picture is kept
+ok the log has the step
+ok the picture is served as a JPEG
+ok a path out of the folder is refused
+ok another bot's id is refused
+ok a pause opens a browser ask
+ok the ask names the run and its question
+ok the ask offers continue, skip, stop
+ok the pause's screenshot is served
+ok take over: the person drives
+ok preview is refused while the person has taken over
+ok the person's input goes through while they drive
+ok the answer reaches the bot
+ok answering hands the browser back
+ok the bot drives again
+ok a risky pause offers confirm, skip, stop
+ok stop reaches the bot
+ok task_end
+ok the end is logged with its status and pictures
+ok a bad run id is refused
+ok runs beyond twenty are pruned
+ok task_delete
+ok the copy is gone
+ok discard clears the state
+ok the password is in no file of the home
+ok the password reached no client

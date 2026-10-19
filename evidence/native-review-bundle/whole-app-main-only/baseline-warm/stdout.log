@@ -1,0 +1,23 @@
+
+perf_load: /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-baseline/dist/backplane
+  log /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture-bots.jsonl (1548 lines; sha256 ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543), 10 agents, 1 bot rooms, 5 s phases, port 3891, display :91
+  ms; frame = ui.frame n p50/p99/max >8/>16; input = ui.input; key>frame = ui.msg.win + ui.input; open = the slowest thread open, Return to frame; line = hub.agent_line n p50/p99/max; hub% = hub.* span time / wall; cpu% = whole app process
+phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 raster p50/p99 blink p50/p99 input p50/p99 key>frame  open   line  p50/p99/max   mcp99  hub%  cpu%  rssMB
+open    17.0s   122  27.6/  211/  216  122/ 122  14.2/ 26.1   8.0/  180   1.6/  197  98.9/  220   100/  221   133   4329  0.5/ 10.2/  418     -  52.5   167   213
+
+targets: frame p99<=8, no frame>16 from streaming (idle/bg), typing input p99<=16, thread open<=50, agent_line p99<=2
+open    all ten displayed opens observed:PASS displayed open<=50ms:FAIL all agents streaming:PASS all ten opens sampled:PASS frame p99<=8ms:FAIL open<=50ms:FAIL agent_line p99<=2ms:FAIL
+warm displayed opens: n=10 p50=105ms p99=162ms max=162ms (X-server readback; includes observer overhead)
+
+open: heaviest spans (total ms in phase, n, mean, max)
+  ui.hub                          6683.9     58   115.24    236.2
+  ui.frame                        6115.4    122    50.13      216
+  ui.msg.frame                    5725.9    535     10.7    224.9
+  hub.agent_line                  5203.4   4329      1.2    418.3
+  ui.input                        3711.8     30   123.73    220.3
+  ui.raster                       3318.8    122     27.2    183.2
+  hub.step.commit                 3169.6   4363     0.73    417.3
+  ui.msg.hub                      3104.4   2196     1.41      4.2
+
+raw JSON: /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-warm/raw.json
+kept /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-warm/tmp/bp-perfload-Q49ib3

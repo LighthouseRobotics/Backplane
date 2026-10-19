@@ -1,0 +1,18 @@
+{
+  "input": {
+    "exit": 1,
+    "stdout_json_emitted": false,
+    "expected_outcome_reproduced": true
+  },
+  "title": {
+    "exit": 0,
+    "stdout_json_emitted": true,
+    "expected_outcome_reproduced": true
+  },
+  "scope": "Offline repeated comparator only; original failed measurement is unchanged; no apps launched",
+  "differing_prefixes": [
+    ""
+  ],
+  "matching_nonempty_prefixes": 11,
+  "root_cause": "PENDING"
+}

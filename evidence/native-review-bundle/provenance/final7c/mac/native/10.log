@@ -1,0 +1,85 @@
+fixture production tools: timeout=perl, checksum=sha256sum
+ok discover Darwin arm64 succeeds
+ok Mac ignores legacy Linux managed and bundled copies
+ok refresh Darwin arm64 succeeds
+ok stock Mac exports remain available without IPC
+ok discover Darwin x86_64 succeeds
+ok Intel Mac uses stock application
+ok discover Linux aarch64 succeeds
+ok Linux ARM ignores Linux x64 managed install
+ok discover Darwin arm64 succeeds
+ok compatible isolated Mac fork is discoverable
+ok unsupported installer reports unpublished platform accurately
+ok unsupported installer leaves managed files unchanged
+ok discover Linux x86_64 succeeds
+ok Linux ignores wrong-platform bundled runtime
+ok refresh Linux x86_64 succeeds
+ok broken managed runtime falls back to working stock CLI
+ok explicit broken selection remains visible
+ok boot Linux x86_64 succeeds
+ok hub accepts validated stock fallback cache
+ok resolve Linux x86_64 succeeds
+ok check and export resolver keeps healthy cached fallback
+ok resolver preserves broken explicit runtime root
+ok resolver preserves broken explicit CLI argument
+ok resolver preserves cached explicit setting failure
+ok synthetic archive created
+ok download fails visibly
+ok download preserves prior runtime bytes
+ok partial extraction fails visibly
+ok partial extraction preserves prior runtime bytes
+ok promotion fails visibly
+ok promotion preserves prior runtime bytes
+ok runtime launch fails visibly
+ok runtime launch preserves prior runtime bytes
+ok runtime version fails visibly
+ok runtime version preserves prior runtime bytes
+ok wrong core with same build fails visibly
+ok wrong core with same build preserves prior runtime bytes
+ok after_backup interruption fails visibly
+ok after_backup interruption restores exact selected bytes
+ok after_backup interruption removes staging without nested backup
+ok after_publish interruption fails visibly
+ok after_publish interruption restores exact selected bytes
+ok after_publish interruption removes staging without nested backup
+ok failed restoration reports preserved backup path
+ok failed restoration retains exact prior bytes
+ok failed restoration keeps new runtime aside and lock
+ok reported backup permits explicit recovery
+ok malformed describe fails visibly
+ok malformed describe preserves prior runtime bytes
+ok malformed describe releases transaction lock
+ok empty describe object fails visibly
+ok empty describe object preserves prior runtime bytes
+ok empty describe object releases transaction lock
+ok describe array shape fails visibly
+ok describe array shape preserves prior runtime bytes
+ok describe array shape releases transaction lock
+ok wrong describe version fails visibly
+ok wrong describe version preserves prior runtime bytes
+ok wrong describe version releases transaction lock
+ok wrong describe API fails visibly
+ok wrong describe API preserves prior runtime bytes
+ok wrong describe API releases transaction lock
+ok wrong describe platform fails visibly
+ok wrong describe platform preserves prior runtime bytes
+ok wrong describe platform releases transaction lock
+ok wrong describe source fails visibly
+ok wrong describe source preserves prior runtime bytes
+ok wrong describe source releases transaction lock
+ok wrong describe repository fails visibly
+ok wrong describe repository preserves prior runtime bytes
+ok wrong describe repository releases transaction lock
+ok missing IPC capabilities fails visibly
+ok missing IPC capabilities preserves prior runtime bytes
+ok missing IPC capabilities releases transaction lock
+ok checksum mismatch fails visibly
+ok checksum failure preserves prior runtime bytes
+ok portable shasum fallback installs successfully
+ok successful transaction publishes new complete runtime
+ok concurrent installer refused
+ok lock refusal preserves runtime
+ok baseline installer source found
+ok baseline partial extraction fails
+ok baseline reproduces overwrite of selected runtime
+83 assertions passed

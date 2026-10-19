@@ -1,0 +1,26 @@
+{
+  "status": "TARGET_FAIL",
+  "execution_exit": 0,
+  "failed_checks": [
+    {
+      "phase": "open",
+      "check": "displayed open<=50ms"
+    },
+    {
+      "phase": "open",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "open",
+      "check": "open<=50ms"
+    },
+    {
+      "phase": "open",
+      "check": "agent_line p99<=2ms"
+    }
+  ],
+  "unverified_checks": [],
+  "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-repeat3-20261019/candidate-warm/tmp/bp-perfload-95oR5c",
+  "trace_sha256": "ca2ccf5862d3f8eb9827b43ff6184656a3f3ca7f47ed1e4136cab3a420a81dfe",
+  "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-repeat3-20261019/candidate-warm/tmp/bp-perfload-95oR5c/display-demands.jsonl"
+}

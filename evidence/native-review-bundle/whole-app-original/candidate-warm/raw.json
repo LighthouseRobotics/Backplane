@@ -1,0 +1,3126 @@
+{
+ "bin": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-candidate/artifacts/dist/backplane",
+ "machine": {
+  "hostname": "the-one-Latitude-7490",
+  "arch": "x64",
+  "platform": "linux",
+  "release": "7.0.0-38-generic",
+  "cpu_model": "Intel(R) Core(TM) i7-8650U CPU @ 1.90GHz",
+  "cpu_count": 8
+ },
+ "binary_sha256": "470e92153fbf700eff31ec16d92bcf66af1e989c96c53e7c8061d77cd73bc210",
+ "xpoke_sha256": "bbe1d93f26cfe3aa9ab3c46530230357a96b7c3bb5f844fcb9a83d7a1a8756f4",
+ "harness_sha256": "d071a38cc1d3f7c726e4327fb9fb8ccd1367f66a7489e4fffdde9bff24799cbd",
+ "observer_sha256": "4f061be549654f91c210eaa4dc99910a9db828a23316683f01428b6c0d0824fa",
+ "source_sha_declared": "96f32a75b1290336686d491bf6b82e1c4cafa140",
+ "build_flags_declared": "LLVM=19;CFLAGS=-O3;LOW_MEM=1;JOBS=2;GOOGLE_BAKE=0",
+ "mail_reuse_home": null,
+ "log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture-bots.jsonl",
+ "log_sha256": "ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543",
+ "log_bytes": 556794,
+ "port": 3892,
+ "agents": 10,
+ "secs": 5,
+ "rooms": 1,
+ "home": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-final-20261019/candidate-warm/tmp/bp-perfload-qvnjf8/home",
+ "phases": [
+  {
+   "name": "open",
+   "displayed_open_ms": [
+    127.4957249999934,
+    114.85711399999855,
+    114.40325600000506,
+    129.64826499999617,
+    115.43501500001003,
+    111.95134800000233,
+    129.60485099999642,
+    120.31952000000456,
+    96.02365700001246,
+    163.90762999998697
+   ],
+   "displayed_input_ms": [],
+   "mail_body_cache": {
+    "frames": 127,
+    "hits": 0
+   },
+   "what": "streaming; 10 real threads opened one after another (ctrl+k, title, Return)",
+   "wall_s": 17.043,
+   "cpu_pct": 169.45373467112597,
+   "rss_max_mb": 205.16796875,
+   "hub_busy_pct": 55.278313677176016,
+   "opens_ms": [
+    125.916,
+    106.692,
+    107.68,
+    119.628,
+    105.463,
+    100.854,
+    124.558,
+    103.935,
+    88.496,
+    143.558
+   ],
+   "key_to_frame": {
+    "n": 30,
+    "p50": 106.692,
+    "p99": 221.623,
+    "max": 221.623
+   },
+   "notes": [],
+   "streaming_deltas": {
+    "t1792413318-1574": 170,
+    "t1792413318-1575": 168,
+    "t1792413318-1576": 168,
+    "t1792413318-1577": 135,
+    "t1792413318-1578": 136,
+    "t1792413318-1579": 172,
+    "t1792413318-1580": 168,
+    "t1792413318-1581": 168,
+    "t1792413318-1582": 137,
+    "t1792413318-1583": 135
+   },
+   "stream_windows": {
+    "t1792413318-1574": {
+     "count": 170,
+     "longest_gap_ms": 700.9091929999995,
+     "sustained": true
+    },
+    "t1792413318-1575": {
+     "count": 168,
+     "longest_gap_ms": 686.6945779999951,
+     "sustained": true
+    },
+    "t1792413318-1576": {
+     "count": 168,
+     "longest_gap_ms": 700.8309949999966,
+     "sustained": true
+    },
+    "t1792413318-1577": {
+     "count": 135,
+     "longest_gap_ms": 685.4987070000061,
+     "sustained": true
+    },
+    "t1792413318-1578": {
+     "count": 136,
+     "longest_gap_ms": 611.2601529999956,
+     "sustained": true
+    },
+    "t1792413318-1579": {
+     "count": 172,
+     "longest_gap_ms": 664.8187020000041,
+     "sustained": true
+    },
+    "t1792413318-1580": {
+     "count": 168,
+     "longest_gap_ms": 669.4433879999997,
+     "sustained": true
+    },
+    "t1792413318-1581": {
+     "count": 168,
+     "longest_gap_ms": 632.6587390000059,
+     "sustained": true
+    },
+    "t1792413318-1582": {
+     "count": 137,
+     "longest_gap_ms": 620.6472829999984,
+     "sustained": true
+    },
+    "t1792413318-1583": {
+     "count": 135,
+     "longest_gap_ms": 591.7411239999929,
+     "sustained": true
+    }
+   },
+   "stats": {
+    "ui.frame": {
+     "n": 127,
+     "p50": 27.551,
+     "p99": 210.686,
+     "max": 219.886,
+     "sum": 6386.935999999999,
+     "over8": 127,
+     "over16": 127
+    },
+    "ui.memo": {
+     "n": 127,
+     "p50": 0.396,
+     "p99": 60.225,
+     "max": 71.213,
+     "sum": 565.5920000000002,
+     "over8": 10,
+     "over16": 10
+    },
+    "ui.layout": {
+     "n": 127,
+     "p50": 14.785,
+     "p99": 27.922,
+     "max": 28.025,
+     "sum": 2088.784,
+     "over8": 127,
+     "over16": 45
+    },
+    "ui.raster": {
+     "n": 127,
+     "p50": 7.776,
+     "p99": 182.177,
+     "max": 190.896,
+     "sum": 3395.766,
+     "over8": 57,
+     "over16": 33
+    },
+    "ui.present": {
+     "n": 165,
+     "p50": 0.664,
+     "p99": 18.736,
+     "max": 21.011,
+     "sum": 357.3470000000001,
+     "over8": 10,
+     "over16": 3
+    },
+    "ui.layout.mm.hit": {
+     "n": 23,
+     "p50": 21.359,
+     "p99": 28.055,
+     "max": 28.055,
+     "sum": 488.211,
+     "over8": 23,
+     "over16": 22
+    },
+    "ui.layout.mm.miss": {
+     "n": 104,
+     "p50": 14.521,
+     "p99": 27.87,
+     "max": 27.946,
+     "sum": 1602.8009999999997,
+     "over8": 104,
+     "over16": 23
+    },
+    "ui.mail.body.hit": {
+     "n": 0,
+     "p50": null,
+     "p99": null,
+     "max": null,
+     "sum": 0,
+     "over8": 0,
+     "over16": 0
+    },
+    "ui.msg.blink": {
+     "n": 42,
+     "p50": 1.52,
+     "p99": 68.268,
+     "max": 68.268,
+     "sum": 134.78199999999995,
+     "over8": 1,
+     "over16": 1
+    },
+    "ui.msg.hub": {
+     "n": 2200,
+     "p50": 1.281,
+     "p99": 3.118,
+     "max": 4.34,
+     "sum": 3097.0339999999987,
+     "over8": 0,
+     "over16": 0
+    },
+    "ui.input": {
+     "n": 30,
+     "p50": 105.215,
+     "p99": 220.602,
+     "max": 220.602,
+     "sum": 3810.0469999999996,
+     "over8": 30,
+     "over16": 30
+    },
+    "ui.hub": {
+     "n": 61,
+     "p50": 129.084,
+     "p99": 302.898,
+     "max": 302.898,
+     "sum": 7050.694999999998,
+     "over8": 61,
+     "over16": 61
+    },
+    "hub.agent_line": {
+     "n": 4362,
+     "p50": 0.457,
+     "p99": 10.612,
+     "max": 354.091,
+     "sum": 5321.832000000021,
+     "over8": 74,
+     "over16": 19
+    },
+    "hub.mcp": {
+     "n": 0,
+     "p50": null,
+     "p99": null,
+     "max": null,
+     "sum": 0,
+     "over8": 0,
+     "over16": 0
+    },
+    "hub.rpc": {
+     "n": 24,
+     "p50": 0.536,
+     "p99": 12.913,
+     "max": 12.913,
+     "sum": 42.559,
+     "over8": 2,
+     "over16": 0
+    },
+    "hub.*": {
+     "n": 26528,
+     "p50": 0.006,
+     "p99": 5.296,
+     "max": 354.091,
+     "sum": 9421.083000001108,
+     "over8": 133,
+     "over16": 40
+    }
+   },
+   "top": [
+    {
+     "name": "ui.hub",
+     "n": 61,
+     "sum_ms": 7050.7,
+     "mean_ms": 115.59,
+     "max_ms": 302.9
+    },
+    {
+     "name": "ui.frame",
+     "n": 127,
+     "sum_ms": 6386.9,
+     "mean_ms": 50.29,
+     "max_ms": 219.9
+    },
+    {
+     "name": "ui.msg.frame",
+     "n": 530,
+     "sum_ms": 6385,
+     "mean_ms": 12.05,
+     "max_ms": 231.5
+    },
+    {
+     "name": "hub.agent_line",
+     "n": 4362,
+     "sum_ms": 5321.8,
+     "mean_ms": 1.22,
+     "max_ms": 354.1
+    },
+    {
+     "name": "ui.input",
+     "n": 30,
+     "sum_ms": 3810,
+     "mean_ms": 127,
+     "max_ms": 220.6
+    },
+    {
+     "name": "hub.step.commit",
+     "n": 4396,
+     "sum_ms": 3539.6,
+     "mean_ms": 0.81,
+     "max_ms": 353.2
+    },
+    {
+     "name": "ui.raster",
+     "n": 127,
+     "sum_ms": 3395.8,
+     "mean_ms": 26.74,
+     "max_ms": 190.9
+    },
+    {
+     "name": "ui.msg.hub",
+     "n": 2200,
+     "sum_ms": 3097,
+     "mean_ms": 1.41,
+     "max_ms": 4.3
+    },
+    {
+     "name": "ui.draw",
+     "n": 127,
+     "sum_ms": 2228.3,
+     "mean_ms": 17.55,
+     "max_ms": 174.2
+    },
+    {
+     "name": "ui.layout",
+     "n": 127,
+     "sum_ms": 2088.8,
+     "mean_ms": 16.45,
+     "max_ms": 28
+    },
+    {
+     "name": "ui.layout.mm.miss",
+     "n": 104,
+     "sum_ms": 1602.8,
+     "mean_ms": 15.41,
+     "max_ms": 27.9
+    },
+    {
+     "name": "ui.plan",
+     "n": 127,
+     "sum_ms": 1072,
+     "mean_ms": 8.44,
+     "max_ms": 17.6
+    },
+    {
+     "name": "ui.p.front",
+     "n": 127,
+     "sum_ms": 659.7,
+     "mean_ms": 5.19,
+     "max_ms": 8.2
+    },
+    {
+     "name": "ui.msg.tick",
+     "n": 18,
+     "sum_ms": 565.7,
+     "mean_ms": 31.43,
+     "max_ms": 73.5
+    },
+    {
+     "name": "ui.memo",
+     "n": 127,
+     "sum_ms": 565.6,
+     "mean_ms": 4.45,
+     "max_ms": 71.2
+    },
+    {
+     "name": "ui.layout.mm.hit",
+     "n": 23,
+     "sum_ms": 488.2,
+     "mean_ms": 21.23,
+     "max_ms": 28.1
+    },
+    {
+     "name": "ui.present",
+     "n": 165,
+     "sum_ms": 357.3,
+     "mean_ms": 2.17,
+     "max_ms": 21
+    },
+    {
+     "name": "hub.step.outs",
+     "n": 4396,
+     "sum_ms": 342,
+     "mean_ms": 0.08,
+     "max_ms": 2.2
+    },
+    {
+     "name": "ui.p.tiles",
+     "n": 127,
+     "sum_ms": 333.4,
+     "mean_ms": 2.63,
+     "max_ms": 9.6
+    },
+    {
+     "name": "ui.win.fill",
+     "n": 165,
+     "sum_ms": 264.1,
+     "mean_ms": 1.6,
+     "max_ms": 18.6
+    },
+    {
+     "name": "ui.msg.blink",
+     "n": 42,
+     "sum_ms": 134.8,
+     "mean_ms": 3.21,
+     "max_ms": 68.3
+    },
+    {
+     "name": "ui.fill",
+     "n": 127,
+     "sum_ms": 94.7,
+     "mean_ms": 0.75,
+     "max_ms": 4.8
+    },
+    {
+     "name": "hub.step.far",
+     "n": 4396,
+     "sum_ms": 85.7,
+     "mean_ms": 0.02,
+     "max_ms": 1
+    },
+    {
+     "name": "hub.kicad_health",
+     "n": 2,
+     "sum_ms": 48.2,
+     "mean_ms": 24.1,
+     "max_ms": 45.3
+    },
+    {
+     "name": "ui.msg.win",
+     "n": 30,
+     "sum_ms": 48.1,
+     "mean_ms": 1.6,
+     "max_ms": 2.9
+    }
+   ],
+   "checks": {
+    "all ten displayed opens observed": true,
+    "displayed open<=50ms": false,
+    "all agents streaming": true,
+    "all ten opens sampled": true,
+    "frame p99<=8ms": false,
+    "open<=50ms": false,
+    "agent_line p99<=2ms": false
+   },
+   "perf_json_before": {
+    "ui.hub": {
+     "name": "ui.hub",
+     "kind": "span",
+     "n": 287,
+     "sum": 26025647,
+     "mean": 90681,
+     "p50": 131071,
+     "p90": 262143,
+     "p99": 262143,
+     "max": 298673,
+     "last": 197575
+    },
+    "ui.msg.frame": {
+     "name": "ui.msg.frame",
+     "kind": "span",
+     "n": 1561,
+     "sum": 22534719,
+     "mean": 14436,
+     "p50": 127,
+     "p90": 65535,
+     "p99": 251143,
+     "max": 251143,
+     "last": 101
+    },
+    "ui.frame": {
+     "name": "ui.frame",
+     "kind": "span",
+     "n": 485,
+     "sum": 22355372,
+     "mean": 46093,
+     "p50": 65535,
+     "p90": 131071,
+     "p99": 225260,
+     "max": 225260,
+     "last": 29623
+    },
+    "hub.agent_line": {
+     "name": "hub.agent_line",
+     "kind": "span",
+     "n": 12916,
+     "sum": 18942037,
+     "mean": 1466,
+     "p50": 511,
+     "p90": 1023,
+     "p99": 16383,
+     "max": 413959,
+     "last": 12475
+    },
+    "hub.step.commit": {
+     "name": "hub.step.commit",
+     "kind": "span",
+     "n": 13047,
+     "sum": 13910979,
+     "mean": 1066,
+     "p50": 7,
+     "p90": 15,
+     "p99": 16383,
+     "max": 413318,
+     "last": 11396
+    },
+    "ui.raster": {
+     "name": "ui.raster",
+     "kind": "span",
+     "n": 485,
+     "sum": 13480160,
+     "mean": 27794,
+     "p50": 16383,
+     "p90": 65535,
+     "p99": 179717,
+     "max": 179717,
+     "last": 13129
+    },
+    "ui.draw": {
+     "name": "ui.draw",
+     "kind": "span",
+     "n": 485,
+     "sum": 9307975,
+     "mean": 19191,
+     "p50": 2047,
+     "p90": 65535,
+     "p99": 164680,
+     "max": 164680,
+     "last": 864
+    },
+    "ui.input": {
+     "name": "ui.input",
+     "kind": "span",
+     "n": 74,
+     "sum": 7437273,
+     "mean": 100503,
+     "p50": 131071,
+     "p90": 218559,
+     "p99": 218559,
+     "max": 218559,
+     "last": 98376
+    },
+    "ui.msg.hub": {
+     "name": "ui.msg.hub",
+     "kind": "span",
+     "n": 6400,
+     "sum": 7299848,
+     "mean": 1140,
+     "p50": 1023,
+     "p90": 2047,
+     "p99": 3991,
+     "max": 3991,
+     "last": 2312
+    },
+    "ui.layout": {
+     "name": "ui.layout",
+     "kind": "span",
+     "n": 485,
+     "sum": 6264621,
+     "mean": 12916,
+     "p50": 16383,
+     "p90": 32767,
+     "p99": 32767,
+     "max": 46345,
+     "last": 13918
+    },
+    "ui.layout.mm.miss": {
+     "name": "ui.layout.mm.miss",
+     "kind": "span",
+     "n": 395,
+     "sum": 5392756,
+     "mean": 13652,
+     "p50": 16383,
+     "p90": 32767,
+     "p99": 46373,
+     "max": 46373,
+     "last": 13929
+    },
+    "ui.plan": {
+     "name": "ui.plan",
+     "kind": "span",
+     "n": 485,
+     "sum": 3662199,
+     "mean": 7550,
+     "p50": 8191,
+     "p90": 16383,
+     "p99": 21628,
+     "max": 21628,
+     "last": 11184
+    },
+    "ui.p.tiles": {
+     "name": "ui.p.tiles",
+     "kind": "span",
+     "n": 485,
+     "sum": 1950563,
+     "mean": 4021,
+     "p50": 4095,
+     "p90": 15761,
+     "p99": 15761,
+     "max": 15761,
+     "last": 5871
+    },
+    "ui.msg.tick": {
+     "name": "ui.msg.tick",
+     "kind": "span",
+     "n": 77,
+     "sum": 1541231,
+     "mean": 20015,
+     "p50": 16383,
+     "p90": 65535,
+     "p99": 200221,
+     "max": 200221,
+     "last": 3673
+    },
+    "ui.p.front": {
+     "name": "ui.p.front",
+     "kind": "span",
+     "n": 485,
+     "sum": 1491100,
+     "mean": 3074,
+     "p50": 4095,
+     "p90": 6632,
+     "p99": 6632,
+     "max": 6632,
+     "last": 4908
+    },
+    "ui.present": {
+     "name": "ui.present",
+     "kind": "span",
+     "n": 626,
+     "sum": 1479260,
+     "mean": 2363,
+     "p50": 1023,
+     "p90": 8191,
+     "p99": 16383,
+     "max": 17716,
+     "last": 787
+    },
+    "ui.msg.blink": {
+     "name": "ui.msg.blink",
+     "kind": "span",
+     "n": 140,
+     "sum": 1233953,
+     "mean": 8813,
+     "p50": 2047,
+     "p90": 16383,
+     "p99": 182274,
+     "max": 182274,
+     "last": 84
+    },
+    "ui.win.fill": {
+     "name": "ui.win.fill",
+     "kind": "span",
+     "n": 626,
+     "sum": 1137034,
+     "mean": 1816,
+     "p50": 511,
+     "p90": 8191,
+     "p99": 16168,
+     "max": 16168,
+     "last": 407
+    },
+    "ui.memo": {
+     "name": "ui.memo",
+     "kind": "span",
+     "n": 485,
+     "sum": 1108815,
+     "mean": 2286,
+     "p50": 2047,
+     "p90": 4095,
+     "p99": 59588,
+     "max": 59588,
+     "last": 1791
+    },
+    "ui.layout.mm.hit": {
+     "name": "ui.layout.mm.hit",
+     "kind": "span",
+     "n": 90,
+     "sum": 879289,
+     "mean": 9769,
+     "p50": 16383,
+     "p90": 21693,
+     "p99": 21693,
+     "max": 21693,
+     "last": 20417
+    },
+    "hub.step.outs": {
+     "name": "hub.step.outs",
+     "kind": "span",
+     "n": 13047,
+     "sum": 874251,
+     "mean": 67,
+     "p50": 7,
+     "p90": 255,
+     "p99": 511,
+     "max": 2622,
+     "last": 94
+    },
+    "ui.fill": {
+     "name": "ui.fill",
+     "kind": "span",
+     "n": 485,
+     "sum": 507221,
+     "mean": 1045,
+     "p50": 1023,
+     "p90": 4095,
+     "p99": 4095,
+     "max": 4874,
+     "last": 1071
+    },
+    "hub.rpc": {
+     "name": "hub.rpc",
+     "kind": "span",
+     "n": 88,
+     "sum": 425926,
+     "mean": 4840,
+     "p50": 1023,
+     "p90": 16383,
+     "p99": 187950,
+     "max": 187950,
+     "last": 21030
+    },
+    "ui.cats": {
+     "name": "ui.cats",
+     "kind": "span",
+     "n": 42,
+     "sum": 344420,
+     "mean": 8200,
+     "p50": 2047,
+     "p90": 22210,
+     "p99": 22210,
+     "max": 22210,
+     "last": 1765
+    },
+    "hub.step.far": {
+     "name": "hub.step.far",
+     "kind": "span",
+     "n": 13047,
+     "sum": 223170,
+     "mean": 17,
+     "p50": 7,
+     "p90": 31,
+     "p99": 255,
+     "max": 1132,
+     "last": 227
+    },
+    "ui.win.put": {
+     "name": "ui.win.put",
+     "kind": "span",
+     "n": 626,
+     "sum": 189834,
+     "mean": 303,
+     "p50": 1,
+     "p90": 1023,
+     "p99": 2047,
+     "max": 2849,
+     "last": 31
+    },
+    "ui.p.slide": {
+     "name": "ui.p.slide",
+     "kind": "span",
+     "n": 485,
+     "sum": 107226,
+     "mean": 221,
+     "p50": 255,
+     "p90": 435,
+     "p99": 435,
+     "max": 435,
+     "last": 230
+    },
+    "ui.glyphs": {
+     "name": "ui.glyphs",
+     "kind": "span",
+     "n": 2,
+     "sum": 102089,
+     "mean": 51044,
+     "p50": 61965,
+     "p90": 61965,
+     "p99": 61965,
+     "max": 61965,
+     "last": 40124
+    },
+    "hub.recover": {
+     "name": "hub.recover",
+     "kind": "span",
+     "n": 1,
+     "sum": 97845,
+     "mean": 97845,
+     "p50": 97845,
+     "p90": 97845,
+     "p99": 97845,
+     "max": 97845,
+     "last": 97845
+    },
+    "ui.msg.win": {
+     "name": "ui.msg.win",
+     "kind": "span",
+     "n": 74,
+     "sum": 96501,
+     "mean": 1304,
+     "p50": 2047,
+     "p90": 2047,
+     "p99": 2739,
+     "max": 2739,
+     "last": 1632
+    },
+    "boot.replay": {
+     "name": "boot.replay",
+     "kind": "span",
+     "n": 1,
+     "sum": 94051,
+     "mean": 94051,
+     "p50": 94051,
+     "p90": 94051,
+     "p99": 94051,
+     "max": 94051,
+     "last": 94051
+    },
+    "hub.kicad_health": {
+     "name": "hub.kicad_health",
+     "kind": "span",
+     "n": 7,
+     "sum": 83179,
+     "mean": 11882,
+     "p50": 16383,
+     "p90": 29056,
+     "p99": 29056,
+     "max": 29056,
+     "last": 29056
+    },
+    "ui.glyphs.memo": {
+     "name": "ui.glyphs.memo",
+     "kind": "span",
+     "n": 2,
+     "sum": 79730,
+     "mean": 39865,
+     "p50": 32767,
+     "p90": 48764,
+     "p99": 48764,
+     "max": 48764,
+     "last": 30966
+    },
+    "ui.blink": {
+     "name": "ui.blink",
+     "kind": "span",
+     "n": 99,
+     "sum": 65399,
+     "mean": 660,
+     "p50": 511,
+     "p90": 2047,
+     "p99": 2991,
+     "max": 2991,
+     "last": 428
+    },
+    "hub.step.pend": {
+     "name": "hub.step.pend",
+     "kind": "span",
+     "n": 13048,
+     "sum": 50480,
+     "mean": 3,
+     "p50": 3,
+     "p90": 7,
+     "p99": 63,
+     "max": 498,
+     "last": 31
+    },
+    "hub.step.busy": {
+     "name": "hub.step.busy",
+     "kind": "span",
+     "n": 13047,
+     "sum": 47177,
+     "mean": 3,
+     "p50": 3,
+     "p90": 7,
+     "p99": 31,
+     "max": 268,
+     "last": 6
+    },
+    "hub.tick": {
+     "name": "hub.tick",
+     "kind": "span",
+     "n": 2,
+     "sum": 41127,
+     "mean": 20563,
+     "p50": 4095,
+     "p90": 38982,
+     "p99": 38982,
+     "max": 38982,
+     "last": 2145
+    },
+    "ui.p.pics": {
+     "name": "ui.p.pics",
+     "kind": "span",
+     "n": 485,
+     "sum": 36123,
+     "mean": 74,
+     "p50": 127,
+     "p90": 127,
+     "p99": 171,
+     "max": 171,
+     "last": 79
+    },
+    "ui.p.theme": {
+     "name": "ui.p.theme",
+     "kind": "span",
+     "n": 485,
+     "sum": 34791,
+     "mean": 71,
+     "p50": 127,
+     "p90": 127,
+     "p99": 255,
+     "max": 288,
+     "last": 84
+    },
+    "ui.glyphs.layout": {
+     "name": "ui.glyphs.layout",
+     "kind": "span",
+     "n": 2,
+     "sum": 12061,
+     "mean": 6030,
+     "p50": 6200,
+     "p90": 6200,
+     "p99": 6200,
+     "max": 6200,
+     "last": 5861
+    },
+    "hub.bot_tick": {
+     "name": "hub.bot_tick",
+     "kind": "span",
+     "n": 2,
+     "sum": 11290,
+     "mean": 5645,
+     "p50": 1023,
+     "p90": 10678,
+     "p99": 10678,
+     "max": 10678,
+     "last": 612
+    },
+    "boot.read": {
+     "name": "boot.read",
+     "kind": "span",
+     "n": 1,
+     "sum": 10620,
+     "mean": 10620,
+     "p50": 10620,
+     "p90": 10620,
+     "p99": 10620,
+     "max": 10620,
+     "last": 10620
+    },
+    "hub.beat": {
+     "name": "hub.beat",
+     "kind": "span",
+     "n": 12,
+     "sum": 6077,
+     "mean": 506,
+     "p50": 511,
+     "p90": 731,
+     "p99": 731,
+     "max": 731,
+     "last": 731
+    },
+    "ui.glyphs.fill": {
+     "name": "ui.glyphs.fill",
+     "kind": "span",
+     "n": 2,
+     "sum": 5341,
+     "mean": 2670,
+     "p50": 2047,
+     "p90": 4248,
+     "p99": 4248,
+     "max": 4248,
+     "last": 1093
+    },
+    "hub.drained": {
+     "name": "hub.drained",
+     "kind": "span",
+     "n": 398,
+     "sum": 4959,
+     "mean": 12,
+     "p50": 15,
+     "p90": 31,
+     "p99": 53,
+     "max": 53,
+     "last": 6
+    },
+    "ui.win.flush": {
+     "name": "ui.win.flush",
+     "kind": "span",
+     "n": 626,
+     "sum": 4571,
+     "mean": 7,
+     "p50": 7,
+     "p90": 31,
+     "p99": 63,
+     "max": 64,
+     "last": 3
+    },
+    "hub.join_here": {
+     "name": "hub.join_here",
+     "kind": "span",
+     "n": 1,
+     "sum": 3756,
+     "mean": 3756,
+     "p50": 3756,
+     "p90": 3756,
+     "p99": 3756,
+     "max": 3756,
+     "last": 3756
+    },
+    "hub.join": {
+     "name": "hub.join",
+     "kind": "span",
+     "n": 1,
+     "sum": 2546,
+     "mean": 2546,
+     "p50": 2546,
+     "p90": 2546,
+     "p99": 2546,
+     "max": 2546,
+     "last": 2546
+    },
+    "hub.release": {
+     "name": "hub.release",
+     "kind": "span",
+     "n": 12,
+     "sum": 2475,
+     "mean": 206,
+     "p50": 255,
+     "p90": 255,
+     "p99": 293,
+     "max": 293,
+     "last": 213
+    },
+    "hub.machines": {
+     "name": "hub.machines",
+     "kind": "span",
+     "n": 1,
+     "sum": 1945,
+     "mean": 1945,
+     "p50": 1945,
+     "p90": 1945,
+     "p99": 1945,
+     "max": 1945,
+     "last": 1945
+    },
+    "hub.models": {
+     "name": "hub.models",
+     "kind": "span",
+     "n": 1,
+     "sum": 1864,
+     "mean": 1864,
+     "p50": 1864,
+     "p90": 1864,
+     "p99": 1864,
+     "max": 1864,
+     "last": 1864
+    },
+    "hub.heart": {
+     "name": "hub.heart",
+     "kind": "span",
+     "n": 4,
+     "sum": 1559,
+     "mean": 389,
+     "p50": 493,
+     "p90": 493,
+     "p99": 493,
+     "max": 493,
+     "last": 335
+    },
+    "ui.glyphs.wrap": {
+     "name": "ui.glyphs.wrap",
+     "kind": "span",
+     "n": 2,
+     "sum": 1437,
+     "mean": 718,
+     "p50": 786,
+     "p90": 786,
+     "p99": 786,
+     "max": 786,
+     "last": 651
+    },
+    "hub.commit": {
+     "name": "hub.commit",
+     "kind": "span",
+     "n": 1,
+     "sum": 730,
+     "mean": 730,
+     "p50": 730,
+     "p90": 730,
+     "p99": 730,
+     "max": 730,
+     "last": 730
+    },
+    "hub.kicad_probe": {
+     "name": "hub.kicad_probe",
+     "kind": "span",
+     "n": 13,
+     "sum": 724,
+     "mean": 55,
+     "p50": 63,
+     "p90": 79,
+     "p99": 79,
+     "max": 79,
+     "last": 59
+    },
+    "hub.silence": {
+     "name": "hub.silence",
+     "kind": "span",
+     "n": 2,
+     "sum": 711,
+     "mean": 355,
+     "p50": 63,
+     "p90": 653,
+     "p99": 653,
+     "max": 653,
+     "last": 653
+    },
+    "ui.msg.hub_state": {
+     "name": "ui.msg.hub_state",
+     "kind": "span",
+     "n": 1,
+     "sum": 565,
+     "mean": 565,
+     "p50": 565,
+     "p90": 565,
+     "p99": 565,
+     "max": 565,
+     "last": 565
+    },
+    "hub.claude_pid": {
+     "name": "hub.claude_pid",
+     "kind": "span",
+     "n": 12,
+     "sum": 454,
+     "mean": 37,
+     "p50": 63,
+     "p90": 63,
+     "p99": 79,
+     "max": 79,
+     "last": 39
+    },
+    "hub.join_more": {
+     "name": "hub.join_more",
+     "kind": "span",
+     "n": 3,
+     "sum": 373,
+     "mean": 124,
+     "p50": 63,
+     "p90": 316,
+     "p99": 316,
+     "max": 316,
+     "last": 35
+    },
+    "hub.push": {
+     "name": "hub.push",
+     "kind": "span",
+     "n": 23,
+     "sum": 359,
+     "mean": 15,
+     "p50": 15,
+     "p90": 30,
+     "p99": 30,
+     "max": 30,
+     "last": 18
+    },
+    "ui.win.sync": {
+     "name": "ui.win.sync",
+     "kind": "span",
+     "n": 626,
+     "sum": 178,
+     "mean": 0,
+     "p50": 0,
+     "p90": 1,
+     "p99": 1,
+     "max": 24,
+     "last": 1
+    },
+    "hub.boat_threads": {
+     "name": "hub.boat_threads",
+     "kind": "span",
+     "n": 1,
+     "sum": 162,
+     "mean": 162,
+     "p50": 162,
+     "p90": 162,
+     "p99": 162,
+     "max": 162,
+     "last": 162
+    },
+    "hub.auto_view": {
+     "name": "hub.auto_view",
+     "kind": "span",
+     "n": 12,
+     "sum": 151,
+     "mean": 12,
+     "p50": 7,
+     "p90": 47,
+     "p99": 47,
+     "max": 47,
+     "last": 43
+    },
+    "hub.far_feed": {
+     "name": "hub.far_feed",
+     "kind": "span",
+     "n": 1,
+     "sum": 36,
+     "mean": 36,
+     "p50": 36,
+     "p90": 36,
+     "p99": 36,
+     "max": 36,
+     "last": 36
+    },
+    "hub.uber_do": {
+     "name": "hub.uber_do",
+     "kind": "span",
+     "n": 1,
+     "sum": 28,
+     "mean": 28,
+     "p50": 28,
+     "p90": 28,
+     "p99": 28,
+     "max": 28,
+     "last": 28
+    },
+    "hub.cef_near": {
+     "name": "hub.cef_near",
+     "kind": "span",
+     "n": 1,
+     "sum": 22,
+     "mean": 22,
+     "p50": 22,
+     "p90": 22,
+     "p99": 22,
+     "max": 22,
+     "last": 22
+    },
+    "net.write.bytes": {
+     "name": "net.write.bytes",
+     "kind": "value",
+     "n": 6399,
+     "sum": 1355816,
+     "mean": 211,
+     "p50": 255,
+     "p90": 255,
+     "p99": 1023,
+     "max": 1740,
+     "last": 200
+    },
+    "ui.p.k": {
+     "name": "ui.p.k",
+     "kind": "value",
+     "n": 485,
+     "sum": 432011,
+     "mean": 890,
+     "p50": 1023,
+     "p90": 1023,
+     "p99": 1202,
+     "max": 1202,
+     "last": 829
+    },
+    "ui.ix.n": {
+     "name": "ui.ix.n",
+     "kind": "value",
+     "n": 485,
+     "sum": 429131,
+     "mean": 884,
+     "p50": 1023,
+     "p90": 1295,
+     "p99": 1295,
+     "max": 1295,
+     "last": 1295
+    },
+    "ui.win.kpx": {
+     "name": "ui.win.kpx",
+     "kind": "value",
+     "n": 626,
+     "sum": 136811,
+     "mean": 218,
+     "p50": 0,
+     "p90": 1023,
+     "p99": 1260,
+     "max": 1260,
+     "last": 8
+    },
+    "ui.ops": {
+     "name": "ui.ops",
+     "kind": "value",
+     "n": 485,
+     "sum": 83709,
+     "mean": 172,
+     "p50": 206,
+     "p90": 206,
+     "p99": 206,
+     "max": 206,
+     "last": 160
+    },
+    "ui.drawn": {
+     "name": "ui.drawn",
+     "kind": "value",
+     "n": 485,
+     "sum": 34710,
+     "mean": 71,
+     "p50": 3,
+     "p90": 511,
+     "p99": 511,
+     "max": 1024,
+     "last": 3
+    },
+    "ui.hub.t.delta": {
+     "name": "ui.hub.t.delta",
+     "kind": "value",
+     "n": 5144,
+     "sum": 5144,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.win.rects": {
+     "name": "ui.win.rects",
+     "kind": "value",
+     "n": 626,
+     "sum": 2920,
+     "mean": 4,
+     "p50": 0,
+     "p90": 15,
+     "p99": 54,
+     "max": 54,
+     "last": 2
+    },
+    "ui.hub.t.changes": {
+     "name": "ui.hub.t.changes",
+     "kind": "value",
+     "n": 820,
+     "sum": 820,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.delta_end": {
+     "name": "ui.hub.t.delta_end",
+     "kind": "value",
+     "n": 374,
+     "sum": 374,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.mm.hit": {
+     "name": "ui.mm.hit",
+     "kind": "value",
+     "n": 485,
+     "sum": 90,
+     "mean": 0,
+     "p50": 0,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 0
+    },
+    "ui.hub.t.reply": {
+     "name": "ui.hub.t.reply",
+     "kind": "value",
+     "n": 28,
+     "sum": 28,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.info": {
+     "name": "ui.hub.t.info",
+     "kind": "value",
+     "n": 27,
+     "sum": 27,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.hb": {
+     "name": "ui.hub.t.hb",
+     "kind": "value",
+     "n": 4,
+     "sum": 4,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.view": {
+     "name": "ui.hub.t.view",
+     "kind": "value",
+     "n": 2,
+     "sum": 2,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.live": {
+     "name": "ui.hub.t.live",
+     "kind": "value",
+     "n": 1,
+     "sum": 1,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.mail.body.hit": {
+     "name": "ui.mail.body.hit",
+     "kind": "value",
+     "n": 485,
+     "sum": 0,
+     "mean": 0,
+     "p50": 0,
+     "p90": 0,
+     "p99": 0,
+     "max": 0,
+     "last": 0
+    },
+    "hub.agents": {
+     "name": "hub.agents",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 12,
+     "mean": 6,
+     "p50": 0,
+     "p90": 12,
+     "p99": 12,
+     "max": 12,
+     "last": 12
+    },
+    "hub.inherited": {
+     "name": "hub.inherited",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 0,
+     "mean": 0,
+     "p50": 0,
+     "p90": 0,
+     "p99": 0,
+     "max": 0,
+     "last": 0
+    },
+    "hub.busy": {
+     "name": "hub.busy",
+     "kind": "gauge",
+     "n": 140,
+     "sum": 1321,
+     "mean": 9,
+     "p50": 12,
+     "p90": 12,
+     "p99": 12,
+     "max": 12,
+     "last": 12
+    },
+    "hub.clients": {
+     "name": "hub.clients",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 3,
+     "mean": 1,
+     "p50": 1,
+     "p90": 2,
+     "p99": 2,
+     "max": 2,
+     "last": 2
+    },
+    "hub.changes": {
+     "name": "hub.changes",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 4704,
+     "mean": 2352,
+     "p50": 2047,
+     "p90": 3155,
+     "p99": 3155,
+     "max": 3155,
+     "last": 3155
+    },
+    "proc.rss_kb": {
+     "name": "proc.rss_kb",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 204124,
+     "mean": 204124,
+     "p50": 204124,
+     "p90": 204124,
+     "p99": 204124,
+     "max": 204124,
+     "last": 204124
+    },
+    "proc.peak_kb": {
+     "name": "proc.peak_kb",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 203316,
+     "mean": 203316,
+     "p50": 203316,
+     "p90": 203316,
+     "p99": 203316,
+     "max": 203316,
+     "last": 203316
+    },
+    "proc.cpu_ms": {
+     "name": "proc.cpu_ms",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 109339,
+     "mean": 109339,
+     "p50": 109339,
+     "p90": 109339,
+     "p99": 109339,
+     "max": 109339,
+     "last": 109339
+    },
+    "proc.up_ms": {
+     "name": "proc.up_ms",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 63271,
+     "mean": 63271,
+     "p50": 63271,
+     "p90": 63271,
+     "p99": 63271,
+     "max": 63271,
+     "last": 63271
+    }
+   },
+   "perf_json_after": {
+    "ui.hub": {
+     "name": "ui.hub",
+     "kind": "span",
+     "n": 348,
+     "sum": 33076342,
+     "mean": 95046,
+     "p50": 131071,
+     "p90": 262143,
+     "p99": 262143,
+     "max": 302898,
+     "last": 130092
+    },
+    "ui.msg.frame": {
+     "name": "ui.msg.frame",
+     "kind": "span",
+     "n": 2091,
+     "sum": 28919767,
+     "mean": 13830,
+     "p50": 127,
+     "p90": 65535,
+     "p99": 251143,
+     "max": 251143,
+     "last": 82
+    },
+    "ui.frame": {
+     "name": "ui.frame",
+     "kind": "span",
+     "n": 612,
+     "sum": 28742308,
+     "mean": 46964,
+     "p50": 32767,
+     "p90": 131071,
+     "p99": 225260,
+     "max": 225260,
+     "last": 25954
+    },
+    "hub.agent_line": {
+     "name": "hub.agent_line",
+     "kind": "span",
+     "n": 17279,
+     "sum": 24592942,
+     "mean": 1423,
+     "p50": 511,
+     "p90": 1023,
+     "p99": 16383,
+     "max": 413959,
+     "last": 569
+    },
+    "hub.step.commit": {
+     "name": "hub.step.commit",
+     "kind": "span",
+     "n": 17443,
+     "sum": 17450566,
+     "mean": 1000,
+     "p50": 7,
+     "p90": 15,
+     "p99": 16383,
+     "max": 413318,
+     "last": 7
+    },
+    "ui.raster": {
+     "name": "ui.raster",
+     "kind": "span",
+     "n": 612,
+     "sum": 16875926,
+     "mean": 27575,
+     "p50": 8191,
+     "p90": 65535,
+     "p99": 190896,
+     "max": 190896,
+     "last": 8951
+    },
+    "ui.draw": {
+     "name": "ui.draw",
+     "kind": "span",
+     "n": 612,
+     "sum": 11536248,
+     "mean": 18850,
+     "p50": 511,
+     "p90": 65535,
+     "p99": 174222,
+     "max": 174222,
+     "last": 11
+    },
+    "ui.input": {
+     "name": "ui.input",
+     "kind": "span",
+     "n": 104,
+     "sum": 11247320,
+     "mean": 108147,
+     "p50": 131071,
+     "p90": 220602,
+     "p99": 220602,
+     "max": 220602,
+     "last": 141736
+    },
+    "ui.msg.hub": {
+     "name": "ui.msg.hub",
+     "kind": "span",
+     "n": 8600,
+     "sum": 10396882,
+     "mean": 1208,
+     "p50": 2047,
+     "p90": 2047,
+     "p99": 4095,
+     "max": 4340,
+     "last": 1556
+    },
+    "ui.layout": {
+     "name": "ui.layout",
+     "kind": "span",
+     "n": 612,
+     "sum": 8353405,
+     "mean": 13649,
+     "p50": 16383,
+     "p90": 32767,
+     "p99": 32767,
+     "max": 46345,
+     "last": 14671
+    },
+    "ui.layout.mm.miss": {
+     "name": "ui.layout.mm.miss",
+     "kind": "span",
+     "n": 499,
+     "sum": 6995557,
+     "mean": 14019,
+     "p50": 16383,
+     "p90": 32767,
+     "p99": 32767,
+     "max": 46373,
+     "last": 14683
+    },
+    "ui.plan": {
+     "name": "ui.plan",
+     "kind": "span",
+     "n": 612,
+     "sum": 4734231,
+     "mean": 7735,
+     "p50": 8191,
+     "p90": 16383,
+     "p99": 21628,
+     "max": 21628,
+     "last": 7374
+    },
+    "ui.p.tiles": {
+     "name": "ui.p.tiles",
+     "kind": "span",
+     "n": 612,
+     "sum": 2283977,
+     "mean": 3731,
+     "p50": 2047,
+     "p90": 8191,
+     "p99": 15761,
+     "max": 15761,
+     "last": 1112
+    },
+    "ui.p.front": {
+     "name": "ui.p.front",
+     "kind": "span",
+     "n": 612,
+     "sum": 2150848,
+     "mean": 3514,
+     "p50": 4095,
+     "p90": 8176,
+     "p99": 8176,
+     "max": 8176,
+     "last": 5687
+    },
+    "ui.msg.tick": {
+     "name": "ui.msg.tick",
+     "kind": "span",
+     "n": 95,
+     "sum": 2106925,
+     "mean": 22178,
+     "p50": 16383,
+     "p90": 131071,
+     "p99": 200221,
+     "max": 200221,
+     "last": 3572
+    },
+    "ui.present": {
+     "name": "ui.present",
+     "kind": "span",
+     "n": 791,
+     "sum": 1836607,
+     "mean": 2321,
+     "p50": 1023,
+     "p90": 8191,
+     "p99": 16383,
+     "max": 21011,
+     "last": 763
+    },
+    "ui.memo": {
+     "name": "ui.memo",
+     "kind": "span",
+     "n": 612,
+     "sum": 1674407,
+     "mean": 2735,
+     "p50": 2047,
+     "p90": 4095,
+     "p99": 65535,
+     "max": 71213,
+     "last": 1570
+    },
+    "ui.win.fill": {
+     "name": "ui.win.fill",
+     "kind": "span",
+     "n": 791,
+     "sum": 1401175,
+     "mean": 1771,
+     "p50": 511,
+     "p90": 8191,
+     "p99": 16383,
+     "max": 18640,
+     "last": 439
+    },
+    "ui.msg.blink": {
+     "name": "ui.msg.blink",
+     "kind": "span",
+     "n": 182,
+     "sum": 1368735,
+     "mean": 7520,
+     "p50": 2047,
+     "p90": 8191,
+     "p99": 182274,
+     "max": 182274,
+     "last": 177
+    },
+    "ui.layout.mm.hit": {
+     "name": "ui.layout.mm.hit",
+     "kind": "span",
+     "n": 113,
+     "sum": 1367500,
+     "mean": 12101,
+     "p50": 16383,
+     "p90": 28055,
+     "p99": 28055,
+     "max": 28055,
+     "last": 15626
+    },
+    "hub.step.outs": {
+     "name": "hub.step.outs",
+     "kind": "span",
+     "n": 17443,
+     "sum": 1216243,
+     "mean": 69,
+     "p50": 7,
+     "p90": 255,
+     "p99": 511,
+     "max": 2622,
+     "last": 157
+    },
+    "ui.fill": {
+     "name": "ui.fill",
+     "kind": "span",
+     "n": 612,
+     "sum": 601949,
+     "mean": 983,
+     "p50": 511,
+     "p90": 4095,
+     "p99": 4874,
+     "max": 4874,
+     "last": 1560
+    },
+    "hub.rpc": {
+     "name": "hub.rpc",
+     "kind": "span",
+     "n": 112,
+     "sum": 468485,
+     "mean": 4182,
+     "p50": 1023,
+     "p90": 8191,
+     "p99": 32767,
+     "max": 187950,
+     "last": 330
+    },
+    "ui.cats": {
+     "name": "ui.cats",
+     "kind": "span",
+     "n": 47,
+     "sum": 353002,
+     "mean": 7510,
+     "p50": 2047,
+     "p90": 22210,
+     "p99": 22210,
+     "max": 22210,
+     "last": 1778
+    },
+    "hub.step.far": {
+     "name": "hub.step.far",
+     "kind": "span",
+     "n": 17443,
+     "sum": 308911,
+     "mean": 17,
+     "p50": 15,
+     "p90": 31,
+     "p99": 255,
+     "max": 1132,
+     "last": 15
+    },
+    "ui.win.put": {
+     "name": "ui.win.put",
+     "kind": "span",
+     "n": 791,
+     "sum": 235341,
+     "mean": 297,
+     "p50": 1,
+     "p90": 2047,
+     "p99": 4095,
+     "max": 6563,
+     "last": 20
+    },
+    "ui.msg.win": {
+     "name": "ui.msg.win",
+     "kind": "span",
+     "n": 104,
+     "sum": 144623,
+     "mean": 1390,
+     "p50": 2047,
+     "p90": 2928,
+     "p99": 2928,
+     "max": 2928,
+     "last": 1807
+    },
+    "ui.p.slide": {
+     "name": "ui.p.slide",
+     "kind": "span",
+     "n": 612,
+     "sum": 141548,
+     "mean": 231,
+     "p50": 255,
+     "p90": 456,
+     "p99": 456,
+     "max": 456,
+     "last": 286
+    },
+    "hub.kicad_health": {
+     "name": "hub.kicad_health",
+     "kind": "span",
+     "n": 9,
+     "sum": 131376,
+     "mean": 14597,
+     "p50": 16383,
+     "p90": 45348,
+     "p99": 45348,
+     "max": 45348,
+     "last": 45348
+    },
+    "ui.glyphs": {
+     "name": "ui.glyphs",
+     "kind": "span",
+     "n": 2,
+     "sum": 102089,
+     "mean": 51044,
+     "p50": 61965,
+     "p90": 61965,
+     "p99": 61965,
+     "max": 61965,
+     "last": 40124
+    },
+    "hub.recover": {
+     "name": "hub.recover",
+     "kind": "span",
+     "n": 1,
+     "sum": 97845,
+     "mean": 97845,
+     "p50": 97845,
+     "p90": 97845,
+     "p99": 97845,
+     "max": 97845,
+     "last": 97845
+    },
+    "boot.replay": {
+     "name": "boot.replay",
+     "kind": "span",
+     "n": 1,
+     "sum": 94051,
+     "mean": 94051,
+     "p50": 94051,
+     "p90": 94051,
+     "p99": 94051,
+     "max": 94051,
+     "last": 94051
+    },
+    "ui.blink": {
+     "name": "ui.blink",
+     "kind": "span",
+     "n": 132,
+     "sum": 88458,
+     "mean": 670,
+     "p50": 511,
+     "p90": 2047,
+     "p99": 2991,
+     "max": 2991,
+     "last": 399
+    },
+    "ui.glyphs.memo": {
+     "name": "ui.glyphs.memo",
+     "kind": "span",
+     "n": 2,
+     "sum": 79730,
+     "mean": 39865,
+     "p50": 32767,
+     "p90": 48764,
+     "p99": 48764,
+     "max": 48764,
+     "last": 30966
+    },
+    "hub.step.pend": {
+     "name": "hub.step.pend",
+     "kind": "span",
+     "n": 17443,
+     "sum": 69477,
+     "mean": 3,
+     "p50": 3,
+     "p90": 7,
+     "p99": 63,
+     "max": 498,
+     "last": 2
+    },
+    "hub.step.busy": {
+     "name": "hub.step.busy",
+     "kind": "span",
+     "n": 17443,
+     "sum": 63515,
+     "mean": 3,
+     "p50": 3,
+     "p90": 7,
+     "p99": 31,
+     "max": 268,
+     "last": 4
+    },
+    "ui.p.pics": {
+     "name": "ui.p.pics",
+     "kind": "span",
+     "n": 612,
+     "sum": 48126,
+     "mean": 78,
+     "p50": 127,
+     "p90": 127,
+     "p99": 179,
+     "max": 179,
+     "last": 80
+    },
+    "ui.p.theme": {
+     "name": "ui.p.theme",
+     "kind": "span",
+     "n": 612,
+     "sum": 46745,
+     "mean": 76,
+     "p50": 127,
+     "p90": 127,
+     "p99": 255,
+     "max": 314,
+     "last": 83
+    },
+    "hub.tick": {
+     "name": "hub.tick",
+     "kind": "span",
+     "n": 2,
+     "sum": 41127,
+     "mean": 20563,
+     "p50": 4095,
+     "p90": 38982,
+     "p99": 38982,
+     "max": 38982,
+     "last": 2145
+    },
+    "ui.glyphs.layout": {
+     "name": "ui.glyphs.layout",
+     "kind": "span",
+     "n": 2,
+     "sum": 12061,
+     "mean": 6030,
+     "p50": 6200,
+     "p90": 6200,
+     "p99": 6200,
+     "max": 6200,
+     "last": 5861
+    },
+    "hub.bot_tick": {
+     "name": "hub.bot_tick",
+     "kind": "span",
+     "n": 2,
+     "sum": 11290,
+     "mean": 5645,
+     "p50": 1023,
+     "p90": 10678,
+     "p99": 10678,
+     "max": 10678,
+     "last": 612
+    },
+    "boot.read": {
+     "name": "boot.read",
+     "kind": "span",
+     "n": 1,
+     "sum": 10620,
+     "mean": 10620,
+     "p50": 10620,
+     "p90": 10620,
+     "p99": 10620,
+     "max": 10620,
+     "last": 10620
+    },
+    "hub.beat": {
+     "name": "hub.beat",
+     "kind": "span",
+     "n": 15,
+     "sum": 8038,
+     "mean": 535,
+     "p50": 776,
+     "p90": 776,
+     "p99": 776,
+     "max": 776,
+     "last": 573
+    },
+    "hub.drained": {
+     "name": "hub.drained",
+     "kind": "span",
+     "n": 536,
+     "sum": 6666,
+     "mean": 12,
+     "p50": 15,
+     "p90": 31,
+     "p99": 53,
+     "max": 53,
+     "last": 19
+    },
+    "ui.win.flush": {
+     "name": "ui.win.flush",
+     "kind": "span",
+     "n": 791,
+     "sum": 6166,
+     "mean": 7,
+     "p50": 7,
+     "p90": 31,
+     "p99": 63,
+     "max": 64,
+     "last": 5
+    },
+    "ui.glyphs.fill": {
+     "name": "ui.glyphs.fill",
+     "kind": "span",
+     "n": 2,
+     "sum": 5341,
+     "mean": 2670,
+     "p50": 2047,
+     "p90": 4248,
+     "p99": 4248,
+     "max": 4248,
+     "last": 1093
+    },
+    "hub.join_here": {
+     "name": "hub.join_here",
+     "kind": "span",
+     "n": 1,
+     "sum": 3756,
+     "mean": 3756,
+     "p50": 3756,
+     "p90": 3756,
+     "p99": 3756,
+     "max": 3756,
+     "last": 3756
+    },
+    "hub.release": {
+     "name": "hub.release",
+     "kind": "span",
+     "n": 16,
+     "sum": 3567,
+     "mean": 222,
+     "p50": 255,
+     "p90": 318,
+     "p99": 318,
+     "max": 318,
+     "last": 258
+    },
+    "hub.join": {
+     "name": "hub.join",
+     "kind": "span",
+     "n": 1,
+     "sum": 2546,
+     "mean": 2546,
+     "p50": 2546,
+     "p90": 2546,
+     "p99": 2546,
+     "max": 2546,
+     "last": 2546
+    },
+    "hub.heart": {
+     "name": "hub.heart",
+     "kind": "span",
+     "n": 5,
+     "sum": 2145,
+     "mean": 429,
+     "p50": 511,
+     "p90": 586,
+     "p99": 586,
+     "max": 586,
+     "last": 586
+    },
+    "hub.machines": {
+     "name": "hub.machines",
+     "kind": "span",
+     "n": 1,
+     "sum": 1945,
+     "mean": 1945,
+     "p50": 1945,
+     "p90": 1945,
+     "p99": 1945,
+     "max": 1945,
+     "last": 1945
+    },
+    "hub.models": {
+     "name": "hub.models",
+     "kind": "span",
+     "n": 1,
+     "sum": 1864,
+     "mean": 1864,
+     "p50": 1864,
+     "p90": 1864,
+     "p99": 1864,
+     "max": 1864,
+     "last": 1864
+    },
+    "ui.glyphs.wrap": {
+     "name": "ui.glyphs.wrap",
+     "kind": "span",
+     "n": 2,
+     "sum": 1437,
+     "mean": 718,
+     "p50": 786,
+     "p90": 786,
+     "p99": 786,
+     "max": 786,
+     "last": 651
+    },
+    "hub.kicad_probe": {
+     "name": "hub.kicad_probe",
+     "kind": "span",
+     "n": 17,
+     "sum": 998,
+     "mean": 58,
+     "p50": 63,
+     "p90": 89,
+     "p99": 89,
+     "max": 89,
+     "last": 58
+    },
+    "hub.commit": {
+     "name": "hub.commit",
+     "kind": "span",
+     "n": 1,
+     "sum": 730,
+     "mean": 730,
+     "p50": 730,
+     "p90": 730,
+     "p99": 730,
+     "max": 730,
+     "last": 730
+    },
+    "hub.silence": {
+     "name": "hub.silence",
+     "kind": "span",
+     "n": 2,
+     "sum": 711,
+     "mean": 355,
+     "p50": 63,
+     "p90": 653,
+     "p99": 653,
+     "max": 653,
+     "last": 653
+    },
+    "ui.msg.hub_state": {
+     "name": "ui.msg.hub_state",
+     "kind": "span",
+     "n": 1,
+     "sum": 565,
+     "mean": 565,
+     "p50": 565,
+     "p90": 565,
+     "p99": 565,
+     "max": 565,
+     "last": 565
+    },
+    "hub.push": {
+     "name": "hub.push",
+     "kind": "span",
+     "n": 33,
+     "sum": 548,
+     "mean": 16,
+     "p50": 15,
+     "p90": 31,
+     "p99": 41,
+     "max": 41,
+     "last": 15
+    },
+    "hub.claude_pid": {
+     "name": "hub.claude_pid",
+     "kind": "span",
+     "n": 12,
+     "sum": 454,
+     "mean": 37,
+     "p50": 63,
+     "p90": 63,
+     "p99": 79,
+     "max": 79,
+     "last": 39
+    },
+    "hub.join_more": {
+     "name": "hub.join_more",
+     "kind": "span",
+     "n": 3,
+     "sum": 373,
+     "mean": 124,
+     "p50": 63,
+     "p90": 316,
+     "p99": 316,
+     "max": 316,
+     "last": 35
+    },
+    "ui.win.sync": {
+     "name": "ui.win.sync",
+     "kind": "span",
+     "n": 791,
+     "sum": 218,
+     "mean": 0,
+     "p50": 0,
+     "p90": 1,
+     "p99": 1,
+     "max": 24,
+     "last": 1
+    },
+    "hub.boat_threads": {
+     "name": "hub.boat_threads",
+     "kind": "span",
+     "n": 1,
+     "sum": 162,
+     "mean": 162,
+     "p50": 162,
+     "p90": 162,
+     "p99": 162,
+     "max": 162,
+     "last": 162
+    },
+    "hub.auto_view": {
+     "name": "hub.auto_view",
+     "kind": "span",
+     "n": 12,
+     "sum": 151,
+     "mean": 12,
+     "p50": 7,
+     "p90": 47,
+     "p99": 47,
+     "max": 47,
+     "last": 43
+    },
+    "hub.far_feed": {
+     "name": "hub.far_feed",
+     "kind": "span",
+     "n": 1,
+     "sum": 36,
+     "mean": 36,
+     "p50": 36,
+     "p90": 36,
+     "p99": 36,
+     "max": 36,
+     "last": 36
+    },
+    "hub.uber_do": {
+     "name": "hub.uber_do",
+     "kind": "span",
+     "n": 1,
+     "sum": 28,
+     "mean": 28,
+     "p50": 28,
+     "p90": 28,
+     "p99": 28,
+     "max": 28,
+     "last": 28
+    },
+    "hub.cef_near": {
+     "name": "hub.cef_near",
+     "kind": "span",
+     "n": 1,
+     "sum": 22,
+     "mean": 22,
+     "p50": 22,
+     "p90": 22,
+     "p99": 22,
+     "max": 22,
+     "last": 22
+    },
+    "net.write.bytes": {
+     "name": "net.write.bytes",
+     "kind": "value",
+     "n": 8593,
+     "sum": 1812385,
+     "mean": 210,
+     "p50": 255,
+     "p90": 255,
+     "p99": 1023,
+     "max": 1740,
+     "last": 200
+    },
+    "ui.ix.n": {
+     "name": "ui.ix.n",
+     "kind": "value",
+     "n": 612,
+     "sum": 611697,
+     "mean": 999,
+     "p50": 1023,
+     "p90": 1585,
+     "p99": 1585,
+     "max": 1585,
+     "last": 1585
+    },
+    "ui.p.k": {
+     "name": "ui.p.k",
+     "kind": "value",
+     "n": 612,
+     "sum": 544151,
+     "mean": 889,
+     "p50": 1023,
+     "p90": 1202,
+     "p99": 1202,
+     "max": 1202,
+     "last": 824
+    },
+    "ui.win.kpx": {
+     "name": "ui.win.kpx",
+     "kind": "value",
+     "n": 791,
+     "sum": 164767,
+     "mean": 208,
+     "p50": 0,
+     "p90": 1023,
+     "p99": 1260,
+     "max": 1260,
+     "last": 4
+    },
+    "ui.ops": {
+     "name": "ui.ops",
+     "kind": "value",
+     "n": 612,
+     "sum": 105331,
+     "mean": 172,
+     "p50": 206,
+     "p90": 206,
+     "p99": 206,
+     "max": 206,
+     "last": 158
+    },
+    "ui.drawn": {
+     "name": "ui.drawn",
+     "kind": "value",
+     "n": 612,
+     "sum": 41654,
+     "mean": 68,
+     "p50": 1,
+     "p90": 511,
+     "p99": 511,
+     "max": 1024,
+     "last": 0
+    },
+    "ui.hub.t.delta": {
+     "name": "ui.hub.t.delta",
+     "kind": "value",
+     "n": 6917,
+     "sum": 6917,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.win.rects": {
+     "name": "ui.win.rects",
+     "kind": "value",
+     "n": 791,
+     "sum": 3320,
+     "mean": 4,
+     "p50": 0,
+     "p90": 15,
+     "p99": 54,
+     "max": 54,
+     "last": 1
+    },
+    "ui.hub.t.changes": {
+     "name": "ui.hub.t.changes",
+     "kind": "value",
+     "n": 1090,
+     "sum": 1090,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.delta_end": {
+     "name": "ui.hub.t.delta_end",
+     "kind": "value",
+     "n": 510,
+     "sum": 510,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.mm.hit": {
+     "name": "ui.mm.hit",
+     "kind": "value",
+     "n": 612,
+     "sum": 113,
+     "mean": 0,
+     "p50": 0,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 0
+    },
+    "ui.hub.t.reply": {
+     "name": "ui.hub.t.reply",
+     "kind": "value",
+     "n": 38,
+     "sum": 38,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.info": {
+     "name": "ui.hub.t.info",
+     "kind": "value",
+     "n": 37,
+     "sum": 37,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.hb": {
+     "name": "ui.hub.t.hb",
+     "kind": "value",
+     "n": 5,
+     "sum": 5,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.view": {
+     "name": "ui.hub.t.view",
+     "kind": "value",
+     "n": 2,
+     "sum": 2,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.hub.t.live": {
+     "name": "ui.hub.t.live",
+     "kind": "value",
+     "n": 1,
+     "sum": 1,
+     "mean": 1,
+     "p50": 1,
+     "p90": 1,
+     "p99": 1,
+     "max": 1,
+     "last": 1
+    },
+    "ui.mail.body.hit": {
+     "name": "ui.mail.body.hit",
+     "kind": "value",
+     "n": 612,
+     "sum": 0,
+     "mean": 0,
+     "p50": 0,
+     "p90": 0,
+     "p99": 0,
+     "max": 0,
+     "last": 0
+    },
+    "hub.agents": {
+     "name": "hub.agents",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 12,
+     "mean": 6,
+     "p50": 0,
+     "p90": 12,
+     "p99": 12,
+     "max": 12,
+     "last": 12
+    },
+    "hub.inherited": {
+     "name": "hub.inherited",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 0,
+     "mean": 0,
+     "p50": 0,
+     "p90": 0,
+     "p99": 0,
+     "max": 0,
+     "last": 0
+    },
+    "hub.busy": {
+     "name": "hub.busy",
+     "kind": "gauge",
+     "n": 176,
+     "sum": 1739,
+     "mean": 9,
+     "p50": 12,
+     "p90": 12,
+     "p99": 12,
+     "max": 12,
+     "last": 12
+    },
+    "hub.clients": {
+     "name": "hub.clients",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 3,
+     "mean": 1,
+     "p50": 1,
+     "p90": 2,
+     "p99": 2,
+     "max": 2,
+     "last": 2
+    },
+    "hub.changes": {
+     "name": "hub.changes",
+     "kind": "gauge",
+     "n": 2,
+     "sum": 4704,
+     "mean": 2352,
+     "p50": 2047,
+     "p90": 3155,
+     "p99": 3155,
+     "max": 3155,
+     "last": 3155
+    },
+    "proc.rss_kb": {
+     "name": "proc.rss_kb",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 210092,
+     "mean": 210092,
+     "p50": 210092,
+     "p90": 210092,
+     "p99": 210092,
+     "max": 210092,
+     "last": 210092
+    },
+    "proc.peak_kb": {
+     "name": "proc.peak_kb",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 209200,
+     "mean": 209200,
+     "p50": 209200,
+     "p90": 209200,
+     "p99": 209200,
+     "max": 209200,
+     "last": 209200
+    },
+    "proc.cpu_ms": {
+     "name": "proc.cpu_ms",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 138216,
+     "mean": 138216,
+     "p50": 138216,
+     "p90": 138216,
+     "p99": 138216,
+     "max": 138216,
+     "last": 138216
+    },
+    "proc.up_ms": {
+     "name": "proc.up_ms",
+     "kind": "gauge",
+     "n": 1,
+     "sum": 80315,
+     "mean": 80315,
+     "p50": 80315,
+     "p90": 80315,
+     "p99": 80315,
+     "max": 80315,
+     "last": 80315
+    }
+   }
+  }
+ ],
+ "ws": {
+  "msgs": 8663,
+  "bytes": 2247238
+ },
+ "streaming_deltas": {
+  "t1792413318-1574": 685,
+  "t1792413318-1575": 686,
+  "t1792413318-1576": 678,
+  "t1792413318-1577": 523,
+  "t1792413318-1578": 520,
+  "t1792413318-1579": 687,
+  "t1792413318-1580": 680,
+  "t1792413318-1581": 682,
+  "t1792413318-1583": 520,
+  "t1792413318-1582": 520,
+  "fixture-bot-thread-1": 379,
+  "fixture-bot-thread-0": 379
+ },
+ "bot_streaming_deltas": {
+  "fixture-bot-thread-1": 379,
+  "fixture-bot-thread-0": 379
+ },
+ "room_streaming": {
+  "fixture-review-room": {
+   "fixture-bot-thread-0": true,
+   "fixture-bot-thread-1": true
+  }
+ },
+ "bot_streaming": true,
+ "open_selections": [
+  {
+   "title": "zqlong",
+   "thread": "fixture-thread-0",
+   "verified": true
+  },
+  {
+   "title": "zqruna",
+   "thread": "t1792413318-1574",
+   "verified": true
+  },
+  {
+   "title": "zqlong",
+   "thread": "fixture-thread-0",
+   "verified": true
+  },
+  {
+   "title": "zqopena",
+   "thread": "fixture-thread-1",
+   "verified": true
+  },
+  {
+   "title": "zqopenb",
+   "thread": "fixture-thread-2",
+   "verified": true
+  },
+  {
+   "title": "zqopenc",
+   "thread": "fixture-thread-3",
+   "verified": true
+  },
+  {
+   "title": "zqopend",
+   "thread": "fixture-thread-4",
+   "verified": true
+  },
+  {
+   "title": "zqopene",
+   "thread": "fixture-thread-5",
+   "verified": true
+  },
+  {
+   "title": "zqopenf",
+   "thread": "fixture-thread-6",
+   "verified": true
+  },
+  {
+   "title": "zqopeng",
+   "thread": "fixture-thread-7",
+   "verified": true
+  },
+  {
+   "title": "zqopenh",
+   "thread": "fixture-thread-8",
+   "verified": true
+  },
+  {
+   "title": "zqopeni",
+   "thread": "fixture-thread-9",
+   "verified": true
+  },
+  {
+   "title": "zqopenj",
+   "thread": "fixture-thread-10",
+   "verified": true
+  },
+  {
+   "title": "zqruna",
+   "thread": "t1792413318-1574",
+   "verified": true
+  },
+  {
+   "title": "zqrunb",
+   "thread": "t1792413318-1575",
+   "verified": true
+  },
+  {
+   "title": "zqrunc",
+   "thread": "t1792413318-1576",
+   "verified": true
+  },
+  {
+   "title": "zqrund",
+   "thread": "t1792413318-1577",
+   "verified": true
+  },
+  {
+   "title": "zqrune",
+   "thread": "t1792413318-1578",
+   "verified": true
+  },
+  {
+   "title": "zqrunf",
+   "thread": "t1792413318-1579",
+   "verified": true
+  },
+  {
+   "title": "zqrung",
+   "thread": "t1792413318-1580",
+   "verified": true
+  },
+  {
+   "title": "zqrunh",
+   "thread": "t1792413318-1581",
+   "verified": true
+  },
+  {
+   "title": "zqruni",
+   "thread": "t1792413318-1582",
+   "verified": true
+  },
+  {
+   "title": "zqrunj",
+   "thread": "t1792413318-1583",
+   "verified": true
+  },
+  {
+   "title": "zqlong",
+   "thread": "fixture-thread-0",
+   "verified": true
+  },
+  {
+   "title": "zqopena",
+   "thread": "fixture-thread-1",
+   "verified": true
+  },
+  {
+   "title": "zqopenb",
+   "thread": "fixture-thread-2",
+   "verified": true
+  },
+  {
+   "title": "zqopenc",
+   "thread": "fixture-thread-3",
+   "verified": true
+  },
+  {
+   "title": "zqopend",
+   "thread": "fixture-thread-4",
+   "verified": true
+  },
+  {
+   "title": "zqopene",
+   "thread": "fixture-thread-5",
+   "verified": true
+  },
+  {
+   "title": "zqopenf",
+   "thread": "fixture-thread-6",
+   "verified": true
+  },
+  {
+   "title": "zqopeng",
+   "thread": "fixture-thread-7",
+   "verified": true
+  },
+  {
+   "title": "zqopenh",
+   "thread": "fixture-thread-8",
+   "verified": true
+  },
+  {
+   "title": "zqopeni",
+   "thread": "fixture-thread-9",
+   "verified": true
+  },
+  {
+   "title": "zqopenj",
+   "thread": "fixture-thread-10",
+   "verified": true
+  }
+ ],
+ "stray_agents": [],
+ "agentsLog": 28,
+ "appErrTail": "backplane 12:36:30 warn slow: ui.frame took 194.1 ms\nbackplane 12:36:30 warn slow: ui.msg.frame took 203.0 ms\nbackplane 12:36:31 warn slow: ui.frame took 101.9 ms\nbackplane 12:36:31 warn slow: ui.msg.frame took 121.6 ms\nbackplane 12:36:32 warn slow: ui.draw took 162.1 ms\nbackplane 12:36:32 warn slow: ui.raster took 178.1 ms\nbackplane 12:36:32 warn slow: ui.frame took 210.6 ms\nbackplane 12:36:32 warn slow: ui.msg.frame took 220.0 ms\nbackplane 12:36:32 warn slow: ui.msg.frame took 105.7 ms\nbackplane 12:36:33 warn slow: ui.draw took 156.8 ms\nbackplane 12:36:33 warn slow: ui.raster took 171.7 ms\nbackplane 12:36:33 warn slow: ui.frame took 198.6 ms\nbackplane 12:36:33 warn slow: ui.msg.frame took 211.2 ms\nbackplane 12:36:34 warn slow: hub.agent_line took 323.1 ms\nbackplane 12:36:34 warn slow: hub.agent_line took 130.4 ms\nbackplane 12:36:34 warn slow: ui.frame took 141.1 ms\nbackplane 12:36:34 warn slow: ui.msg.frame took 161.6 ms\nbackplane 12:36:36 warn slow: ui.cats took 127.7 ms\nbackplane 12:36:36 warn slow: ui.msg.tick took 145.0 ms\n",
+ "native_display": {
+  "schema_version": 1,
+  "opens_enabled": true,
+  "input_probe": "Backplane42",
+  "input_repeats": 6,
+  "composer_region": [
+   444,
+   788,
+   600,
+   32
+  ],
+  "header_region": [
+   312,
+   12,
+   180,
+   30
+  ],
+  "enabled": true,
+  "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-final-20261019/candidate-warm/tmp/bp-perfload-qvnjf8/display-demands.jsonl",
+  "inputs_enabled": false,
+  "input_cache": "uncalibrated",
+  "input_targets": {},
+  "caret_normalization": null,
+  "open_cache": "warm-calibrated",
+  "boundary": "xserver-readback",
+  "physical_scanout_verified": false,
+  "targets": {
+   "zqlong": "424364e543e9527c6f2370eff4d4a515a4f1734a4cd98b5217467346dbdb8c54",
+   "zqopena": "45af8d6b21c830ee2edc9fcd7fb14ca93802c28a688dd0d014dcb059db1f5a9c",
+   "zqopenb": "2e863786ff77cda4521f06e283dc15dc7cce31daf3b1c843825264ac1b588141",
+   "zqopenc": "d8cfcbcb5de435b974316dfaa0253413f3cf347737409e1eaac7dd1ccdee0288",
+   "zqopend": "4e483edbb392b99734b8621cc1a7cd5b36ab8cce13b1ceb2f35166182a1c4e4a",
+   "zqopene": "5f0d42257c6e2555bc7a9d81254e9a6bf9215b590a69d91381f7a6e8c2f6a5e1",
+   "zqopenf": "88fdc9d2f9de7c4e5863fec619beb831803f3d926cf9ac980161a99da64cedec",
+   "zqopeng": "a5f4c5bb1f5e6e649b75389770c026e9311f1dc36c29e4eeeedaf1ff42968cbf",
+   "zqopenh": "6c50100f07727ea813e49236d9b1554620df2cdde183bd73a4d8742b2f04fb5b",
+   "zqopeni": "9c8f64177414beecc019041c39a39fee12798e4908af0f254fd8668f4c1a38d6",
+   "zqopenj": "eb703e2cd9d0e41169feae6320c29411d7770cb6167f4756fed5dabe492c0bbd",
+   "zqruna": "61a90cd1e0524d89c56667ea83e774dfc8e14bb08f63ee0d9acc4f45df26f192",
+   "zqrunb": "678f3d9808ee3d49af64e6801186c646dc47fc06abe296d0fb023d2fc35f01cb",
+   "zqrunc": "8d3bf41955f5a8be70d78f0aaec3b9ef5db6edbabb8b77dc4766e2ac9cc4dd8a",
+   "zqrund": "6de9d955df4cfdc8a9515c60a7130a4bcda521705c03fafbf59cd5d21ffec751",
+   "zqrune": "0865e965c69115a568810cdfebdbde3fad3b07453cbd716770b4b55f388aebfc",
+   "zqrunf": "5d4c287e2da837998496dd4e1ed3b422722757715b0cd38828ec2da271d63026",
+   "zqrung": "ac96c56b8f2efb44e5a451654127d22361e33c436000b1e12838cdfa85bc7c6d",
+   "zqrunh": "37320de8ae281c72cd9a0e237e9bb4dfb9718ab3f3e5b8567a0d298b0c3e6c0d",
+   "zqruni": "7ff933142b31ba13634f067348f8436039fc56b4e37438ace7185b2222879296",
+   "zqrunj": "ddae7217e1138973f9c7d9e09b999c4a4c34d3452fb6fb2ff6249181cc144fb2"
+  },
+  "demands": [
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopena",
+    "thread": "fixture-thread-1",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 1,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "45af8d6b21c830ee2edc9fcd7fb14ca93802c28a688dd0d014dcb059db1f5a9c",
+    "dispatch_started_ms": 64608.59765,
+    "elapsed_ms": 127.4957249999934,
+    "samples": 19,
+    "pixel_sha256": "45af8d6b21c830ee2edc9fcd7fb14ca93802c28a688dd0d014dcb059db1f5a9c"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopenb",
+    "thread": "fixture-thread-2",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 2,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "2e863786ff77cda4521f06e283dc15dc7cce31daf3b1c843825264ac1b588141",
+    "dispatch_started_ms": 66315.205807,
+    "elapsed_ms": 114.85711399999855,
+    "samples": 16,
+    "pixel_sha256": "2e863786ff77cda4521f06e283dc15dc7cce31daf3b1c843825264ac1b588141"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopenc",
+    "thread": "fixture-thread-3",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 3,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "d8cfcbcb5de435b974316dfaa0253413f3cf347737409e1eaac7dd1ccdee0288",
+    "dispatch_started_ms": 68010.022103,
+    "elapsed_ms": 114.40325600000506,
+    "samples": 17,
+    "pixel_sha256": "d8cfcbcb5de435b974316dfaa0253413f3cf347737409e1eaac7dd1ccdee0288"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopend",
+    "thread": "fixture-thread-4",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 4,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "4e483edbb392b99734b8621cc1a7cd5b36ab8cce13b1ceb2f35166182a1c4e4a",
+    "dispatch_started_ms": 69706.72332,
+    "elapsed_ms": 129.64826499999617,
+    "samples": 19,
+    "pixel_sha256": "4e483edbb392b99734b8621cc1a7cd5b36ab8cce13b1ceb2f35166182a1c4e4a"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopene",
+    "thread": "fixture-thread-5",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 5,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "5f0d42257c6e2555bc7a9d81254e9a6bf9215b590a69d91381f7a6e8c2f6a5e1",
+    "dispatch_started_ms": 71406.589029,
+    "elapsed_ms": 115.43501500001003,
+    "samples": 15,
+    "pixel_sha256": "5f0d42257c6e2555bc7a9d81254e9a6bf9215b590a69d91381f7a6e8c2f6a5e1"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopenf",
+    "thread": "fixture-thread-6",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 6,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "88fdc9d2f9de7c4e5863fec619beb831803f3d926cf9ac980161a99da64cedec",
+    "dispatch_started_ms": 73101.097089,
+    "elapsed_ms": 111.95134800000233,
+    "samples": 16,
+    "pixel_sha256": "88fdc9d2f9de7c4e5863fec619beb831803f3d926cf9ac980161a99da64cedec"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopeng",
+    "thread": "fixture-thread-7",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 7,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "a5f4c5bb1f5e6e649b75389770c026e9311f1dc36c29e4eeeedaf1ff42968cbf",
+    "dispatch_started_ms": 74788.857092,
+    "elapsed_ms": 129.60485099999642,
+    "samples": 20,
+    "pixel_sha256": "a5f4c5bb1f5e6e649b75389770c026e9311f1dc36c29e4eeeedaf1ff42968cbf"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopenh",
+    "thread": "fixture-thread-8",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 8,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "6c50100f07727ea813e49236d9b1554620df2cdde183bd73a4d8742b2f04fb5b",
+    "dispatch_started_ms": 76489.125292,
+    "elapsed_ms": 120.31952000000456,
+    "samples": 17,
+    "pixel_sha256": "6c50100f07727ea813e49236d9b1554620df2cdde183bd73a4d8742b2f04fb5b"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopeni",
+    "thread": "fixture-thread-9",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 9,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "9c8f64177414beecc019041c39a39fee12798e4908af0f254fd8668f4c1a38d6",
+    "dispatch_started_ms": 78183.416202,
+    "elapsed_ms": 96.02365700001246,
+    "samples": 13,
+    "pixel_sha256": "9c8f64177414beecc019041c39a39fee12798e4908af0f254fd8668f4c1a38d6"
+   },
+   {
+    "kind": "open",
+    "phase": "open",
+    "title": "zqopenj",
+    "thread": "fixture-thread-10",
+    "region": [
+     312,
+     12,
+     180,
+     30
+    ],
+    "revision": 10,
+    "boundary": "xserver-readback",
+    "expected_pixel_sha256": "eb703e2cd9d0e41169feae6320c29411d7770cb6167f4756fed5dabe492c0bbd",
+    "dispatch_started_ms": 79907.948138,
+    "elapsed_ms": 163.90762999998697,
+    "samples": 23,
+    "pixel_sha256": "eb703e2cd9d0e41169feae6320c29411d7770cb6167f4756fed5dabe492c0bbd"
+   }
+  ]
+ }
+}

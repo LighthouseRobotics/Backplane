@@ -1,0 +1,3 @@
+ok chromium: typing, selection, primary shortcut, Unicode, paste, Tab, deletion, multiline, composition, same-owner handback, stale-owner rejection
+ok ordered input and queue recovery after failure
+ok browser shutdown and temporary profile cleanup

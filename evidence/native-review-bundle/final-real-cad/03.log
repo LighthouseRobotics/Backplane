@@ -1,0 +1,30 @@
+ok   repo: the turn ran
+ok   three steps: before, the board, the schematic
+ok   the first holds the design as it was
+ok   the board's change follows its tool call
+ok   the schematic's follows its own
+ok   each step's parent is the step before
+ok   steps live in the repository's own git dir
+ok   a step's board plots
+ok   its plot names the live file as its family
+ok   stepping to it resends only the chunks it changed
+ok   the comparison marks removed and changed
+ok   and adds nothing it did not add
+ok   a missing version says so
+ok   refs name the git dir and top
+ok   refs list HEAD and the branches
+ok   and the project's board
+ok   HEAD against the working copy marks the schematic's edit
+ok   refs list the tags
+ok   a tag typed in resolves to its commit
+ok   with the git dir and top a version needs
+ok   an unknown ref says so
+ok   a ref like an option is refused
+ok   a comparison on an untouched layer marks nothing and dims the rest
+ok   plain: the turn ran
+ok   a folder outside git has its steps too
+ok   in its own history repository
+ok   which the steps name
+ok   and which it never records
+/tmp/bp-final-cad.6u7gxB/bp-hist-40f97F
+all ok

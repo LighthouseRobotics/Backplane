@@ -1,0 +1,149 @@
+ok 0,0,128 equal
+ok 0,0,128 equal false flag
+ok 0,0,128 removed
+ok 0,0,128 removed false flag
+ok 0,0,128 inserted
+ok 0,0,128 inserted false flag
+ok 0,0,128 reordered
+ok 0,0,128 reordered false flag
+ok 0,0,64 equal
+ok 0,0,64 equal false flag
+ok 0,0,64 removed
+ok 0,0,64 removed false flag
+ok 0,0,64 inserted
+ok 0,0,64 inserted false flag
+ok 0,0,64 reordered
+ok 0,0,64 reordered false flag
+ok 64,0,64 equal
+ok 64,0,64 equal false flag
+ok 64,0,64 removed
+ok 64,0,64 removed false flag
+ok 64,0,64 inserted
+ok 64,0,64 inserted false flag
+ok 64,0,64 reordered
+ok 64,0,64 reordered false flag
+ok 16,16,16 equal
+ok 16,16,16 equal false flag
+ok 16,16,16 removed
+ok 16,16,16 removed false flag
+ok 16,16,16 inserted
+ok 16,16,16 inserted false flag
+ok 16,16,16 reordered
+ok 16,16,16 reordered false flag
+ok 256,256,32 equal
+ok 256,256,32 equal false flag
+ok 256,256,32 removed
+ok 256,256,32 removed false flag
+ok 256,256,32 inserted
+ok 256,256,32 inserted false flag
+ok 256,256,32 reordered
+ok 256,256,32 reordered false flag
+ok unchanged exact pixels
+ok changed run exact pixels
+ok reordered ops exact pixels
+ok changed base exact pixels
+ok scroll hint still exact pixels
+ok changed polygon exact pixels
+ok changed polygon negative control
+ok changed run negative control
+ok whole plan exact image
+sample,99,1767,1467,6,6
+sample,98,1626,1444,6,6
+sample,97,1619,1440,6,6
+sample,96,1627,1437,6,6
+sample,95,1774,1438,6,6
+sample,94,1621,1439,6,6
+sample,93,1629,1430,6,6
+sample,92,1618,1434,6,6
+sample,91,1621,1434,6,6
+sample,90,1628,1442,6,6
+sample,89,1635,1442,6,6
+sample,88,1637,1441,6,6
+sample,87,1632,1445,6,6
+sample,86,1848,1633,6,6
+sample,85,1695,1498,6,6
+sample,84,1677,1686,6,6
+sample,83,1655,1458,6,6
+sample,82,1614,1439,6,6
+sample,81,1810,1445,6,6
+sample,80,1680,1482,6,6
+sample,79,1679,1471,6,6
+sample,78,1666,1516,6,6
+sample,77,1705,1491,6,6
+sample,76,1666,1479,6,6
+sample,75,1689,1476,6,6
+sample,74,1671,1513,6,6
+sample,73,1692,1472,6,6
+sample,72,1668,1480,6,6
+sample,71,1665,1483,6,6
+sample,70,1667,1478,6,6
+sample,69,1673,1476,6,6
+sample,68,1675,1477,6,6
+sample,67,1669,1476,6,6
+sample,66,1670,1726,6,6
+sample,65,1676,1485,6,6
+sample,64,1674,1483,6,6
+sample,63,1712,1480,6,6
+sample,62,1674,1481,6,6
+sample,61,1673,1487,6,6
+sample,60,2305,1516,6,6
+sample,59,1685,1480,6,6
+sample,58,1668,1489,6,6
+sample,57,1666,1618,6,6
+sample,56,1679,1474,6,6
+sample,55,1677,1484,6,6
+sample,54,1674,1486,6,6
+sample,53,1670,1482,6,6
+sample,52,1663,1481,6,6
+sample,51,1676,1479,6,6
+sample,50,1684,1479,6,6
+sample,49,1678,1479,6,6
+sample,48,1677,1488,6,6
+sample,47,1778,1499,6,6
+sample,46,1619,1434,6,6
+sample,45,1613,1432,6,6
+sample,44,1615,1465,6,6
+sample,43,1627,1443,6,6
+sample,42,1624,1438,6,6
+sample,41,1622,1433,6,6
+sample,40,1618,1441,6,6
+sample,39,1624,1434,6,6
+sample,38,1623,1431,6,6
+sample,37,1622,1436,6,6
+sample,36,1624,1578,6,6
+sample,35,1627,1446,6,6
+sample,34,1620,1440,6,6
+sample,33,1627,1440,6,6
+sample,32,1613,1437,6,6
+sample,31,1629,1436,6,6
+sample,30,1622,1434,6,6
+sample,29,1842,1478,6,6
+sample,28,1667,1460,6,6
+sample,27,1690,1485,6,6
+sample,26,1678,1504,6,6
+sample,25,1685,1459,6,6
+sample,24,1710,1437,6,6
+sample,23,1664,1482,6,6
+sample,22,1638,1444,6,6
+sample,21,1628,1444,6,6
+sample,20,1629,1449,6,6
+sample,19,1625,1440,6,6
+sample,18,1642,1452,6,6
+sample,17,1617,1507,6,6
+sample,16,1631,1515,6,6
+sample,15,1682,1446,6,6
+sample,14,1632,1455,6,6
+sample,13,1628,1440,6,6
+sample,12,1634,1436,6,6
+sample,11,1621,1439,6,6
+sample,10,1631,1436,6,6
+sample,9,1623,1443,6,6
+sample,8,1622,1446,6,6
+sample,7,1656,1451,6,6
+sample,6,1659,1436,6,6
+sample,5,1756,1443,6,6
+sample,4,1628,1436,6,6
+sample,3,1630,1437,6,6
+sample,2,1620,1462,6,6
+sample,1,1677,1477,6,6
+sample,0,1694,1510,6,6

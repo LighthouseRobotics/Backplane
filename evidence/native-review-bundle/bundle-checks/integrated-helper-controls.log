@@ -1,0 +1,26 @@
+ok exact baseline build script retains audited O3 flags
+ok exact portable clock and lock script retains audited O3 flags
+ok changed optimization is refused by exact script identity
+ok later compiler flag override is refused by exact script identity
+ok unaudited script version is refused by exact script identity
+ok actual downloaded baseline layout and immutable SHA receipt validate
+ok actual baseline compiler receipt is parsed by its real filename
+ok snapshot label names CI input while product tree stays explicit
+ok all measurements require the upgraded single fixture hash
+ok complete successful comparisons produce a pass summary
+ok pass-looking output cannot hide nonzero comparison exit
+ok file existence cannot hide a failed comparison verdict
+ok malformed comparison JSON is refused
+ok missing comparison exit receipt is refused
+ok wrong comparison source label is refused
+ok wrong comparison binary hash is refused
+ok incomplete target-map coverage is refused
+ok baseline target failure stays a failure
+ok Status-tab null coverage cannot become a pass
+ok malformed per-run status cannot become a pass
+ok missing raw comparison report is refused
+ok nonnumeric comparison exit is refused
+ok reusable port preflight still rejects an actual listener
+ok bare-bind negative control reproduces TIME_WAIT false refusal
+ok preflight accepts normal reuse after the owned listener exits
+25 artifact-layout/summary/port controls passed; no native app executed

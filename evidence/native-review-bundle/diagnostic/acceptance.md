@@ -1,0 +1,3 @@
+The failed strict empty-composer reference comparison is reproduced as an observer limitation in **both baseline and candidate**. Untimed captures alternate between exactly the two hashes from the failed run. After the pinned observer normalization, the difference is exactly three placeholder pixels at ROI x14,y15..17: the blinking caret covers the first A and normalization substitutes panel color. Both binaries also produce the same nonempty Backplane42 pixels.
+
+Original reports and comparison verdict remain unchanged and failed. No alias, ROI, deadline or threshold was changed. This diagnostic does not turn the experiment into performance acceptance or certify unobserved UI content. See verification.json and the exact capture source; raw PPM/PNG files remain local.

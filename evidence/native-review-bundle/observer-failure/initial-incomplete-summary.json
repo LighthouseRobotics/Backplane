@@ -1,0 +1,40 @@
+{
+  "result": "incomplete_or_fail",
+  "runs": {
+    "baseline-cold": {
+      "status": "EXECUTION_FAIL",
+      "execution_exit": 1,
+      "error": "[Errno 2] No such file or directory: '/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-20261019/baseline-cold/raw.json'"
+    },
+    "candidate-cold": {
+      "status": "EXECUTION_FAIL",
+      "execution_exit": 1,
+      "error": "[Errno 2] No such file or directory: '/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-20261019/candidate-cold/raw.json'"
+    },
+    "baseline-warm": {
+      "status": "EXECUTION_FAIL",
+      "error": "dedicated port/display unavailable; see preflight.log"
+    },
+    "candidate-warm": {
+      "status": "EXECUTION_FAIL",
+      "error": "dedicated port/display unavailable; see preflight.log"
+    }
+  },
+  "independent_reference_comparisons": {
+    "input": {
+      "status": "FAIL",
+      "error": "comparison exited 1"
+    },
+    "title": {
+      "status": "FAIL",
+      "error": "comparison exited 1"
+    }
+  },
+  "limits": {
+    "frame_p99_ms": 8,
+    "streaming_or_input_ms": 16,
+    "open_ms": 50,
+    "agent_line_p99_ms": 2
+  },
+  "scope": "X-server composer/title content and trace processing. Status tab, full timeline and physical scanout are not certified. Configured secs=5 applies to timed phases; typing/open/normal use fixed event workloads."
+}

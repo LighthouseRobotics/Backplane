@@ -1,0 +1,24 @@
+{
+  "result": "pass",
+  "final_source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "final_producer_receipt": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/plan-only-platform/7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3/native/build/result.json",
+  "final_producer_receipt_sha256": "50186be7babb5cf037d763d24a79979b7a85229b8191334d0c2367fd1a4960a2",
+  "matching_artifact": {
+    "path": "dist/backplane",
+    "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane",
+    "bytes": 146234240,
+    "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+    "role": "hub_binary"
+  },
+  "executed_binary": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+  "binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+  "binary_bytes": 146234240,
+  "frozen_source_commit": "f30b5a3d8619b71ae922ca2cea9618726091492f",
+  "frozen_source_tree": "829c295f86a8e973d54abed64a689b05bc7e3376",
+  "mapping": "The frozen f30 app and genuine final7c build artifact have identical SHA256 and byte count.7c changes only the KiCad TypeScript test fixture. Both producer identities remain distinct. The producer also records backplane-serve with identical bytes; the consumed path is specifically dist/backplane."
+}

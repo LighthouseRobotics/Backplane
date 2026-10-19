@@ -1,0 +1,9 @@
+{
+  "verdict": "pass",
+  "scope": "Whitelisted small text evidence; originals preserved; no applications/builds launched",
+  "files_scanned": 380,
+  "credential_pattern_matches": [],
+  "homes_binaries_generated_builds_images_large_traces_included": false,
+  "original_local_host_and_temporary_path_metadata_retained": true,
+  "note": "Pattern scan is not a guarantee to detect every possible secret. New experiment acceptance is not inferred from file presence."
+}

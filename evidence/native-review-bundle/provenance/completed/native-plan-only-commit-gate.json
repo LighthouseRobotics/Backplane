@@ -1,0 +1,166 @@
+{
+  "result": "check_and_proof_step_pass",
+  "commit": "af6527f41f9828ef483dfaae9e5bd3b1884ebf49",
+  "tree": "3177124742934fe86aad60c068a6159f136dad34",
+  "input_commit": "24c1af12945c5bfa9571c9dc302cc063e31f933a",
+  "source_head_before_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "run": 39257567096,
+  "proof_step": {
+    "conclusion": "success",
+    "name": "Check every file and prove every law",
+    "number": 8,
+    "status": "completed"
+  },
+  "build_status": "pending at feature commit; later complete receipt required for artifact execution",
+  "source_files_verified": 972,
+  "remote_status_at_commit": {
+    "conclusion": "",
+    "headSha": "24c1af12945c5bfa9571c9dc302cc063e31f933a",
+    "jobs": [
+      {
+        "completedAt": "0001-01-01T00:00:00Z",
+        "conclusion": "",
+        "databaseId": 118076590396,
+        "name": "Frozen native checks and proofs",
+        "startedAt": "2026-10-19T13:08:09Z",
+        "status": "in_progress",
+        "steps": [
+          {
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Run actions/checkout@v4",
+            "number": 2,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Preserve payload and apply exact source tree",
+            "number": 3,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Bounded temporary proof swap",
+            "number": 4,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Run oven-sh/setup-bun@v2",
+            "number": 5,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Run ./.github/actions/setup-bend",
+            "number": 6,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Record exact toolchain",
+            "number": 7,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Check every file and prove every law",
+            "number": 8,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Check browser owner reply and side effects",
+            "number": 9,
+            "status": "completed"
+          },
+          {
+            "conclusion": "skipped",
+            "name": "Compile and run physical-root lifecycle regression",
+            "number": 10,
+            "status": "completed"
+          },
+          {
+            "conclusion": "skipped",
+            "name": "Compile and run exact fused tile-plan regression",
+            "number": 11,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Native candidate build dependencies",
+            "number": 12,
+            "status": "completed"
+          },
+          {
+            "conclusion": "success",
+            "name": "Native object cache",
+            "number": 13,
+            "status": "completed"
+          },
+          {
+            "conclusion": "",
+            "name": "Build the exact native candidate",
+            "number": 14,
+            "status": "in_progress"
+          },
+          {
+            "conclusion": "",
+            "name": "Record full acceptance receipt",
+            "number": 15,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Run actions/upload-artifact@v4",
+            "number": 16,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Identify available native outputs",
+            "number": 17,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Upload native build and source receipt",
+            "number": 18,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Remove temporary swap",
+            "number": 19,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Post Native object cache",
+            "number": 36,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Post Run oven-sh/setup-bun@v2",
+            "number": 37,
+            "status": "pending"
+          },
+          {
+            "conclusion": "",
+            "name": "Post Run actions/checkout@v4",
+            "number": 38,
+            "status": "pending"
+          }
+        ],
+        "url": "https://github.com/LighthouseRobotics/Backplane/actions/runs/39257567096/job/118076590396"
+      }
+    ],
+    "status": "in_progress"
+  }
+}

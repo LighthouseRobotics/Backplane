@@ -1,0 +1,5360 @@
+{
+  "result": "pass",
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "mode_normalization": {
+    "reason": "Match Git checkout 644/755 permissions used by CI fingerprint; original local umask produced664/775",
+    "changed": [
+      {
+        "path": ".github/actions/setup-bend/action.yml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": ".github/workflows/browser-input.yml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": ".github/workflows/contribution-validation.yml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": ".github/workflows/nightly.yml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": ".github/workflows/release.yml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": ".gitignore",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "AGENTS.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "CLAUDE.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "IMPL-NOTES.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "LAWS.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "LICENSE",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "PROOF.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/fonts/SPLEEN-LICENSE",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/fonts/spleen-8x16.bdf",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/icon/backplane-128.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/icon/backplane-256.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/icon/backplane-512.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/icon/backplane-64.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/icon/backplane.svg",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "assets/icon/mark.svg",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "check1.log",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "deploy/aur/PKGBUILD.in",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "deploy/backplane.desktop",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "deploy/install.sh.in",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/boat.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/bots.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/browser-native.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/contribution-validation.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/deploy.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/design-review.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/git.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/i18n/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/i18n/glossary-ja.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/kicad-ipc.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/locks.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/cats.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/hero.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/phone-3d.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/phone-list.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/phone-mech.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/phone-thread.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-board.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-compare.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-files.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-mech.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-order.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-review.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/web-schematic.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/media/window-3d.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/native-perf-reproduce.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/order.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/parity.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/perf-bench.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/perf.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/provider-fallback.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/reference/t3code-parity.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/schematic-performance.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/solid-orientation.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/teach.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/terminal.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/uber.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/voice.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/wakes.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/web-viewer-performance.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "docs/windows.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "i18n/en.msg",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "i18n/ja.msg",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "i18n/native.keys",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/.gitignore",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/.gitignore",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/.kotlin/errors/errors-1791060689331.log",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/.kotlin/errors/errors-1791876453557.log",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/build.gradle.kts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/AndroidManifest.xml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/AppModel.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/AppSettings.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Bots.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Cat.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Core.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Engine.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/FilesView.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/GoogleLoop.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Hub.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/LiveService.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/MainActivity.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Markdown.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/NativeLocale.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/NativeMessages.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Notes.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Pair.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Plane.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Plot.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/PlotView.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/ReviewView.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Screen.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/SpacePage.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/SpaceView.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/StateStore.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Tabs.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/TasksView.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/ThreadParts.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/java/dev/backplane/mobile/Ui.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/res/drawable/ic_launcher_fg.xml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/res/drawable/ic_stat.xml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/res/values/ic_launcher.xml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/app/src/main/res/xml/network.xml",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/build.gradle.kts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/gradle.properties",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/gradle/wrapper/gradle-wrapper.jar",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/gradle/wrapper/gradle-wrapper.properties",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/gradlew",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "mobile/android/gradlew.bat",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/android/settings.gradle.kts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/.gitignore",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane.entitlements",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane.xcodeproj/project.pbxproj",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/AppModel.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/AppSettings.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Assets.xcassets/AppIcon.appiconset/Contents.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Assets.xcassets/AppIcon.appiconset/icon.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Assets.xcassets/Contents.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/BackplaneApp.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Bots.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Cat.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Engine.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/FilesView.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/GoogleLoop.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Hub.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/HubConnections.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Island.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Markdown.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/NativeLocale.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Notifier.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Pair.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Plane.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Plot.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/PlotShaders.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/PlotView.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/ReviewView.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Screen.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/ScreenCache.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/SpaceView.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/StateStore.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Tabs.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/TasksView.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/ThreadParts.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/TimelineScroll.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/Views.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/WirePriority.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/en.lproj/InfoPlist.strings",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Backplane/ja.lproj/InfoPlist.strings",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Info.plist",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Info.plist.in",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Island/IslandWidget.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/IslandInfo.plist",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Shared/IslandAttributes.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "mobile/ios/Shared/NativeMessages.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/.gitignore",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/deploy/deploy.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "order/deploy/fab-cert.service",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/deploy/fab-cert.timer",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/deploy/fab.service",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/deploy/nginx.conf",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/analysis.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/app.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/catalog.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/config.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/duties.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/estimate.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/limits.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/package.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/pages.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/pay.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/pricing.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/quoting.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/sourcing.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/store.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/fabsrv/vendor_api.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/requirements.txt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/tests/conftest.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/tests/fakevendor/vendor/__init__.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "order/tests/test_server.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "patches/raster-bitmap-shape.patch",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/bend-order.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/bend-reuse.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/bendok.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/boat-job.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/bp-lock.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/bridge-native.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-app.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-browser.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-cef.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-ios.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-kipc.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-mobile.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-step2glb.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-voice.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-windows.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build-wire.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/build.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/cc-split.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/cc-unit.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/cef-runtime.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/check-manifest.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/check.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/dev-server.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/dev.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/fetch-cad-fixture.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/font-to-bend.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/i18n-gen.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/icons.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/inputs-key.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/js-native.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/js-unmarshal.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/mac-rss.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/package-linux.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/package.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/ppm-to-png.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/record-test-timings.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/setup-host.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/smoke.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/stamp-version.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/state-key.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/strokefont-to-bend.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/test-shard.py",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/test-timings.txt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/test.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/validate-contribution.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "scripts/validate-contribution.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/verified.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "scripts/windows-runtime.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-bform.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-browser.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-chat.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-google.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-hooks.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-memory.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-rform.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-room.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-routine-form.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-routines.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-settings.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-side.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "shots-snap/bots-space.ppm",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/bots.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/cats.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/effects/img.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/effects/img.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/effects/link.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/effects/link.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/effects/win.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/effects/win.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/forms.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/imgfx.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/layout.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/link.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/mailroom.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/main.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/mm.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/nui.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/parts3.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/plane.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/render.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/rvw.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/side_row_types.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/side_rows.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/space.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/text.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/theme.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/viewer.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/app/win.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/acp.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/adopt.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/agent.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/agy.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/apikeys.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/attach.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/auth.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/badge.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/board.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/bom.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/boot.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/bot.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/bothub.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/botui.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cad.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cat.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cbor.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cef.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/charter.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/checks.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cjk.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cli.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/client.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/clipath.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cmds.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/codec.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/cron.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/deploy.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/desk.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/diff.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/edit.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/emb.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/eq.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/errtail.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/exe.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/fallback.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/far.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/farlive.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/fm.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/fmcp.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/fold.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/fuzzy.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/fview.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/gh.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/glb.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/google.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/handoff.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/hier.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/hist.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/http.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/hub.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/i18n.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/icons.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/images.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ime.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/json.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/kexport.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/keyring.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/kicadcli.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/kihealth.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/kserve.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/layers.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ledger.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/lightbox.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/links.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/live.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/locks.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/look.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/mail.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/mailbody.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/mailrun.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/mailview.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/mcp.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/mech.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/menu.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/model.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/msgs.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/msp.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/notice.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/onboard.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/once.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/onehub.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/order.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/outbox.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/pcb2d.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/pcb3d.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/perf.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/plane.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/plot.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/png.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/port.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/prompt.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/qr.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ref.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/refs.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/refview.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/release.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/review.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ride.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ring.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/rpcout.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/rules.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/rview.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/sched.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/schematic.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/semver.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/sexpr.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/sha1.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/sha256.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ship.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/sign.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/slash.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/space.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/stamp.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/standin.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/store.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/strokefont.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/subs.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/svg.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/tailnet.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/task.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/tboard.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/teach.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/title.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/todo.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/told.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/tools.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/tz.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/uber.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ubersync.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/ubop.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/usage.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/utf8.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/version.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/voice.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/vt.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/wake.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/when.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/winnote.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/core/xref.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/bitmap.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/cat.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/draw.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/effects/font.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/effects/font.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/face.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/font.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/fontfx.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/fresh.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/icon.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/mesh.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/raster.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/text.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/gfx/tiles.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/app.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/bots.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/bridge.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/hubs.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/index.html",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/notify.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/permissions.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/picker.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/plane.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/recent.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/screen.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/session.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/space.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/tabs.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/mobile/view.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/adoptio.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/agyio.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/apikeys.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/argv.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/botnet.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/browser.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/castio.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/adopt.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/adopt.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/cast.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/cast.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/google.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/google.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/host.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/host.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/hublock.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/hublock.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/locks.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/locks.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/mailstore.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/mailstore.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/perf.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/perf.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/pty.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/pty.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/windows-child.h",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/effects/windows-stdio.h",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/farview.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/freecad.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/gh.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/git.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/google.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/host.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/hublock.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/kexport.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/kicad.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/kserve.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/lockio.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/logread.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/mailstore.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/main.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/orderio.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/park.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/perf.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/plot.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/proc.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/pty.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/push.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/review.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/server.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/term.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/update.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/voice.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/server/wake.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/app.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/apple-touch-icon.png",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/auth.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/bots.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/browser-input.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/cat.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/dom.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/favicon.svg",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/host.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/icon.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/index.html",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/plot2d.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/solid.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/space.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/space.css",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/style.css",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/sw.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/view.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "src/web/wire.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/acp_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/agent_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/agy_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/apikeys_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/attach_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/auth_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/bom_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/botdir_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/botlist_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/botnet_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/bots_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/browser_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cad_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cam_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cat_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cats_face_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cbor_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cef_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/channel_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/check.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/checks_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/chip_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cjk_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/claude_cmds_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cli_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/clipath_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cmp_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/composer_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cron_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/crypto_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/cscroll_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/delta_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/deploy_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/depth_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/desk_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/dictate_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/diff_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/draft_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/drop_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/edit_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/emb_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/exe_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fabmin_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fallback_settings_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fallback_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/far_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/farlive_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/farui_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/files_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/antigravity/resume.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/antigravity/signin.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/antigravity/turn.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/cats-face/golden.txt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/claude/bg-wake.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/claude/stop-steer.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-client-gate.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-emit-gate.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-final-gates.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-integration-gate.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "test/fixtures/fallback-native-gate.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "test/fixtures/fallback-settings/dark.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-settings/info.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-settings/light.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fallback-ui-emit.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fork-viewers/aliases.kicad_sch",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fork-viewers/legacy.kicad_pcb",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/fork-viewers/transforms.kicad_pcb",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/i18n_fallback.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/i18n_webphone.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kicad-demo-source.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kipc/api.desc",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kipc/backplane.proto",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kipc/board.proto",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kipc/commands.proto",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kipc/envelope.proto",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/kipc/test.proto",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/lang_prompt_record.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/outbox/index.html",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/outbox/probe.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fixtures/outbox/probe.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fmcp_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fold_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fork_board_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fork_sch_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/fview_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/gh_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/google_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/handoff_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/hear_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/hier_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/hist_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/hub_switch_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/hubs_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/i18n_core_ui_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/i18n_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/i18n_upload_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/i18n_webphone_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/i18n_window_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/images_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ime_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ime_ui_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ios_permissions_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ios_scroll_page_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ios_session_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ios_usage_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/island_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/json_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/keep_step_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/kexport_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/kicadcli_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/kihealth_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/kipc_protocol_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/kserve_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/lang_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/launch_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/layers_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/lightbox_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/linkid_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/links_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/live_memo_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/live_split_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/live_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/locale_memo_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/locks_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/longtext_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/lostwork_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/machines_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mail_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailbody_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailboot_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailcredit_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailfile_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailperf_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailroom_client_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailroom_memo_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailroom_parity_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailroom_replay_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailrun_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailstore_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mailview_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mbots_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mcalm_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/md_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/menu_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mhalves_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mnav_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/models_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mpicker_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mplane_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/msp_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/mtabs_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/I18nNativeCheck.kt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/agent_lines.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/agents_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/bitmap_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/board_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/board_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/boot_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/bots_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/bots_snap.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/cat_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/cbor_frame_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/checkpoint_ignored_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/cjk_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/fallback_emit_panel.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/fallback_emit_rows.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/fallback_emit_settings.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/far_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/far_sync_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/fixtures/thread.jsonl",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/fold_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/fork_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/gh_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/git_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/glyph_fallback.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/hit_audit.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/hub_line_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/hub_link_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/hud_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/i18n_english_dump.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/i18n_native_check.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/i18n_phone_dump.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/i18n_smoke.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/ime_events.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/keep_plan_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/kicad_files.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/kicad_platform.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/lay_prof.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/link_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/log_read.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/lostwork_replay.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailboot_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailboot_commit.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailfile_smoke.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailorder_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailroom_replay.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailroom_snap.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mailstore_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/memo_replay.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/mesh_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/notice_replay.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/par_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/pcb3d_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/pcb_text_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/pic_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/plot_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/proc_run.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/pty_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/raster_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/release_child.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/rvw_sync.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/sch_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/scroll_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/sheet_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/side_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/side_ix_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/sidebar_rows.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/stroke_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/text_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/type_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/uber_snap.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/ui_frame.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/ui_snap.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/update_swap.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/viewer_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/visible_cat_probe.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/vt_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/vt_dump.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/windows_runtime.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/windows_window.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/worktree_carry_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/worktree_lifecycle_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native/wrap_bench.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/native_i18n_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/nav_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/notice_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/notify_settings_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/nui_recv_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/onboard_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/orderask_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/outbox_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/page_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/panes_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/paste_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/pcb_text_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/perf_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/picker_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/pics_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/plane_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/plot_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/policy_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/project_drag_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/project_find_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/prompt_dump.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/qr_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/rcomment_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ref_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/refs_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/refview_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/release_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/release_transaction_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/restart_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/review_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/rooms_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/routines_codec_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/rpage_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/rules_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/rview_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/sch_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/sched_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/scratch_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/scroll_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/select_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/ship_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/side_rows_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/sidebar_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/sign_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/slash_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/smoke.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/solid_orientation_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/space_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/stamp_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/store_torn_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/subagents_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/svg_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/task_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tboard_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/teach_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/teach_ui_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/text_wrap_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/textrun_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tokens_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/told_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/adopt_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/agents_far_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/agents_load.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/agy_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/agy_standin.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/auth_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/auto_panel_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/boat-fake",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "test/tools/boat_job_test.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "test/tools/botdir_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/bots_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/browser_auth_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/build_clock_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/build_lock_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/cast_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/cast_window.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/cef_remaining.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/cef_runtime_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/cef_window.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/claude_standin.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/codex_mcp_standin.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/create_far_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/deploy_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/deploy_main_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/deploy_mcp_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/desk_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/draft_window_e2e.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/durable_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/emb_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/emit_cache_test.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/exe_swap_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/exit_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/fallback_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/fallback_phone_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/fallback_preview.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/far_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/fixtures/wsclient.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/google_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/hier_bench.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/hist_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/history_render.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/history_render.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/hold_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/hold_window.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/i18n_catalog_stack_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/i18n_native_codegen_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/i18n_upload_bridge.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/i18n_webphone_review.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/install_helpers_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios-native-helpers.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios-reading-gate.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios-usage-check.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_bridge_profile.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_connection_observation_test.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_fixture_start.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_lifetime_state.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_native_helpers_test.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_profile_state.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_recent_bridge_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_recent_fixture.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_recent_fixture.html",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_recent_fixture.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_recent_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_simulator_smoke.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_simulator_smoke_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_test_cbor.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_timeline_test.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ios_worker_lifetime.swift",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/join_time.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/js_native_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/keep_plan_report.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/keep_plan_report_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/keyring_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/kicad_export_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/kicad_health_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/kicad_ipc_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/kicad_ipc_real_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/kicad_platform_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/kipc_stub.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/launch_bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/launch_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/live_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/live_far_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/locks_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/locks_js_guard.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/logfull_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/logread_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/lostwork_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/mac_rss.sh",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "test/tools/mail_catchup_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/mail_catchup_resume.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/mail_credit_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/mailrun_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/mcp_load.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/mech_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_display.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_display_compare.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_display_compare_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_display_readback_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_display_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_i18n_bridge.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/native_i18n_kotlin.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/newproj_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/onehub_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/orbit_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/outbox_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/paste_web_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/paste_window_e2e.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_fixture.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_fixture_codec_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_fixture_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_guard.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_guard_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_load.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_standin.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/perf_standin_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_cold_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_engine_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_flush_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_lean_bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_live_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_screen_bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_stream_bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_tap_bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/phone_worker_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/plot2d_cache.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/plot2d_mount.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/plot_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/prep_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/present_observer_fixture.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/proj_thread_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/refs_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/release_cli_probe_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/release_exports_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/release_transaction_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/remote_view_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/remote_view_far_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/restart_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/restart_work_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/resume_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/retire_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/review_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ride_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/scratch_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/solid_browser.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/solid_roundtrip.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/solid_roundtrip.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/space_preview.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/spawn_gen_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/stall_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/stamp_version_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/stuck_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/subagents_web_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/teach_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/test_runner_signal_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/uber_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/uber_promote_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/uber_seed_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/validation_evidence_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/validation_renderer_test.py",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/verified_test.sh",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/viewers_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/viewers_far_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/voice_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/wake_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/wake_subscription_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/watch_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/watch_scripts_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/web_e2e.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/web_load.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/windows-child.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/windows-hublock.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/windows-stdio.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/wire_js_test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/ws_tally.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/xclipboard.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/xdrop.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tools/xpoke.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/tz_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/uber_sync_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/uber_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/usage_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/view_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/visible_cat_cache_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/voice_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/vt_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/wake_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/watch_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/when_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/wire/index.html",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/wire/wire.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/wire/wire.js",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "test/worktree_test.bend",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/build.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/bun.lock",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/package.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/bunws.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/cef.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/chromium.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/init.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/main.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/playwright.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/png.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/src/recorder.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/cef-lifetime.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/cef-runtime-install.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/cef-runtime.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/cef.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/idle_cpu.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/input.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/pages.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/record.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/browser/test/smoke.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/CMakeLists.txt",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/SPIKE.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/VISIBILITY.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/VISIBILITY.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/bench/bench.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/bench/bunws.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/bench/bunws_check.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/bench/cdp.mjs",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/bench/xlat.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/host.cc",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/test/chrome.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/test/harness.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/test/host.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/cef/test/relay.ts",
+        "before": "0o775",
+        "after": "0o755"
+      },
+      {
+        "path": "tools/cef/test/x11.c",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/build.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/bun.lock",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/package.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/src/codec.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/src/main.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/src/nng.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/src/schema.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/src/worker.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/test/kipc.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/kipc/test/readiness.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/.gitignore",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/bun.lock",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/check-glb.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/package.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/step2glb.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/tsconfig.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/step2glb/types.d.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/README.md",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/build.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/package.json",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/src/devices.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/src/main.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/src/openai.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/src/vad.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/test/mock.ts",
+        "before": "0o664",
+        "after": "0o644"
+      },
+      {
+        "path": "tools/voice/test/voice.test.ts",
+        "before": "0o664",
+        "after": "0o644"
+      }
+    ],
+    "source_bytes_or_Git_modes_changed": false
+  }
+}

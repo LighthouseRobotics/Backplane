@@ -1,0 +1,30 @@
+{
+  "original_pr": "https://github.com/i2cjak/Backplane/pull/157",
+  "original_and_integrated_commits": [
+    {
+      "commit": "88b74139c667b204feafc824570acfc2bb09afc2",
+      "author": "i2cjak",
+      "author_email": "i2cjak@users.noreply.github.com",
+      "subject": "Keep glyph masks out of native tile planning with direct text keys"
+    },
+    {
+      "commit": "c6d702666f2088a1573371ea9b1c7575248a20d9",
+      "author": "i2cjak",
+      "author_email": "i2cjak@users.noreply.github.com",
+      "subject": "Reuse keyed tiles across glyph cache growth with proven key summaries"
+    },
+    {
+      "commit": "867d6629ec7ea294ab40deefaefce83a89162000",
+      "author": "i2cjak",
+      "author_email": "i2cjak@users.noreply.github.com",
+      "subject": "Keep glyph masks out of native tile planning with direct text keys"
+    },
+    {
+      "commit": "ebd9a118b0fe1d41876ff08499d1fb766e3edd92",
+      "author": "i2cjak",
+      "author_email": "i2cjak@users.noreply.github.com",
+      "subject": "Reuse keyed tiles across glyph cache growth with proven key summaries"
+    }
+  ],
+  "hooks": "PR232 production/trust/release/deploy hooks excluded"
+}

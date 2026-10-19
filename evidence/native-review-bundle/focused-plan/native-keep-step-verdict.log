@@ -1,0 +1,2 @@
+Error: the kernel did not build (lean: Executable not found in $PATH: "lean"); --verdict needs Lean v4.34.0 (elan toolchain leanprover/lean4:v4.34.0), or $BENDTT set to a built kernel
+bend 2.0.37 is available: run bend update

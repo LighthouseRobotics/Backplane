@@ -1,0 +1,30 @@
+ok independent both references agree
+ok independent inputs references agree
+ok independent titles references agree
+ok self-calibrated wrong glyphs rejected
+ok self-calibrated wrong header rejected
+ok missing prefix rejected
+ok duplicate prefix pixels rejected
+ok invalid target hash rejected
+ok stale observed pixels rejected
+ok missing input demand rejected
+ok reordered input demands rejected
+ok missing title demand rejected
+ok changed caret normalization rejected
+ok changed demand region rejected
+ok self-consistent changed observer region rejected
+ok missing observer metadata rejected
+ok different boundary rejected
+ok different fixture rejected
+ok different harness rejected
+ok different xpoke rejected
+ok different build flags rejected
+ok unknown build flags rejected
+ok different hardware rejected
+ok missing hardware identity rejected
+ok missing phase identity rejected
+ok unknown source rejected
+ok different load rejected
+ok duplicate demand revision rejected
+ok empty observers rejected
+29 independent native display comparison controls passed

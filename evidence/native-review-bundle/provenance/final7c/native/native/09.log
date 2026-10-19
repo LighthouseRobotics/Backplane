@@ -1,0 +1,16 @@
+cc   build/cc/kicad_platform/u12.c
+cc   build/cc/kicad_platform/u0.c
+cc   build/cc/kicad_platform/u9.c
+cc   build/cc/kicad_platform/u1.c
+cc   build/cc/kicad_platform/u3.c
+cc   build/cc/kicad_platform/u2.c
+cc   build/cc/kicad_platform/u4.c
+cc   build/cc/kicad_platform/u6.c
+cc   build/cc/kicad_platform/u7.c
+cc   build/cc/kicad_platform/u8.c
+cc   build/cc/kicad_platform/u5.c
+cc   build/cc/kicad_platform/u10.c
+cc   build/cc/kicad_platform/u11.c
+cc   build/cc/kicad_platform/u13.c
+stages: emit (fresh) 2.8s split 0.1s cc 3.2s link 0.0s total 6.1s | objects hit 0 miss 14 | peak RSS: emit 0.60G, largest single cc 0.16G, this build's compiles together (sampled) 0.22G, cgroup all-together -
+build/kicad_platform (14 units, 2 jobs)

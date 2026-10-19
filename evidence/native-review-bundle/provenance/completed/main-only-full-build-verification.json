@@ -1,0 +1,19 @@
+{
+  "result": "pass",
+  "scope": "native",
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "verified_job": "Frozen native checks and proofs",
+  "siblings_may_still_run": false,
+  "source_worktree": "native-plan-only",
+  "source_head_before_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "current_head": "af6527f41f9828ef483dfaae9e5bd3b1884ebf49",
+  "tree": "3177124742934fe86aad60c068a6159f136dad34",
+  "input_commit": "24c1af12945c5bfa9571c9dc302cc063e31f933a",
+  "proof_run": "https://github.com/LighthouseRobotics/Backplane/actions/runs/39257567096",
+  "receipt_sha256": "c3d41287e9106d4f272af446d113144cfcec95632e89c9f41a459b9f7a8af2b0",
+  "verified_files": 972,
+  "verified_artifacts": 54,
+  "build_exit": 0,
+  "binary_sha256": "f48159d3e70d7bffbbb52afd61bcaea1f08b0a419cf386be2f292c9fb5f3b39c"
+}

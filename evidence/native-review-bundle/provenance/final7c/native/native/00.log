@@ -1,0 +1,17 @@
+cc   build/cc/release-child/u12.c
+cc   build/cc/release-child/u0.c
+cc   build/cc/release-child/u13.c
+cc   build/cc/release-child/u2.c
+cc   build/cc/release-child/u8.c
+cc   build/cc/release-child/u5.c
+cc   build/cc/release-child/u3.c
+cc   build/cc/release-child/u4.c
+cc   build/cc/release-child/u10.c
+cc   build/cc/release-child/u9.c
+cc   build/cc/release-child/u7.c
+cc   build/cc/release-child/u11.c
+cc   build/cc/release-child/u1.c
+cc   build/cc/release-child/u6.c
+cc   build/cc/release-child/u14.c
+stages: emit (fresh) 40.2s split 0.1s cc 8.3s link 0.1s total 48.6s | objects hit 0 miss 15 | peak RSS: emit 2.61G, largest single cc 0.22G, this build's compiles together (sampled) 0.35G, cgroup all-together -
+build/release-child (15 units, 2 jobs)

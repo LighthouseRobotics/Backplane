@@ -1,0 +1,14 @@
+{
+  "verdict": "pass",
+  "expected_failure": "unchanged1x1ROI rejected",
+  "partial_report": true,
+  "failure_json": true,
+  "calibration_draft": "B",
+  "owned_pids_exited": [
+    2133959,
+    2133964
+  ],
+  "x_display_released": true,
+  "port3893_listener_released": true,
+  "note": "TIME_WAIT remains normally; preflight now uses SO_REUSEADDR and still rejects listeners"
+}

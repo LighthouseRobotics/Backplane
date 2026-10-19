@@ -1,0 +1,16 @@
+[perf_load] log: 1548 lines kept, 0 dropped; long thread fixture-thread-0 (180 messages); 1 rooms, 2 bots
+[perf_load] Xvfb :91 pid 2494504
+[perf_load] app pid 2494509, home /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/baseline-cold/tmp/bp-perfload-hLJJx7/home
+[perf_load] hub up after 0.6 s
+[perf_load] stand-ins started by the log itself (resumed turns?):
+START 2494625 /
+START 2494629 /
+[perf_load] project p1792418521-1570, 10 threads
+[perf_load] phase idle: window on the long thread, nothing streaming (blink only)
+[perf_load] workload ready: all 10 agents delivered streaming deltas
+[perf_load] phase bg: 10 agents streaming (6 with a subagent and a background shell), bots posting; the window on the long thread
+[perf_load] phase fg: streaming; the window shows a streaming thread with its Subagents panel
+[perf_load] phase type: streaming; 60 keys typed into the streaming thread's composer (8/s), then deleted
+[perf_load] phase input-display: streaming; 66 ASCII additions and 66 Backspaces, exact independent composer glyph-region observations at 8/s
+[perf_load] phase open: streaming; 10 real threads opened one after another (ctrl+k, title, Return)
+[perf_load] phase normal: normal use, all at once: agents + subagents + bots streaming; a streaming thread with Subagents (typing, scrolling), the long thread scrolled, the Status plane

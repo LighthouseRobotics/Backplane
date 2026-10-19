@@ -1,0 +1,19 @@
+{
+  "result": "pass",
+  "scope": "combined",
+  "run_status": "in_progress",
+  "run_conclusion": "",
+  "verified_job": "Frozen combined checks and proofs",
+  "siblings_may_still_run": true,
+  "source_worktree": "combined-plan-only",
+  "source_head_before_commit": "cffa8881f59a8dd17ab00736a07d66c91a7d304f",
+  "current_head": "cffa8881f59a8dd17ab00736a07d66c91a7d304f",
+  "tree": "829c295f86a8e973d54abed64a689b05bc7e3376",
+  "input_commit": "d8bf7863ec6f2aed95abc6ba26765f40e8bce415",
+  "proof_run": "https://github.com/LighthouseRobotics/Backplane/actions/runs/39258968602",
+  "receipt_sha256": "de00da220026a1177afb3f52961a5673d384603d5ab6308b38195bc3a4ea8881",
+  "verified_files": 1069,
+  "verified_artifacts": 40,
+  "build_exit": null,
+  "binary_sha256": null
+}

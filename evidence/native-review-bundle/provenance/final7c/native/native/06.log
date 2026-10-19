@@ -1,0 +1,38 @@
+ok host effect linkage frame
+ok isolated staged carry repositories initialize
+ok staged carry reports success
+ok carries fully staged modified contents
+ok carries fully staged added file
+ok carries fully staged deletion
+ok carries fully staged rename destination
+ok removes fully staged rename source
+ok staged plus unstaged edit carries working contents
+ok unstaged reversal of staged edit carries working contents
+ok still carries unstaged modified contents
+ok still carries untracked files
+ok staged tracked ignored file still carries
+ok staged newline filename is preserved
+ok staged leading dash filename is preserved
+ok staged deletion with recreated untracked file keeps its contents
+ok staged deletion with recreated broken symlink keeps its target
+ok still leaves ignored untracked files behind
+ok staged KiCad backups stay behind
+ok staged KiCad locks stay behind
+ok staged KiCad autosaves stay behind
+ok staged KiCad footprint cache stays behind
+ok carry never changes the source index
+ok carry never changes the source working files
+ok carry never changes source HEAD
+ok carry leaves destination index at its base
+ok repeated carry succeeds
+ok repeated carry keeps working contents
+ok fully staged work selects HEAD instead of newer upstream
+ok fully staged worktree creation succeeds
+ok fully staged worktree actually starts at source HEAD
+ok fully staged work never mixes with newer upstream files
+ok thread worktree includes fully staged edit
+ok thread worktree includes fully staged addition
+ok thread worktree includes fully staged deletion
+ok thread worktree creation keeps source staging intact
+ok non-carrying worktree still selects upstream
+all ok

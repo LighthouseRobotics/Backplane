@@ -1,0 +1,54 @@
+ok host effect linkage frame
+ok capture fixture initializes
+ok capture returns a commit
+ok tracked ignored working contents captured
+ok tracked deletion stays absent
+ok nonignored working changes captured
+ok ignored untracked file excluded
+ok capture preserves real index bytes
+ok stage later ignored file
+ok repeated snapshot succeeds
+ok reused private index learns current tracking
+ok working diff contains newly tracked ignored path
+ok prepare fresh private revert index
+ok fresh-index revert succeeds
+ok fresh-index revert restores ignored tracked contents
+ok revert removes tracked ignored path absent at checkpoint
+ok revert leaves ignored untracked contents
+ok revert removes ordinary file added since checkpoint
+ok revert preserves staged deletion and real index bytes
+ok unborn fixture initializes without a real index
+ok unborn checkpoint has a commit
+ok unborn checkpoint captures files without creating real index
+ok unborn repository can stage ignored file after first capture
+ok second unborn checkpoint succeeds
+ok unborn later tracking uses current working contents
+ok remove real index but retain old private index
+ok snapshot after removing real index succeeds
+ok missing real index discards stale private tracking
+ok split-index fixture initializes
+ok split-index snapshot succeeds
+ok split-index references work in private index
+ok split-index revert succeeds
+ok split-index revert keeps real index bytes
+ok revival fixture initializes
+ok thread worktree created
+ok edit ignored tracked board in thread
+ok thread checkpoint created
+ok worktree checkpoint preserves real index bytes
+ok modified thread worktree removed
+ok thread worktree revived
+ok removed thread checkpoint restored
+ok revival recovers v2 instead of silently reverting to v1
+ok optimization flags fixture initializes
+ok subfolder flagged snapshot succeeds
+ok private index refreshes flags throughout repository
+ok snapshot leaves real flags and index bytes unchanged
+ok same-stat fixture initializes
+ok same-stat checkpoint succeeds
+ok same-stat working contents are always read
+ok index records fixture initializes
+ok unmerged and gitlink index snapshot succeeds
+ok private snapshot resolves only its conflict records
+ok gitlink and file modes survive checkpoint seeding
+all ok

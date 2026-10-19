@@ -1,0 +1,55 @@
+ 96 |   }
+ 97 |   for (const field of ["log_bytes","agents","secs","build_flags_declared","machine"]) assert.deepEqual(candidate[field],baseline[field],`${field}: experiments differ`);
+ 98 |   assert(Number.isInteger(baseline.log_bytes) && baseline.log_bytes > 0,"fixture byte count missing");
+ 99 |   assert.deepEqual(candidate.phases?.map((p:any) => p.name),baseline.phases?.map((p:any) => p.name),"measured phases differ");
+100 |   for (const field of fields) assert.deepEqual(b.display[field],a.display[field],`native_display.${field}: observer metadata differs`);
+101 |   assert.deepEqual(b.input,a.input,"composer reference pixels differ from independent baseline");
+               ^
+AssertionError: composer reference pixels differ from independent baseline
++ actual - expected
+
+  {
++   '': '40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1',
+-   '': '9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934',
+    B: '65924d2d1aa3efc2977be51a67e8d9f6ea1373eb645882fe69f4dacd285f04f0',
+    Ba: '25df12380d6cd73bede61f1f9ca6e04235b8a905ae26295edfd460c820d3ec71',
+    Bac: 'fd1245e1b4676100ca2e471f8caf8547c4d66574112851d16ecf4d2dfcde1500',
+    Back: '359afe4108a94826cc7130ee4a0da9eb89a654214198dc7b3006ecb10f01f412',
+    Backp: 'ac324e4f9b9778143153a1a5efcf1052e44c6bd0ff6b4ae4986a29fe961d643e',
+
+ generatedMessage: false,
+     actual: {
+  "": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1",
+  B: "65924d2d1aa3efc2977be51a67e8d9f6ea1373eb645882fe69f4dacd285f04f0",
+  Ba: "25df12380d6cd73bede61f1f9ca6e04235b8a905ae26295edfd460c820d3ec71",
+  Bac: "fd1245e1b4676100ca2e471f8caf8547c4d66574112851d16ecf4d2dfcde1500",
+  Back: "359afe4108a94826cc7130ee4a0da9eb89a654214198dc7b3006ecb10f01f412",
+  Backp: "ac324e4f9b9778143153a1a5efcf1052e44c6bd0ff6b4ae4986a29fe961d643e",
+  Backpl: "e99ed88a937139e0ab0f29ac800cce158c649f85dec1e4846fdd33a19123b15e",
+  Backpla: "607d3000fb0c40da4267b580589fc1577a30a89c27d34d6b6df671a7a1a27f34",
+  Backplan: "619eb1bf1552cb185c52d81b09ea9e7690b3337e6070b3511727b283dcdc0dee",
+  Backplane: "24049849ae8b01892ae89c8cc3d9943d3a59c0a477602836b0170778ed03c066",
+  Backplane4: "978c3f14f62b00544e2e51a4efcb7116cef3115e3733172d0b96dc69fac155f2",
+  Backplane42: "b66c26cd5e7dc3662ab0612652dbbca9dfe1ad69d73b897d785bff6c9c073d96",
+},
+   expected: {
+  "": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934",
+  B: "65924d2d1aa3efc2977be51a67e8d9f6ea1373eb645882fe69f4dacd285f04f0",
+  Ba: "25df12380d6cd73bede61f1f9ca6e04235b8a905ae26295edfd460c820d3ec71",
+  Bac: "fd1245e1b4676100ca2e471f8caf8547c4d66574112851d16ecf4d2dfcde1500",
+  Back: "359afe4108a94826cc7130ee4a0da9eb89a654214198dc7b3006ecb10f01f412",
+  Backp: "ac324e4f9b9778143153a1a5efcf1052e44c6bd0ff6b4ae4986a29fe961d643e",
+  Backpl: "e99ed88a937139e0ab0f29ac800cce158c649f85dec1e4846fdd33a19123b15e",
+  Backpla: "607d3000fb0c40da4267b580589fc1577a30a89c27d34d6b6df671a7a1a27f34",
+  Backplan: "619eb1bf1552cb185c52d81b09ea9e7690b3337e6070b3511727b283dcdc0dee",
+  Backplane: "24049849ae8b01892ae89c8cc3d9943d3a59c0a477602836b0170778ed03c066",
+  Backplane4: "978c3f14f62b00544e2e51a4efcb7116cef3115e3733172d0b96dc69fac155f2",
+  Backplane42: "b66c26cd5e7dc3662ab0612652dbbca9dfe1ad69d73b897d785bff6c9c073d96",
+},
+   operator: "deepStrictEqual",
+       diff: "simple",
+       code: "ERR_ASSERTION"
+
+      at compareNativeDisplay (/home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/native_display_compare.ts:101:10)
+
+Bun v1.4.3 (Linux x64)

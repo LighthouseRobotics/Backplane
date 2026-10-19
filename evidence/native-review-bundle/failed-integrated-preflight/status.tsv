@@ -1,0 +1,10 @@
+stage	status	exit_code
+provenance	PENDING	
+baseline-cold	PENDING	
+candidate-cold	PENDING	
+baseline-warm	PENDING	
+candidate-warm	PENDING	
+compare-input	PENDING	
+compare-title	PENDING	
+provenance	FAIL	1
+overall	INCOMPLETE_OR_FAIL	1

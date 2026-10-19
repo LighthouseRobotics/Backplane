@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "build_flags": "LLVM=19;CFLAGS=-O3;LOW_MEM=1;JOBS=2;GOOGLE_BAKE=0",
+  "fixture_sha256": "ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543",
+  "toolchain": {
+    "clang": "Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)",
+    "bend": "2.0.36",
+    "bun": "1.4.3"
+  },
+  "measurement_harness": {
+    "commit": "62fa318989b092aa8712825a4c75f1e4f0c6bcbf",
+    "files": {
+      "test/tools/perf_load.ts": "d071a38cc1d3f7c726e4327fb9fb8ccd1367f66a7489e4fffdde9bff24799cbd",
+      "test/tools/native_display.ts": "4f061be549654f91c210eaa4dc99910a9db828a23316683f01428b6c0d0824fa",
+      "test/tools/perf_guard.ts": "0a032d6bc9a3d8f096e12e80a86a8ecc6e1f231010ba58db0225cf8201ac9758",
+      "test/tools/xpoke.c": "69b810a94e5f71ffe29f985f21988ea8565261ccc5444070a1a3598d3817ef5b",
+      "test/tools/native_display_compare.ts": "a0eeacde7a2a765679775f5c6c22f8b307c28796ff5d2e8205e541afab49ce6e",
+      "test/tools/perf_standin.ts": "b91aa51c446c360fe1736aaa479cfe0c436c7439f7515d0bc63ae384fd4c8054",
+      "src/core/cbor.bend": "e4af894a915214f38c42d9a5937927da2819d970bfec474b0539439b8283ed86"
+    },
+    "scope": "Separately committed measurement code. App source and binary identities remain pinned to their original CI receipts."
+  },
+  "baseline": {
+    "source_label": "b39a80e56da5b1a352e6b8811252906c03073f54",
+    "identity_kind": "committed-ci-build",
+    "product_base": "30884966ef59c383581bcd1b7653f8f739cf009e",
+    "binary_sha256": "ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48",
+    "artifact_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-baseline",
+    "source_receipt_sha256": "803572a97144f6c234155b63cf318321dce74ec5a89178c4003700081bdb455d",
+    "hash_receipt_sha256": "f54a38395db63efa48eddbd9ef98f84365f44768751565d88ed6dc3019e33d3e"
+  },
+  "candidate": {
+    "source_label": "24c1af12945c5bfa9571c9dc302cc063e31f933a",
+    "identity_kind": "ci-applied-snapshot",
+    "checkout_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+    "applied_tree": "3177124742934fe86aad60c068a6159f136dad34",
+    "patch_sha256": "49e06bdaca8dd4885343104358c64969ece151d7c06604db7782e0e43cf1c5f2",
+    "source_head_before_patch": "30884966ef59c383581bcd1b7653f8f739cf009e",
+    "product_worktree": "native-plan-only",
+    "binary_sha256": "f48159d3e70d7bffbbb52afd61bcaea1f08b0a419cf386be2f292c9fb5f3b39c",
+    "artifact_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-plan-only",
+    "receipt_sha256": "c3d41287e9106d4f272af446d113144cfcec95632e89c9f41a459b9f7a8af2b0"
+  },
+  "source_label_note": "Candidate --source-sha labels the immutable CI input commit containing the applied patch. Product identity is checkout_commit + applied_tree + patch_sha256; the uncommitted candidate is not claimed to be product HEAD."
+}

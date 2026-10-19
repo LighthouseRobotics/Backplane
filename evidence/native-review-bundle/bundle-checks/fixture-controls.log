@@ -1,0 +1,17 @@
+ok fixture generation is deterministic
+ok reviewed fixture count/bytes/hash match
+ok all original history bytes are preserved
+ok history-only negative control misses normal prerequisites
+ok uberbot maps to a fixture thread
+ok room participants map to two local fixture bots
+ok twelve non-bot history threads remain
+ok persisted events cannot resume a turn or schedule a wake
+ok all fixture providers use the stand-in protocol
+ok restart continuation is disabled
+ok generator requires an explicit output argument
+ok standalone generator writes the reviewed bytes and receipt
+ok generator preserves an existing different fixture
+ok production stand-in binding prepares private blocks
+ok production stand-in starts no turn on empty input
+ok absent provider cannot fall through to another executable
+16 fixture/isolation controls passed

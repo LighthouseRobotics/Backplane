@@ -1,0 +1,23 @@
+{
+  "scope": "Main3088-only native plan comparison; no glyph API integration; not app acceptance",
+  "base_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "samples": 100,
+  "checks_passed": 49,
+  "quantile": "empirical nearest rank",
+  "old_reference_us": {
+    "p50": 1663,
+    "p99": 1848,
+    "min": 1613,
+    "max": 2305
+  },
+  "fused_us": {
+    "p50": 1459,
+    "p99": 1686,
+    "min": 1430,
+    "max": 1726
+  },
+  "changed_tiles_both": 6,
+  "benchmark_sha256": "d40a93a12797e0afbc4113a7bbf658b6570c1c9ca7072841c0322616665f76d7",
+  "binary_sha256": "cc1f5fdc27a30e8324d5190f6af4e017e881662157489186e83260835f64eb76",
+  "whole_app": "PENDING immutable full check/proof/build and matched measurements"
+}

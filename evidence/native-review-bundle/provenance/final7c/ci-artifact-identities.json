@@ -1,0 +1,56 @@
+[
+  {
+    "artifact_id": 12192902421,
+    "name": "backplane-linux-arm64",
+    "api_archive_digest": "sha256:5ffce4fd3671a2ead9a5ff821a70b6d375cd743900f4b11f64a83351530db9d4",
+    "full_archive_downloaded": false,
+    "archive_digest_independently_verified": false,
+    "range_bytes_downloaded": 2531,
+    "source_commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "app_sha256_from_producer_identity_file": "673a86d06d4591f1b9f4f6cc86a9969ca120e394e2b98e9f5cf10b37ceb62f8d",
+    "members": {
+      "build/candidate-source.txt": {
+        "bytes": 41,
+        "sha256": "38ec735c1685ab3348058dcda4bbbe5f6f5440b276f9b4cea0dca0e8de7daeef",
+        "ZIP_CRC_verified": true
+      },
+      "build/candidate-toolchain.txt": {
+        "bytes": 154,
+        "sha256": "0a3b33672f4cc2ae7959adecaa6dff8c4598d594d8991957a82295832fe6f636",
+        "ZIP_CRC_verified": true
+      },
+      "build/candidate-artifacts.sha256": {
+        "bytes": 1089,
+        "sha256": "f3ed9d9fd86b59155f43a6b8543521afbbbfdb5454e158394847c5a9bb25d1b2",
+        "ZIP_CRC_verified": true
+      }
+    }
+  },
+  {
+    "artifact_id": 12192208438,
+    "name": "backplane-linux-x64",
+    "api_archive_digest": "sha256:47936bea686c2b2fa375f8ff8b67002ae97a260d10631835ddf9d80c86f11894",
+    "full_archive_downloaded": false,
+    "archive_digest_independently_verified": false,
+    "range_bytes_downloaded": 2527,
+    "source_commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "app_sha256_from_producer_identity_file": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+    "members": {
+      "build/candidate-source.txt": {
+        "bytes": 41,
+        "sha256": "38ec735c1685ab3348058dcda4bbbe5f6f5440b276f9b4cea0dca0e8de7daeef",
+        "ZIP_CRC_verified": true
+      },
+      "build/candidate-toolchain.txt": {
+        "bytes": 148,
+        "sha256": "50229b0ef5643b0a76a8dc068b1acd8650f94b7a1a8c5dc7697c450f79e97c6a",
+        "ZIP_CRC_verified": true
+      },
+      "build/candidate-artifacts.sha256": {
+        "bytes": 1089,
+        "sha256": "abd6fc9b03c4a5c3211fe5e55e6338cbc019c9f68cbfd797271721cbd5a4fc0a",
+        "ZIP_CRC_verified": true
+      }
+    }
+  }
+]

@@ -1,0 +1,95 @@
+ok check-fail refuses release with gate off and force=false
+ok check-fail creates no tag
+ok check-fail creates no exports
+ok check-fail refuses release with gate off and force=true
+ok check-fail creates no tag
+ok check-fail creates no exports
+ok missing-report refuses release with gate off and force=false
+ok missing-report creates no tag
+ok missing-report creates no exports
+ok missing-report refuses release with gate off and force=true
+ok missing-report creates no tag
+ok missing-report creates no exports
+ok malformed-report refuses release with gate off and force=false
+ok malformed-report creates no tag
+ok malformed-report creates no exports
+ok malformed-report refuses release with gate off and force=true
+ok malformed-report creates no tag
+ok malformed-report creates no exports
+ok wrong-shape refuses release with gate off and force=false
+ok wrong-shape creates no tag
+ok wrong-shape creates no exports
+ok wrong-shape refuses release with gate off and force=true
+ok wrong-shape creates no tag
+ok wrong-shape creates no exports
+ok unstaged work refused visibly
+ok unstaged starts no checks or tag
+ok staged work refused visibly
+ok staged starts no checks or tag
+ok untracked work refused visibly
+ok untracked starts no checks or tag
+ok tracked-config work refused visibly
+ok tracked-config starts no checks or tag
+ok untracked-config work refused visibly
+ok untracked-config starts no checks or tag
+ok untracked-checklist work refused visibly
+ok untracked-checklist starts no checks or tag
+ok HEAD movement refuses tag after immutable checks
+ok both checks use immutable source despite HEAD movement
+ok HEAD movement leaves no tag
+ok default gate blocks design findings
+ok deliberate force allows design findings
+ok deliberate gate off allows design findings
+ok export-fail reaches visible error without success report
+ok export-fail publishes no partial output directory
+ok export-fail removes staging and releases lock
+ok export-fail retries explicitly at same tag
+ok metadata-fail reaches visible error without success report
+ok metadata-fail publishes no partial output directory
+ok metadata-fail removes staging and releases lock
+ok metadata-fail retries explicitly at same tag
+ok mkdir-fail reaches visible error without success report
+ok mkdir-fail publishes no partial output directory
+ok mkdir-fail removes staging and releases lock
+ok mkdir-fail retries explicitly at same tag
+ok list-fail reaches visible error without success report
+ok list-fail publishes no partial output directory
+ok list-fail removes staging and releases lock
+ok list-fail retries explicitly at same tag
+ok empty-export reaches visible error without success report
+ok empty-export publishes no partial output directory
+ok empty-export removes staging and releases lock
+ok empty-export retries explicitly at same tag
+ok missing-drill reaches visible error without success report
+ok missing-drill publishes no partial output directory
+ok missing-drill removes staging and releases lock
+ok missing-drill retries explicitly at same tag
+ok empty-file reaches visible error without success report
+ok empty-file publishes no partial output directory
+ok empty-file removes staging and releases lock
+ok empty-file retries explicitly at same tag
+ok absolute-config cannot release external mutable source
+ok absolute-config runs no CAD commands or tag
+ok parent-config cannot release external mutable source
+ok parent-config runs no CAD commands or tag
+ok linked-board cannot release external mutable source
+ok linked-board runs no CAD commands or tag
+ok external-sheet cannot release external mutable source
+ok external-sheet runs no CAD commands or tag
+ok no CAD inputs cannot publish metadata-only release
+ok internal committed parent references remain valid
+ok existing parent traversal outside snapshot refused
+ok success reports the immutable source commit
+ok manifest and tag bind to checked commit
+ok annotated tag names checked commit
+ok all seven outputs use immutable committed bytes
+ok retry refuses a complete previous output
+ok complete output is not re-exported
+ok previous complete output bytes remain intact
+ok all extracted check and release sources cleaned
+ok no test uses a publishing command
+ok stand-in publication completes after local tag movement
+ok immutable refspec publishes checked commit despite moved local tag
+ok local publication negative control really moved tag
+ok publication pushes immutable object refspec
+94 release transaction assertions passed

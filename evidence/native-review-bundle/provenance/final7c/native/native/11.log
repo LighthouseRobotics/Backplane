@@ -1,0 +1,9 @@
+cc   build/cc/log-read/u0.c
+cc   build/cc/log-read/u3.c
+cc   build/cc/log-read/u2.c
+cc   build/cc/log-read/u1.c
+cc   build/cc/log-read/u5.c
+cc   build/cc/log-read/u4.c
+cc   build/cc/log-read/u6.c
+stages: emit (fresh) 3.9s split 0.0s cc 1.0s link 0.0s total 4.9s | objects hit 0 miss 7 | peak RSS: emit 0.63G, largest single cc 0.12G, this build's compiles together (sampled) 0.12G, cgroup all-together -
+build/log-read (7 units, 2 jobs)

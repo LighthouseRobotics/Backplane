@@ -1,0 +1,20 @@
+{
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "receipt": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/plan-only-platform/7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3/native/build/result.json",
+  "receipt_sha256": "50186be7babb5cf037d763d24a79979b7a85229b8191334d0c2367fd1a4960a2",
+  "app": {
+    "path": "dist/backplane",
+    "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane",
+    "bytes": 146234240,
+    "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+    "role": "hub_binary"
+  },
+  "native_consumed_binding_verified": true,
+  "result": "pass",
+  "scope": "Schema2 producer receipt and all build logs independently verified; actual large hub file is not in this small evidence archive."
+}

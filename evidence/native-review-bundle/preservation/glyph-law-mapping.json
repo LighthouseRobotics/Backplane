@@ -1,0 +1,64 @@
+{
+  "scope": "Source statement comparison, not a replacement for exact-source proof. Glyph full-proof/build receipt is included; fused full proof remains pending.",
+  "before_commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+  "glyph_commit": "e0b7548fdf9da49d5a5e42647c42395492bc6047",
+  "before_laws_sha256": "28fe319a734d0397665adcc4ba4e4ec30179a3f8e14a6765abb1bffc13bc36db",
+  "glyph_laws_sha256": "f5dd637ac733e301b4aadece0953e8601dd9091301e15f11aa9373299d118072",
+  "old_public_laws": 2170,
+  "glyph_public_laws": 2173,
+  "byte_identical_existing": 2161,
+  "missing": [],
+  "added": {
+    "glyph_delta_agreement": "law glyph_delta_agreement:\n  for +old: R.Tab\n  for +new: R.Tab\n  for +ops: List<&2, R.Op>\n  for hc: {T.Keys.clear(T.Delta.of(old, new), T.Keys.ops(ops, T.KNil{})) == True{} : Bool}\n  {T.Table.agrees(ops, old, new) == True{} : Bool}",
+    "glyph_table_agreement": "law glyph_table_agreement:\n  for +old: R.Tab\n  for +new: R.Tab\n  for +ops: List<&2, R.Op>\n  for h: {T.Table.agrees(ops, old, new) == True{} : Bool}\n  {R.Res.ops(ops, old) == R.Res.ops(ops, new) : List<&2, R.Op>}",
+    "tiles_table_extension_exact": "law tiles_table_extension_exact:\n  for k: Nat\n  for +e: Nat\n  for +old: R.Tab\n  for +new: R.Tab\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +h: {T.Tiles.agrees(T.Tiles.make(k, e, old, ops, base, rx, ry, n), old, new) == True{} : Bool}\n  {T.Tiles.make(k, e, new, ops, base, rx, ry, n) == T.Tiles.make(k, e, old, ops, base, rx, ry, n) : T.Tiles}"
+  },
+  "changed": {
+    "seek_made": {
+      "before": "law seek_made:\n  for k: Nat\n  for +e: Nat\n  for +old: List<&2, R.Op>\n  for +b0: Image\n  for +mx: U32\n  for +my: U32\n  for +mn: U32\n  for +x: U32\n  for +y: U32\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +l: List<&2, R.Op>\n  for +base: Image\n  {T.Tiles.seek(k, T.Tiles.make(k, e, old, b0, mx, my, mn), x, y, rx, ry, n, e, l, base) == T.Tile.draw(e, l, base) : Image}",
+      "after": "law seek_made:\n  for +tab: R.Tab\n  for k: Nat\n  for +e: Nat\n  for +old: List<&2, R.Op>\n  for +b0: Image\n  for +mx: U32\n  for +my: U32\n  for +mn: U32\n  for +x: U32\n  for +y: U32\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +l: List<&2, R.Op>\n  for +base: Image\n  {T.Tiles.seek(k, T.Tiles.make(k, e, tab, old, b0, mx, my, mn), x, y, rx, ry, n, e, tab, l, base) == T.Tile.draw(e, tab, l, base) : Image}",
+      "guarantee_mapping": "Same exact scratch tile image for arbitrary glyph table; table is an additional universally quantified argument."
+    },
+    "tiles_again_exact": {
+      "before": "law tiles_again_exact:\n  for k: Nat\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +old: List<&2, R.Op>\n  for +base0: Image\n  for +base1: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +pk: Nat\n  for +old2: List<&2, R.Op>\n  for +base2: Image\n  for +prx: U32\n  for +pry: U32\n  for +pn: U32\n  for +qn: U32\n  for +dy: U32\n  {T.Tiles.again(k, e, ops, base1, T.Tiles.make(k, e, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n) == T.Tiles.make(k, e, ops, base1, rx, ry, n) : T.Tiles}",
+      "after": "law tiles_again_exact:\n  for +tab: R.Tab\n  for k: Nat\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +old: List<&2, R.Op>\n  for +base0: Image\n  for +base1: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +pk: Nat\n  for +old2: List<&2, R.Op>\n  for +base2: Image\n  for +prx: U32\n  for +pry: U32\n  for +pn: U32\n  for +qn: U32\n  for +dy: U32\n  {T.Tiles.again(k, e, tab, ops, base1, T.Tiles.make(k, e, tab, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n) == T.Tiles.make(k, e, tab, ops, base1, rx, ry, n) : T.Tiles}",
+      "guarantee_mapping": "Same exact scratch tiles for arbitrary glyph table, prior ops/bases/scrolls; table is universally quantified."
+    },
+    "tile_keep": {
+      "before": "law tile_keep:\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +l: List<&2, R.Op>\n  for +base: Image\n  for +img: Image\n  for +p: T.Past\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  {T.Tile.again(e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}",
+      "after": "law tile_keep:\n  for +tab: R.Tab\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +l: List<&2, R.Op>\n  for +base: Image\n  for +img: Image\n  for +keys: T.KeySet\n  for +p: T.Past\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  {T.Tile.again(e, tab, ops, base, T.Tile{ops, l, base, img, keys}, p, rx, ry, n) == T.Tile{ops, l, base, img, keys} : T.Tile}",
+      "guarantee_mapping": "Same unchanged tile retained, now including arbitrary exact key summary and arbitrary glyph table."
+    },
+    "frame_again_exact": {
+      "before": "law frame_again_exact:\n  for +w0: U32\n  for +h0: U32\n  for +w: U32\n  for +h: U32\n  for +ops: List<&2, R.Op>\n  for +old: List<&2, R.Op>\n  for +base0: Image\n  for +base: Image\n  for +dy: U32\n  {T.Frame.again(w, h, ops, base, T.FSome{w0, h0, T.Frame.make(w0, h0, old, base0)}, dy) == T.Frame.make(w, h, ops, base) : T.Tiles}",
+      "after": "law frame_again_exact:\n  for +tab: R.Tab\n  for +tab0: R.Tab\n  for +w0: U32\n  for +h0: U32\n  for +w: U32\n  for +h: U32\n  for +ops: List<&2, R.Op>\n  for +old: List<&2, R.Op>\n  for +base0: Image\n  for +base: Image\n  for +dy: U32\n  {T.Frame.again(w, h, ops, base, tab, T.FSome{w0, h0, tab0, T.Frame.make(w0, h0, old, base0, tab0)}, dy) == T.Frame.make(w, h, ops, base, tab) : T.Tiles}",
+      "guarantee_mapping": "Same exact scratch frame; independent arbitrary old and new glyph tables are additionally quantified, with no equality precondition."
+    },
+    "drawn_get_run": {
+      "before": "law drawn_get_run:\n  for t: T.Jobs\n  for path: List<&2, Bool>\n  for +e: Nat\n  for +l: List<&2, R.Op>\n  for +base: Image\n  {T.Drawn.get(T.Jobs.run(t, e), path, e, l, base) == T.Tile.draw(e, l, base) : Image}",
+      "after": "law drawn_get_run:\n  for +tab: R.Tab\n  for t: T.Jobs\n  for path: List<&2, Bool>\n  for +e: Nat\n  for +l: List<&2, R.Op>\n  for +base: Image\n  {T.Drawn.get(T.Jobs.run(t, e, tab), path, e, tab, l, base) == T.Tile.draw(e, tab, l, base) : Image}",
+      "guarantee_mapping": "Same exact scratch tile image whichever balanced jobs path is used; arbitrary table is additionally quantified."
+    },
+    "plan_fill_again": {
+      "before": "law plan_fill_again:\n  for k: Nat\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for prev: T.Tiles\n  for +p: T.Past\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +off: Nat\n  for +t: T.Jobs\n  {T.Plan.fill(T.Tiles.plan(k, e, ops, base, prev, p, rx, ry, n), e, off, T.Jobs.run(t, e)) == T.Tiles.again(k, e, ops, base, prev, p, rx, ry, n) : T.Tiles}",
+      "after": "law plan_fill_again:\n  for +tab: R.Tab\n  for k: Nat\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for prev: T.Tiles\n  for +p: T.Past\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +off: Nat\n  for +t: T.Jobs\n  {T.Plan.fill(T.Tiles.plan(k, e, ops, base, prev, p, rx, ry, n), e, tab, off, T.Jobs.run(t, e, tab)) == T.Tiles.again(k, e, tab, ops, base, prev, p, rx, ry, n) : T.Tiles}",
+      "guarantee_mapping": "Same equality between planned/filled tiles and sequential redraw for arbitrary jobs/offsets; arbitrary table is additionally quantified."
+    },
+    "frame_par_exact": {
+      "before": "law frame_par_exact:\n  for +w: U32\n  for +h: U32\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for prev: T.Frames\n  for +dy: U32\n  {T.Frame.par(w, h, ops, base, prev, dy) == T.Frame.again(w, h, ops, base, prev, dy) : T.Tiles}",
+      "after": "law frame_par_exact:\n  for +tab: R.Tab\n  for +w: U32\n  for +h: U32\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for prev: T.Frames\n  for +dy: U32\n  {T.Frame.par(w, h, ops, base, tab, prev, dy) == T.Frame.again(w, h, ops, base, tab, prev, dy) : T.Tiles}",
+      "guarantee_mapping": "Same exact equivalence of parallel and sequential frame rendering for arbitrary prior frames; table is additionally quantified."
+    },
+    "tiles_blink_exact": {
+      "before": "law tiles_blink_exact:\n  for k: Nat\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +on: Bool\n  {T.Tiles.blink(T.Tiles.make(k, e, ops, base, rx, ry, n), e, on) == T.Tiles.make(k, e, T.Caret.set(ops, on), base, rx, ry, n) : T.Tiles}",
+      "after": "law tiles_blink_exact:\n  for +tab: R.Tab\n  for k: Nat\n  for +e: Nat\n  for +ops: List<&2, R.Op>\n  for +base: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  for +on: Bool\n  {T.Tiles.blink(T.Tiles.make(k, e, tab, ops, base, rx, ry, n), e, tab, on) == T.Tiles.make(k, e, tab, T.Caret.set(ops, on), base, rx, ry, n) : T.Tiles}",
+      "guarantee_mapping": "Same exact fresh rendering of changed caret state; arbitrary table is additionally quantified."
+    },
+    "tiles_recat_exact": {
+      "before": "law tiles_recat_exact:\n  for k: Nat\n  for +e: Nat\n  for +cs: List<&2, R.Op>\n  for +cs2: List<&2, R.Op>\n  for +rest: List<&2, R.Op>\n  for +base: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  {T.Tiles.recat(k, e, cs, cs2, T.Tiles.make(k, e, T.Ops.cat(cs, rest), base, rx, ry, n), rx, ry, n) == T.Tiles.make(k, e, T.Ops.cat(cs2, rest), base, rx, ry, n) : T.Tiles}",
+      "after": "law tiles_recat_exact:\n  for +tab: R.Tab\n  for k: Nat\n  for +e: Nat\n  for +cs: List<&2, R.Op>\n  for +cs2: List<&2, R.Op>\n  for +rest: List<&2, R.Op>\n  for +base: Image\n  for +rx: U32\n  for +ry: U32\n  for +n: U32\n  {T.Tiles.recat(k, e, tab, cs, cs2, T.Tiles.make(k, e, tab, T.Ops.cat(cs, rest), base, rx, ry, n), rx, ry, n) == T.Tiles.make(k, e, tab, T.Ops.cat(cs2, rest), base, rx, ry, n) : T.Tiles}",
+      "guarantee_mapping": "Same exact fresh rendering when replacing cat-prefix operations; arbitrary table is additionally quantified."
+    }
+  },
+  "fused_followup": "See original native-latency-law-audit.json: all2173 prior statements identical, only keep_step_exact added."
+}

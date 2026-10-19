@@ -1,0 +1,53 @@
+{
+  "result": "pass",
+  "scope": "combined",
+  "run_status": "in_progress",
+  "run_conclusion": "",
+  "verified_job": "Frozen combined checks and proofs",
+  "siblings_may_still_run": true,
+  "source_worktree": "combined-plan-only",
+  "source_head_before_commit": "cffa8881f59a8dd17ab00736a07d66c91a7d304f",
+  "current_head": "cffa8881f59a8dd17ab00736a07d66c91a7d304f",
+  "tree": "829c295f86a8e973d54abed64a689b05bc7e3376",
+  "input_commit": "d8bf7863ec6f2aed95abc6ba26765f40e8bce415",
+  "proof_run": "https://github.com/LighthouseRobotics/Backplane/actions/runs/39258968602",
+  "receipt_sha256": "de00da220026a1177afb3f52961a5673d384603d5ab6308b38195bc3a4ea8881",
+  "verified_files": 1069,
+  "verified_artifacts": 40,
+  "build_exit": null,
+  "binary_sha256": null,
+  "commit": "f30b5a3d8619b71ae922ca2cea9618726091492f",
+  "parents": [
+    "8ad46edaee0344e77a1879ef9a693ede5046c8f3",
+    "0165dc953b6e57221b8f5695dfdc73d471416f9b",
+    "f87d6a8023574c49f5856f83200a0865fe9499a7",
+    "08c94385ada1191b54bebdc96dbb55ef2f0a8889",
+    "f8eb9c4d9ce9922382cad196022b1fd1748b96e5",
+    "5fc35e14e8dbd0c1bd8f3ed5cb1b722174cd2e01",
+    "6fbaac934870bb8e8734f0e439f1b1146a1082db",
+    "95db5b036b0db341db7c8ee0d3e1e6844e5421f4",
+    "5ff6956b46ea12d7519a5910d5e6d5b263524d1b",
+    "af6527f41f9828ef483dfaae9e5bd3b1884ebf49"
+  ],
+  "original_laws_unchanged": 2170,
+  "selected_feature_laws_unchanged": 29,
+  "public_laws_total": 2200,
+  "local_runtime_controls": {
+    "lifecycle": 17,
+    "native_pixels": 49,
+    "paired_plans": 100
+  },
+  "experimental_glyph_ancestor": false,
+  "frozen_proof_and_app_source_commit": "f30b5a3d8619b71ae922ca2cea9618726091492f",
+  "final_non_bend_followup": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "tree": "e46ac8046e1bd3b90877c63f3af0e3de9a23ac0a",
+    "merged_fixture_commit": "e6812d4cb9d2571c3e2c3dceb902dabbbb64c01f",
+    "changed_files": [
+      "test/tools/kicad_platform_e2e.ts"
+    ],
+    "Bend_source_diff": "empty",
+    "status": "fixture controls passed; final platform CI pending",
+    "scope": "The exact proof receipt above binds the checked tree, not this later test-only tree."
+  }
+}

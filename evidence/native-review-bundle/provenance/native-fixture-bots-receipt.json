@@ -1,0 +1,18 @@
+{
+  "legacy_fixture": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture.jsonl",
+  "legacy_sha256": "242a722701dfca4c8b7d763575e3c8e6260eaa70a001abb52bef63a2fb9c098b",
+  "fixture": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture-bots.jsonl",
+  "sha256": "ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543",
+  "bytes": 556794,
+  "events": 1520,
+  "event_counts": {
+    "ProjectCreated": 1,
+    "ThreadCreated": 14,
+    "MessagePosted": 1500,
+    "BotSet": 2,
+    "UberSet": 1,
+    "RoomSet": 1,
+    "SettingSet": 1
+  },
+  "scope": "Generated local fixture only. No running turns, wake/routine/hook/device/provider events; the frozen driver binds every provider to its private stand-in directory and blocks absent providers. Actual workload/runtime acceptance remains separate."
+}

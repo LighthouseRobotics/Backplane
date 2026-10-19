@@ -1,0 +1,186 @@
+{
+  "schema": 2,
+  "lane": "real-cad",
+  "started": "2026-10-19T14:10:37.409503+00:00",
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "host": {
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.39",
+    "machine": "x86_64"
+  },
+  "toolchain": [
+    {
+      "command": [
+        "bend",
+        "version"
+      ],
+      "status": 0,
+      "output": "bend 2.0.36"
+    },
+    {
+      "command": [
+        "bun",
+        "--version"
+      ],
+      "status": 0,
+      "output": "1.4.3"
+    },
+    {
+      "command": [
+        "clang",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /home/the-one/Documents/backplane-overnight-2026-10-19/toolchain/root/usr/lib/llvm-19/bin"
+    },
+    {
+      "command": [
+        "git",
+        "--version"
+      ],
+      "status": 0,
+      "output": "git version 2.43.0"
+    },
+    {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Python 3.12.3"
+    }
+  ],
+  "flags": {
+    "CC": "/home/the-one/Documents/backplane-overnight-2026-10-19/toolchain/bin/clang",
+    "BACKPLANE_CFLAGS": null,
+    "BACKPLANE_LOW_MEM": "1",
+    "BACKPLANE_JOBS": "1",
+    "BACKPLANE_CPUS": null,
+    "BACKPLANE_PREBUILT": null,
+    "BACKPLANE_GOOGLE_BAKE": "0",
+    "BACKPLANE_KICAD_CLI": "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+    "BUN_JSC_forceRAMSize": "4294967296",
+    "BUN_JSC_useJIT": null,
+    "BACKPLANE_CHROME": null,
+    "BACKPLANE_TEST_BROWSERS": null,
+    "BACKPLANE_X11": null,
+    "BACKPLANE_TEST_XVFB": null
+  },
+  "steps": [
+    {
+      "command": [
+        "python3",
+        "scripts/fetch-cad-fixture.py"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1.116467763989931,
+      "reason": "",
+      "log": "00.log",
+      "log_sha256": "759d24212752a244dcb4eb8b3c8a5e1be57bf76572458646ab36983bd9e377b7"
+    },
+    {
+      "command": [
+        "scripts/build-wire.sh"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1.1247484879859257,
+      "reason": "",
+      "log": "01.log",
+      "log_sha256": "dc9a5964b4643cedca75f0970b016420d706052a251f7a7603ec684931bd912c"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/review_e2e.ts",
+        "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+        "build/wire"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 47.646377084980486,
+      "reason": "",
+      "log": "02.log",
+      "log_sha256": "08760617ad22dbd4658444bb012b1fad5c8e779ea22958c6fc010782272557e4"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/hist_e2e.ts",
+        "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+        "build/wire"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 26.95796876802342,
+      "reason": "",
+      "log": "03.log",
+      "log_sha256": "b12f8acdb9699daf40886ba5371f1dae4bedc886908aa675f382eb9a86cfa2b4"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+      "resolved_path": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+      "role": "hub_binary"
+    },
+    {
+      "path": "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+      "resolved_path": "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+      "bytes": 1097,
+      "sha256": "93c08d8e22362dd2f7c94d3a73ec0a028a78a21288f25b165ccb16d2103c0da0",
+      "role": "kicad_cli"
+    }
+  ],
+  "consumed": {
+    "hub_binary": {
+      "path": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+      "resolved_path": "/home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/final-plan-native/artifacts/dist/backplane",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+      "role": "hub_binary"
+    },
+    "kicad_cli": {
+      "path": "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+      "resolved_path": "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+      "bytes": 1097,
+      "sha256": "93c08d8e22362dd2f7c94d3a73ec0a028a78a21288f25b165ccb16d2103c0da0",
+      "role": "kicad_cli"
+    }
+  },
+  "provenance": {
+    "bend_version": "2.0.36",
+    "build": {
+      "receipt": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/plan-only-platform/7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3/native/build/result.json",
+      "receipt_sha256": "50186be7babb5cf037d763d24a79979b7a85229b8191334d0c2367fd1a4960a2",
+      "source_commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+      "source_sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+      "artifact_path": "dist/backplane",
+      "binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+    },
+    "cad": {
+      "command": [
+        "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+        "--version"
+      ],
+      "status": 0,
+      "output": "10.99.0",
+      "minimum_major": 10
+    }
+  },
+  "result": "pass",
+  "source_after": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "finished": "2026-10-19T14:11:56.132443+00:00"
+}

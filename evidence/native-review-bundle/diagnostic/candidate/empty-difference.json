@@ -1,0 +1,54 @@
+{
+  "normalized_sha256": [
+    "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1",
+    "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+  ],
+  "difference_bbox_roi": [
+    14,
+    15,
+    15,
+    18
+  ],
+  "different_pixels": 3,
+  "color_pairs": [
+    {
+      "first": [
+        21,
+        24,
+        29
+      ],
+      "second": [
+        19,
+        22,
+        27
+      ],
+      "count": 1
+    },
+    {
+      "first": [
+        44,
+        47,
+        57
+      ],
+      "second": [
+        19,
+        22,
+        27
+      ],
+      "count": 1
+    },
+    {
+      "first": [
+        67,
+        71,
+        85
+      ],
+      "second": [
+        19,
+        22,
+        27
+      ],
+      "count": 1
+    }
+  ]
+}

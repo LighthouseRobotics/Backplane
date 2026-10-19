@@ -1,0 +1,452 @@
+{
+  "schema": 2,
+  "lane": "native",
+  "started": "2026-10-19T13:59:57.949552+00:00",
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "host": {
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "machine": "x86_64"
+  },
+  "toolchain": [
+    {
+      "command": [
+        "bend",
+        "version"
+      ],
+      "status": 0,
+      "output": "bend 2.0.36"
+    },
+    {
+      "command": [
+        "bun",
+        "--version"
+      ],
+      "status": 0,
+      "output": "1.4.3"
+    },
+    {
+      "command": [
+        "clang",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-19/bin"
+    },
+    {
+      "command": [
+        "git",
+        "--version"
+      ],
+      "status": 0,
+      "output": "git version 2.55.0"
+    },
+    {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Python 3.12.3"
+    }
+  ],
+  "flags": {
+    "CC": null,
+    "BACKPLANE_CFLAGS": null,
+    "BACKPLANE_LOW_MEM": "1",
+    "BACKPLANE_JOBS": "2",
+    "BACKPLANE_CPUS": null,
+    "BACKPLANE_PREBUILT": null,
+    "BACKPLANE_GOOGLE_BAKE": "0",
+    "BACKPLANE_KICAD_CLI": null,
+    "BUN_JSC_forceRAMSize": "4294967296",
+    "BUN_JSC_useJIT": null,
+    "BACKPLANE_CHROME": "/usr/bin/google-chrome",
+    "BACKPLANE_TEST_BROWSERS": "chromium",
+    "BACKPLANE_X11": null,
+    "BACKPLANE_TEST_XVFB": null
+  },
+  "steps": [
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/release_child.bend",
+        "build/release-child"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 48.736743772999944,
+      "reason": "",
+      "log": "00.log",
+      "log_sha256": "20c91cc8a091cbe60242cc0066c1963aac3e8aa2400c46e365b45330896ad552"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/release_exports_e2e.ts",
+        "build/release-child"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.4147991949998868,
+      "reason": "",
+      "log": "01.log",
+      "log_sha256": "87936f53adfa38e8203a49f10a1a6989c486c8a235682969cafa4a896efb244e"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/release_transaction_e2e.ts",
+        "build/release-child"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 8.535196932999952,
+      "reason": "",
+      "log": "02.log",
+      "log_sha256": "db5b63eb680241e1805b7fa018357ea0e44dd3e3ba017f751224b724d40078c5"
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/worktree_lifecycle_test.bend",
+        "build/worktree_lifecycle_test"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 5.079098420000037,
+      "reason": "",
+      "log": "03.log",
+      "log_sha256": "6abeaece0417f7eaacdb49d3e3898c07095c1e172bc1abf7852cef0df1b9f6c0"
+    },
+    {
+      "command": [
+        "build/worktree_lifecycle_test"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.21419162900019728,
+      "reason": "",
+      "log": "04.log",
+      "log_sha256": "c1422be11eb0198d519da41336e31f9c01b262b73ba5f7e21e39d2236bc00a46"
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/worktree_carry_test.bend",
+        "build/worktree_carry_test"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 5.280133691000174,
+      "reason": "",
+      "log": "05.log",
+      "log_sha256": "cebffa5fb913836d6c071261cf31c5a6804339202c701b6fe095e2f1a00ed5e5"
+    },
+    {
+      "command": [
+        "build/worktree_carry_test"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.2143495200000416,
+      "reason": "",
+      "log": "06.log",
+      "log_sha256": "cf7f066b5dfe4c1b4af2f8d1ee476ba6913ba33320522683117a728230e0ed9a"
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/checkpoint_ignored_test.bend",
+        "build/checkpoint_ignored_test"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 5.781457033999914,
+      "reason": "",
+      "log": "07.log",
+      "log_sha256": "ffc737bad1c822985c2a84c9337c6eb2ddb57bebb5683723e26b7c805833b892"
+    },
+    {
+      "command": [
+        "build/checkpoint_ignored_test"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.46464875400010897,
+      "reason": "",
+      "log": "08.log",
+      "log_sha256": "80a8525d36ea494dc5f51db38728471697b38a46f1f5deeb2ec64369230f7143"
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/kicad_platform.bend",
+        "build/kicad_platform"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 6.135803202000034,
+      "reason": "",
+      "log": "09.log",
+      "log_sha256": "419ffb9933adf6b34fedd101ad51ee84aeda7fcbf0aa65d3b4534cfa5eeb0c04"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/kicad_platform_e2e.ts",
+        "build/kicad_platform"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 0.5150728879998496,
+      "reason": "",
+      "log": "10.log",
+      "log_sha256": "8e4fcf2c8a2406ac882cd5325b09ff82ef1b4e900f61030371ec66e68a6818c0"
+    },
+    {
+      "command": [
+        "scripts/build-app.sh",
+        "test/native/log_read.bend",
+        "build/log-read"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 5.030379009999933,
+      "reason": "",
+      "log": "11.log",
+      "log_sha256": "3bf95068a52c89aca7833834b5b6eab44942fc8e356fa7f87cbffb18cadbd9e7"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/logread_e2e.ts",
+        "dist/backplane",
+        "build/wire",
+        "build/log-read"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1.2489986620000764,
+      "reason": "",
+      "log": "12.log",
+      "log_sha256": "1aef8caedd8d9fc90aaa74bd0817e8a018e1b37d604a8a660fe7ea7452312052"
+    },
+    {
+      "command": [
+        "bend",
+        "test/fixtures/outbox/index.html",
+        "-o",
+        "build/outbox-client"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 32.68562665000013,
+      "reason": "",
+      "log": "13.log",
+      "log_sha256": "ca76a86869255ce06a9a72fed2afdfd723a0429a4f2ec4a84edf9248da07c0e1"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/outbox_e2e.ts",
+        "dist/backplane",
+        "build/outbox-client",
+        "mobile/build/assets/bridge.js"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1.6553658130001168,
+      "reason": "",
+      "log": "14.log",
+      "log_sha256": "35f936a103618da4ff2ae42e50be43cc2c66d616514387540884d7fead96851e"
+    },
+    {
+      "command": [
+        "bun",
+        "test/tools/retire_e2e.ts",
+        "dist/backplane",
+        "build/wire"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 8.564514992000113,
+      "reason": "",
+      "log": "15.log",
+      "log_sha256": "7c62d0992d9931edc4d3c885b80ce8bdedc7aea3b93ca35aa141e5c5320c2a76"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "dist/backplane",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+    },
+    {
+      "path": "dist/backplane-browser",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-browser",
+      "bytes": 94627808,
+      "sha256": "17049780b4e6d3bd0b698ad20407c6cd38c42a5e7f5cc488adc3fedb80360dcd"
+    },
+    {
+      "path": "dist/backplane-kipc",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-kipc",
+      "bytes": 90904544,
+      "sha256": "0065edf330b5365970c7d92387bffb15b17a0e13e60e223c58de3496a984b1ea"
+    },
+    {
+      "path": "dist/backplane-serve",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-serve",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+    },
+    {
+      "path": "dist/backplane-step2glb",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-step2glb",
+      "bytes": 98478048,
+      "sha256": "e99569d8cdf1a7a68ed56c2bc9cf4a4820e8a90277729746cf1c02843b1c4f7a"
+    },
+    {
+      "path": "dist/backplane-voice",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-voice",
+      "bytes": 90814432,
+      "sha256": "4fc694ffebc2b45d5d9949fe3cb7ac109289266f9eaf28f6ae3ed042c4e6ec79"
+    },
+    {
+      "path": "dist/web/apple-touch-icon-hw2kj0yh.png",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/apple-touch-icon-hw2kj0yh.png",
+      "bytes": 4277,
+      "sha256": "e6f1eae8c7f543dc3d72b1b12c77d2c0449cda6964dffba8e6fefabed0addbd2"
+    },
+    {
+      "path": "dist/web/chunk-18dwx26x.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-18dwx26x.js",
+      "bytes": 3700600,
+      "sha256": "0a952d81686e4465ab80cefb6990feb310823242e74957c3c7d779e9dda41023"
+    },
+    {
+      "path": "dist/web/chunk-18dwx26x.js.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-18dwx26x.js.gz",
+      "bytes": 620056,
+      "sha256": "b530b84c050cf00505d5a59cb1be10e2e3fb1be2cbdbb6e8fcda824a64b97fca"
+    },
+    {
+      "path": "dist/web/chunk-3hk1rdr5.css",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-3hk1rdr5.css",
+      "bytes": 55811,
+      "sha256": "5c2ce6cd604641f5a798949783f98af5b59383f87aeadd08d637589c11bd264c"
+    },
+    {
+      "path": "dist/web/chunk-3hk1rdr5.css.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-3hk1rdr5.css.gz",
+      "bytes": 10919,
+      "sha256": "bd701e2d007f9377c63b0bd3db535ba84745dcf74a00231f06ac52eca43befc7"
+    },
+    {
+      "path": "dist/web/favicon-7jbpzm5e.svg",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/favicon-7jbpzm5e.svg",
+      "bytes": 1207,
+      "sha256": "5b0f22a3329f59809216aabe58d8dbbedbd46d29e4a2373a727529daa2441a2c"
+    },
+    {
+      "path": "dist/web/index.html",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/index.html",
+      "bytes": 527,
+      "sha256": "34c083922f6eb985572603b887a6841be519c542fba22bba17b2568ac1a5a3dc"
+    },
+    {
+      "path": "dist/web/index.html.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/index.html.gz",
+      "bytes": 321,
+      "sha256": "ab0d599356b1aaeeb84175d6313c95fca6ec79ec5c33897f3016d1fb9e6766e1"
+    },
+    {
+      "path": "dist/web/sw.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/sw.js",
+      "bytes": 1324,
+      "sha256": "2d726573774359cdfa9c891db3cbab7918efcafe1c56fa9d4da5d6fc06eb1244"
+    },
+    {
+      "path": "dist/web/sw.js.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/sw.js.gz",
+      "bytes": 594,
+      "sha256": "81016633ffc7adf8cf1eb018b49993c64080ea6c6c1492231bae16f2e6c52c4e"
+    },
+    {
+      "path": "build/release-child",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/release-child",
+      "bytes": 3626616,
+      "sha256": "ec8d871ca98ec8d4751b7b43db963e04a7449e60568174ff864740ec488f717f"
+    },
+    {
+      "path": "build/kicad_platform",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/kicad_platform",
+      "bytes": 1558632,
+      "sha256": "02a8f4621bdd3a8e5e2406d10052d98ac29834dc7f0d975e538c94c089cf5524"
+    },
+    {
+      "path": "build/worktree_lifecycle_test",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/build/worktree_lifecycle_test",
+      "bytes": 1179568,
+      "sha256": "cf5cd583702e317d77ff73260710b179222aeeaf0f42b2338af2871b2a681fee"
+    },
+    {
+      "path": "mobile/build/assets/bridge.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/mobile/build/assets/bridge.js",
+      "bytes": 4224028,
+      "sha256": "d4ee8a6cdcd4b210d38840c52fbd6fbce12c5a4ccd4b8b3725745ca4405421ad"
+    }
+  ],
+  "consumed": {
+    "hub_binary": {
+      "path": "dist/backplane",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+      "role": "hub_binary"
+    },
+    "phone_bridge": {
+      "path": "mobile/build/assets/bridge.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/mobile/build/assets/bridge.js",
+      "bytes": 4224028,
+      "sha256": "d4ee8a6cdcd4b210d38840c52fbd6fbce12c5a4ccd4b8b3725745ca4405421ad",
+      "role": "phone_bridge"
+    }
+  },
+  "provenance": {
+    "bend_version": "2.0.36",
+    "build": {
+      "receipt": "/home/runner/work/Backplane/Backplane/build/validation/build/result.json",
+      "receipt_sha256": "50186be7babb5cf037d763d24a79979b7a85229b8191334d0c2367fd1a4960a2",
+      "source_commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+      "source_sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+      "artifact_path": "dist/backplane",
+      "binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+    },
+    "native_baseline": {
+      "command": [
+        "git",
+        "cat-file",
+        "-e",
+        "30884966ef59c383581bcd1b7653f8f739cf009e:src/server/kicad.bend"
+      ],
+      "status": 0,
+      "output": "",
+      "commit": "30884966ef59c383581bcd1b7653f8f739cf009e",
+      "path": "src/server/kicad.bend"
+    }
+  },
+  "result": "pass",
+  "source_after": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "finished": "2026-10-19T14:02:09.306989+00:00"
+}

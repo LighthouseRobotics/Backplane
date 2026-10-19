@@ -1,0 +1,77 @@
+{
+  "scope": "Native glyph microbenchmark; whole-app targets require separate measurements.",
+  "samples": {
+    "masks": {
+      "n": 100,
+      "p50_us": 664,
+      "p99_us": 728,
+      "max_us": 773
+    },
+    "keys": {
+      "n": 100,
+      "p50_us": 440,
+      "p99_us": 557,
+      "max_us": 561
+    },
+    "prekeyed": {
+      "n": 100,
+      "p50_us": 437,
+      "p99_us": 557,
+      "max_us": 959
+    },
+    "table-guard": {
+      "n": 100,
+      "p50_us": 6,
+      "p99_us": 9,
+      "max_us": 10
+    },
+    "convert-and-eq": {
+      "n": 100,
+      "p50_us": 593,
+      "p99_us": 846,
+      "max_us": 937
+    },
+    "key-eq": {
+      "n": 100,
+      "p50_us": 457,
+      "p99_us": 570,
+      "max_us": 597
+    },
+    "extension-plan": {
+      "n": 100,
+      "p50_us": 649,
+      "p99_us": 742,
+      "max_us": 838
+    },
+    "font-open": {
+      "n": 1,
+      "p50_us": 46381,
+      "p99_us": 46381,
+      "max_us": 46381
+    },
+    "ascii-fill-table": {
+      "n": 1,
+      "p50_us": 10391,
+      "p99_us": 10391,
+      "max_us": 10391
+    },
+    "nonASCII-fill-table": {
+      "n": 1,
+      "p50_us": 10315,
+      "p99_us": 10315,
+      "max_us": 10315
+    },
+    "fill-redraw-and-byte-check": {
+      "n": 1,
+      "p50_us": 2242,
+      "p99_us": 2242,
+      "max_us": 2242
+    },
+    "cold-frame": {
+      "n": 1,
+      "p50_us": 92584,
+      "p99_us": 92584,
+      "max_us": 92584
+    }
+  }
+}

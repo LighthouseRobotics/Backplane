@@ -1,0 +1,3 @@
+native display demand: changed target accepted; stale, wrong, indistinguishable and late content rejected
+composer observer: caret blink ignored; missing/corrupt glyph pixels and wrong region size distinguished
+calibration: delayed/transient frames settle; unchanged, wrong-empty, oscillating and late pixels rejected (7 controls)

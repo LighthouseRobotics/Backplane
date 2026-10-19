@@ -1,0 +1,12 @@
+{
+  "commit": "e0b7548fdf9da49d5a5e42647c42395492bc6047",
+  "tree": "19b386b54d5cca154bcb6976bf20cd1c39178912",
+  "input_commit": "96f32a75b1290336686d491bf6b82e1c4cafa140",
+  "receipt_sha256": "4029773ab185fbaf7005306f1b25a86b4cf394b34e1f5db9d84491a88921fcd8",
+  "verified_artifacts": 53,
+  "verified_source_files": 981,
+  "build_exit": 0,
+  "result": "pass",
+  "job": "https://github.com/LighthouseRobotics/Backplane/actions/runs/39245186632/job/118035275435",
+  "superseded_batch_note": "Native job succeeded before cancellation of obsolete incomplete KiCad job. Corrected KiCad and combined candidates have separate successful runs."
+}

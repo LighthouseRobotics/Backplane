@@ -1,0 +1,19 @@
+cc   build/cc/i18n_native_smoke/u6.c
+cc   build/cc/i18n_native_smoke/u8.c
+cc   build/cc/i18n_native_smoke/u0.c
+cc   build/cc/i18n_native_smoke/u2.c
+cc   build/cc/i18n_native_smoke/u13.c
+cc   build/cc/i18n_native_smoke/u4.c
+cc   build/cc/i18n_native_smoke/u1.c
+cc   build/cc/i18n_native_smoke/u11.c
+cc   build/cc/i18n_native_smoke/u10.c
+cc   build/cc/i18n_native_smoke/u14.c
+cc   build/cc/i18n_native_smoke/u15.c
+cc   build/cc/i18n_native_smoke/u7.c
+cc   build/cc/i18n_native_smoke/u12.c
+cc   build/cc/i18n_native_smoke/u3.c
+cc   build/cc/i18n_native_smoke/u9.c
+cc   build/cc/i18n_native_smoke/u16.c
+cc   build/cc/i18n_native_smoke/u5.c
+stages: emit (fresh) 0.7s split 0.0s cc 1.2s link 0.0s total 1.9s | objects hit 0 miss 17 | peak RSS: emit 0.25G, largest single cc 0.11G, this build's compiles together (sampled) 0.19G, cgroup all-together -
+/home/runner/work/Backplane/Backplane/build/validation/renderer/i18n_native_smoke (17 units, 2 jobs)

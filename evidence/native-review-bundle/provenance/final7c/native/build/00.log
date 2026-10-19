@@ -1,0 +1,60 @@
+/home/runner/work/Backplane/Backplane/dist/web/chunk-18dwx26x.js (3614.2kb)
+/home/runner/work/Backplane/Backplane/dist/web/index.html (0.5kb)
+/home/runner/work/Backplane/Backplane/dist/web/chunk-3hk1rdr5.css (54.5kb)
+/home/runner/work/Backplane/Backplane/dist/web/favicon-7jbpzm5e.svg (1.2kb)
+/home/runner/work/Backplane/Backplane/dist/web/apple-touch-icon-hw2kj0yh.png (4.2kb)
+js-unmarshal: ../core/client.Ui (D, T) crosses as it is
+js-native: String.cmp and Map.bit.go are native
+cc   build/cc/backplane/u8.c
+cc   build/cc/backplane/u12.c
+cc   build/cc/backplane/u10.c
+cc   build/cc/backplane/u16.c
+cc   build/cc/backplane/u14.c
+cc   build/cc/backplane/u13.c
+cc   build/cc/backplane/u15.c
+cc   build/cc/backplane/u9.c
+cc   build/cc/backplane/u7.c
+cc   build/cc/backplane/u5.c
+cc   build/cc/backplane/u6.c
+cc   build/cc/backplane/u11.c
+cc   build/cc/backplane/u1.c
+cc   build/cc/backplane/u3.c
+cc   build/cc/backplane/u4.c
+cc   build/cc/backplane/u2.c
+cc   build/cc/backplane/u0.c
+stages: emit (fresh) 582.8s split 4.3s cc 702.9s link 0.8s total 1290.8s | objects hit 0 miss 17 | peak RSS: emit 11.85G, largest single cc 4.01G, this build's compiles together (sampled) 7.44G, cgroup all-together -
+dist/backplane (17 units, 2 jobs)
+bun install v1.4.3 (c6da4a4d3)
+
++ playwright-core@1.63.0
+
+1 package installed [220.00ms]
+-rwxr-xr-x 1 runner runner 94627808 Oct 19 13:59 /home/runner/work/Backplane/Backplane/dist/backplane-browser
+bun install v1.4.3 (c6da4a4d3)
+
++ @types/bun@1.4.2
++ occt-import-js@0.0.23
+
+5 packages installed [216.00ms]
+   [8ms]  minify  -7.65 MB (estimate)
+   [4ms]  bundle  3 modules
+  [99ms] compile  dist/backplane-step2glb
+-rwxr-xr-x 1 runner runner 98478048 Oct 19 13:59 dist/backplane-step2glb
+-rwxr-xr-x 1 runner runner 90814432 Oct 19 13:59 /home/runner/work/Backplane/Backplane/dist/backplane-voice
+bun install v1.4.3 (c6da4a4d3)
+
++ protobufjs@7.4.0
+
+14 packages installed [156.00ms]
+-rwxr-xr-x 1 runner runner 90904544 Oct 19 13:59 /home/runner/work/Backplane/Backplane/dist/backplane-kipc
+total 651680
+drwxr-xr-x  4 runner runner      4096 Oct 19 13:59 .
+drwxr-xr-x 18 runner runner      4096 Oct 19 13:59 ..
+-rwxr-xr-x  1 runner runner 146234240 Oct 19 13:59 backplane
+-rwxr-xr-x  1 runner runner  94627808 Oct 19 13:59 backplane-browser
+-rwxr-xr-x  1 runner runner  90904544 Oct 19 13:59 backplane-kipc
+-rwxr-xr-x  1 runner runner 146234240 Oct 19 13:59 backplane-serve
+-rwxr-xr-x  1 runner runner  98478048 Oct 19 13:59 backplane-step2glb
+-rwxr-xr-x  1 runner runner  90814432 Oct 19 13:59 backplane-voice
+drwxr-xr-x  3 runner runner      4096 Oct 19 13:59 licenses
+drwxr-xr-x  2 runner runner      4096 Oct 19 13:38 web

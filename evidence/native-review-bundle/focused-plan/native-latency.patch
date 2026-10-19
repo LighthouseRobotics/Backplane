@@ -1,0 +1,317 @@
+diff --git a/LAWS.bend b/LAWS.bend
+index abbdf1875..ba62b616a 100644
+--- a/LAWS.bend
++++ b/LAWS.bend
+@@ -8353,6 +8353,16 @@ law tiles_recat_exact:
+ # ---- gfx-runs: tile plans that build only changed nodes' ops ----
+ # comparing a child's ops as they reach it, straight from its parent's, is
+ # exactly comparing the list Region.keep would build
++law keep_step_exact:
++  for +o: R.Op
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.step(o, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)} : T.KeepStep}
++
+ law keep_eq:
+   for ops: List<&2, R.Op>
+   for +px: U32
+diff --git a/PROOF.bend b/PROOF.bend
+index a4b7e1a87..018c8501c 100644
+--- a/PROOF.bend
++++ b/PROOF.bend
+@@ -10779,6 +10779,66 @@ def keep_step(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, rest, ys):
+     case False{}:
+       {==}
+ 
++law keep_step_k_exact:
++  for k: Bool
++  for +x0: U32
++  for +y0: U32
++  for +x1: U32
++  for +y1: U32
++  for +c: U32
++  for +a: U32
++  for +s: R.Shape
++  for +ys: List<&2, R.Op>
++  {T.Keep.step.k(k, x0, y0, x1, y1, c, a, s, ys) == T.KStep{T.Keep.ys.k(k, ys), T.Keep.ok.k(k, x0, y0, x1, y1, c, a, s, ys)} : T.KeepStep}
++
++def keep_step_k_exact(k, x0, y0, x1, y1, c, a, s, ys):
++  match k:
++    case True{}: {==}
++    case False{}: {==}
++
++law keep_step_h_exact:
++  for hit: Bool
++  for +x0: U32
++  for +y0: U32
++  for +x1: U32
++  for +y1: U32
++  for +c: U32
++  for +a: U32
++  for +s: R.Shape
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.step.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys.h(hit, s, px, py, rx, ry, n, ys), T.Keep.ok.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)} : T.KeepStep}
++
++def keep_step_h_exact(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys):
++  match hit:
++    case True{}:
++      keep_step_k_exact(Bool.not(R.Region.empty(R.Region.move(s, px, py, rx, ry, n))), x0, y0, x1, y1, c, a, R.Region.move(s, px, py, rx, ry, n), ys)
++    case False{}: {==}
++
++def Laws.keep_step_exact(o, px, py, rx, ry, n, ys):
++  match o:
++    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
++      keep_step_h_exact(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
++
++law keep_eq_cons:
++  for +o: R.Op
++  for +t: List<&2, R.Op>
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.eq(o <> t, px, py, rx, ry, n, ys, True{}) == T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)) : Bool}
++
++def keep_eq_cons(o, t, px, py, rx, ry, n, ys):
++  Equal.cong(T.KeepStep, Bool, +p => T.Keep.eq(t, px, py, rx, ry, n, T.Keep.step.ys(p), T.Keep.step.same(p)),
++    T.Keep.step(o, px, py, rx, ry, n, ys), T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)}, Laws.keep_step_exact(o, px, py, rx, ry, n, ys))
++
+ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
+   match ops ok:
+     case Nil{} False{}:
+@@ -10788,6 +10848,9 @@ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
+     case Nil{} True{}:
+       {==}
+     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s} <> +t True{}:
++      %Equal.sym(Bool, T.Keep.eq(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n, ys, True{}),
++        T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
++        keep_eq_cons(R.Op{x0, y0, x1, y1, c, a, s}, t, px, py, rx, ry, n, ys)) : {_ == T.Eq.ops.go(R.Region.keep(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n), ys, True{}) : Bool}
+       Equal.trans(Bool, T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+         T.Eq.ops.go(R.Region.keep(t, px, py, rx, ry, n), T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+         T.Eq.ops.go(R.Region.keep.op(R.Region.hits(x0, y0, x1, y1, rx, ry, n), R.Op{x0, y0, x1, y1, c, a, s}, px, py, rx, ry, n, R.Region.keep(t, px, py, rx, ry, n)), ys, True{}),
+diff --git a/src/gfx/tiles.bend b/src/gfx/tiles.bend
+index e37956eda..0cae6d493 100644
+--- a/src/gfx/tiles.bend
++++ b/src/gfx/tiles.bend
+@@ -790,6 +790,40 @@ def Keep.ok(o: R.Op, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, ys: List<&
+     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
+       Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
+ 
++# Advance the old list and compare its head from one clipped shape. The
++# former Keep.ys/Keep.ok pair clipped every run or polygon twice at every
++# visited child, including the unchanged children that the plan keeps.
++type KeepStep is Data:
++  KStep{ys: List<&2, R.Op>, same: Bool}
++
++def Keep.step.ys(s: KeepStep) -> List<&2, R.Op>:
++  match s:
++    case KStep{ys, _}: ys
++
++def Keep.step.same(s: KeepStep) -> Bool:
++  match s:
++    case KStep{_, same}: same
++
++def Keep.step.k(kept: Bool, +x0: U32, +y0: U32, +x1: U32, +y1: U32, +c: U32, +a: U32, s2: R.Shape, +ys: List<&2, R.Op>) -> KeepStep:
++  match kept:
++    case True{}:
++      KStep{Keep.drop1(ys), Keep.ok.c(x0, y0, x1, y1, c, a, s2, ys)}
++    case False{}:
++      KStep{ys, True{}}
++
++def Keep.step.h(hit: Bool, +x0: U32, +y0: U32, +x1: U32, +y1: U32, +c: U32, +a: U32, +s: R.Shape, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>) -> KeepStep:
++  match hit:
++    case True{}:
++      +s2 = R.Region.move(s, px, py, rx, ry, n)
++      Keep.step.k(Bool.not(R.Region.empty(s2)), x0, y0, x1, y1, c, a, s2, ys)
++    case False{}:
++      KStep{ys, True{}}
++
++def Keep.step(o: R.Op, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>) -> KeepStep:
++  match o:
++    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
++      Keep.step.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
++
+ # Eq.ops.go(Region.keep(ops, px, py, rx, ry, n), ys, ok) without building
+ # the list (law keep_eq); it stops at the first op that differs
+ def Keep.eq(ops: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>, ok: Bool) -> Bool:
+@@ -799,7 +833,8 @@ def Keep.eq(ops: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32
+     case Nil{} True{}:
+       Eq.ops.go(Nil{}, ys, True{})
+     case +o <> t True{}:
+-      Keep.eq(t, px, py, rx, ry, n, Keep.ys(o, px, py, rx, ry, n, ys), Keep.ok(o, px, py, rx, ry, n, ys))
++      +step = Keep.step(o, px, py, rx, ry, n, ys)
++      Keep.eq(t, px, py, rx, ry, n, Keep.step.ys(step), Keep.step.same(step))
+ 
+ # Eq.ops(Cut.get(c), ys) (law cut_eq)
+ def Cut.eq(c: Cut, +ys: List<&2, R.Op>) -> Bool:
+diff --git a/test/keep_step_test.bend b/test/keep_step_test.bend
+new file mode 100644
+index 000000000..c294a7eb1
+--- /dev/null
++++ b/test/keep_step_test.bend
+@@ -0,0 +1,65 @@
++import Base
++import ./check.bend as C
++import ./glyph_table_test.bend as G
++import ../src/gfx/raster.bend as R
++import ../src/gfx/draw.bend as D
++import ../src/gfx/text.bend as X
++import ../src/gfx/tiles.bend as T
++
++# Compare with the independently materialized Region.keep list, including
++# drops, empty clipped runs, missing/extra/changed ops and changed bases.
++def ops() -> List<&2, R.Op>:
++  List.concat(&2, R.Op, [
++    X.Text.keydraw(G.cache(4294967295), G.face(), "A日A日", D.Clip.all(), 61, 8, 16777215),
++    [R.Op{30, 1, 78, 35, 16711680, 145, R.SPoly{False{}, [R.Edge{30.0, 1.0, 78.0, 12.0}, R.Edge{78.0, 12.0, 38.0, 35.0}, R.Edge{38.0, 35.0, 30.0, 1.0}]}},
++     R.Op{2, 2, 79, 39, 65535, 255, R.SRun{0, 0, R.RNone{}}},
++     D.Draw.rect(D.Clip.all(), 76, 30, 4, 9, 255, 127),
++     D.Draw.rect(D.Clip.all(), 0, 0, 80, 40, 2236962, 255)]])
++
++def polygon(os: List<&2, R.Op>) -> List<&2, R.Op>:
++  match os:
++    case Nil{}: Nil{}
++    case R.Op{x0, y0, x1, y1, _, a, R.SPoly{i, es}} <> t:
++      R.Op{x0, y0, x1, y1, 65280, a, R.SPoly{i, es}} <> t
++    case o <> t:
++      o <> polygon(t)
++
++def region(+os: List<&2, R.Op>, +x: U32, +y: U32, +n: U32, +ys: List<&2, R.Op>, +label: String) -> IO(Unit):
++  do IO<Unit>:
++    C.Check.str(label, Bool.show(T.Keep.eq(os, 0, 0, x, y, n, ys, True{})), Bool.show(T.Eq.ops(R.Region.keep(os, 0, 0, x, y, n), ys)))
++    C.Check.str(label ++ " false flag", Bool.show(T.Keep.eq(os, 0, 0, x, y, n, ys, False{})), "False")
++
++def regions(+os: List<&2, R.Op>, +x: U32, +y: U32, +n: U32) -> IO(Unit):
++  +ys = R.Region.keep(os, 0, 0, x, y, n)
++  +tag = U32.show(x) ++ "," ++ U32.show(y) ++ "," ++ U32.show(n)
++  do IO<Unit>:
++    region(os, x, y, n, ys, tag ++ " equal")
++    region(os, x, y, n, Nil{}, tag ++ " removed")
++    region(os, x, y, n, D.Draw.rect(D.Clip.all(), 0, 0, 1, 1, 99, 255) <> ys, tag ++ " inserted")
++    region(os, x, y, n, List.reverse(&2, R.Op, ys), tag ++ " reordered")
++
++def exact(+os: List<&2, R.Op>, +base: Image, +prev: T.Frames, +dy: U32, label: String) -> IO(Unit):
++  +tab = X.Text.table(G.cache(4294967295))
++  +img = T.Tiles.image(T.Frame.par(80, 40, os, base, tab, prev, dy))
++  +fresh = T.Tiles.image(T.Frame.make(80, 40, os, base, tab))
++  C.Check.str(label, G.same(img, fresh), "True")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    +os : List<&2, R.Op> = ops()
++    regions(os, 0, 0, 128)
++    regions(os, 0, 0, 64)
++    regions(os, 64, 0, 64)
++    regions(os, 16, 16, 16)
++    regions(os, 256, 256, 32)
++    +tab : R.Tab = X.Text.table(G.cache(4294967295))
++    +prev : T.Frames = T.FSome{80, 40, tab, T.Frame.make(80, 40, os, Pix{0}, tab)}
++    +changed : List<&2, R.Op> = X.Text.keydraw(G.cache(4294967295), G.face(), "日日AA", D.Clip.all(), 61, 8, 16777215)
++    exact(os, Pix{0}, prev, 0, "unchanged exact pixels")
++    exact(changed, Pix{0}, prev, 0, "changed run exact pixels")
++    exact(List.reverse(&2, R.Op, os), Pix{0}, prev, 0, "reordered ops exact pixels")
++    exact(os, Qua{Pix{1}, Pix{2}, Pix{3}, Pix{4}}, prev, 0, "changed base exact pixels")
++    exact(changed, Pix{0}, prev, 64, "scroll hint still exact pixels")
++    exact(polygon(os), Pix{0}, prev, 0, "changed polygon exact pixels")
++    C.Check.str("changed polygon negative control", G.same(T.Tiles.image(T.Frame.make(80, 40, polygon(os), Pix{0}, tab)), T.Tiles.image(T.Frame.make(80, 40, os, Pix{0}, tab))), "False")
++    C.Check.str("changed run negative control", G.same(T.Tiles.image(T.Frame.make(80, 40, changed, Pix{0}, tab)), T.Tiles.image(T.Frame.make(80, 40, os, Pix{0}, tab))), "False")
+diff --git a/test/native/keep_plan_bench.bend b/test/native/keep_plan_bench.bend
+new file mode 100644
+index 000000000..c4b2e9d28
+--- /dev/null
++++ b/test/native/keep_plan_bench.bend
+@@ -0,0 +1,83 @@
++import Base
++import ../check.bend as C
++import ../glyph_table_test.bend as G
++import ../keep_step_test.bend as K
++import ../../src/gfx/text.bend as X
++import ../../src/gfx/raster.bend as R
++import ../../src/gfx/draw.bend as D
++import ../../src/gfx/tiles.bend as T
++import ../../src/server/perf.bend as P
++
++# The previous production comparator, kept independent of Keep.step.
++def Ref.keep(os: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>, ok: Bool) -> Bool:
++  match os ok:
++    case _ False{}: False{}
++    case Nil{} True{}: T.Eq.ops.go(Nil{}, ys, True{})
++    case +o <> t True{}:
++      Ref.keep(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys))
++
++def Ref.eq(c: T.Cut, +ys: List<&2, R.Op>) -> Bool:
++  match c:
++    case T.CAll{o}: T.Eq.ops(o, ys)
++    case T.CIn{o, px, py, rx, ry, n}: Ref.keep(o, px, py, rx, ry, n, ys, True{})
++
++def Ref.same(c: T.Cut, +base: Image, t: T.Tiles) -> Bool:
++  match t:
++    case T.TLeaf{_}: False{}
++    case T.TNode{o, b, _, _, _, _}: T.Eq.tile.k(Ref.eq(c, o), base, b)
++
++def Ref.leaf(+e: Nat, +c: T.Cut, +base: Image, t: T.Tile, p: T.Past, +rx: U32, +ry: U32, +n: U32) -> T.Plan:
++  match t:
++    case T.Tile{+o, l, +b, i, keys}:
++      T.Tile.plan2.k(T.Eq.tile.k(Ref.eq(c, o), base, b), e, c, base, T.Tile{o, l, b, i, keys}, p, rx, ry, n)
++
++def Ref.plan(+k: Nat, +e: Nat, c: T.Cut, +base: Image, prev: T.Tiles, +p: T.Past, +rx: U32, +ry: U32, +n: U32, same: Bool) -> T.Plan:
++  match k prev same:
++    case 0n T.TLeaf{t} _: Ref.leaf(e, c, base, t, p, rx, ry, n)
++    case 1n+j0 T.TNode{o, b, pa, pb, pc, pd} True{}: T.PKeepN{T.TNode{o, b, pa, pb, pc, pd}}
++    case 1n+j0 T.TNode{_, _, +pa, +pb, +pc, +pd} False{}:
++      +j = j0
++      +h = U32.shr(n)
++      +os = T.Cut.get(c)
++      T.Plan.node(os, base,
++        Ref.plan(j, e, T.CIn{os, rx, ry, rx, ry, h}, T.Img.q(base, 0n), pa, p, rx, ry, h, Ref.same(T.CIn{os, rx, ry, rx, ry, h}, T.Img.q(base, 0n), pa)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, (rx + h : U32), ry, h}, T.Img.q(base, 1n), pb, p, (rx + h : U32), ry, h, Ref.same(T.CIn{os, rx, ry, (rx + h : U32), ry, h}, T.Img.q(base, 1n), pb)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, rx, (ry + h : U32), h}, T.Img.q(base, 2n), pc, p, rx, (ry + h : U32), h, Ref.same(T.CIn{os, rx, ry, rx, (ry + h : U32), h}, T.Img.q(base, 2n), pc)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, (rx + h : U32), (ry + h : U32), h}, T.Img.q(base, 3n), pd, p, (rx + h : U32), (ry + h : U32), h, Ref.same(T.CIn{os, rx, ry, (rx + h : U32), (ry + h : U32), h}, T.Img.q(base, 3n), pd)))
++    case _ _ _: T.Tiles.plan.make(k, e, T.Cut.get(c), base, rx, ry, n)
++
++def Ref.frame(+os: List<&2, R.Op>, +prev: T.Tiles) -> T.Plan:
++  Ref.plan(5n, 6n, T.CAll{os}, Pix{0}, prev, T.Past{5n, prev, 2048, 0}, 0, 0, 2048, T.Tiles.same(os, Pix{0}, prev))
++
++def rows(+n: Nat, +c: Map<&2, X.TG>, +f: X.Face) -> List<&2, R.Op>:
++  match n:
++    case 0n: Nil{}
++    case 1n+k:
++      List.append(&2, R.Op, X.Text.keydraw(c, f, "The regulator enable pin is pulled up through R12 to VBAT; check U3 footprint, then rerun DRC.", D.Clip.all(), 300, U32.from_nat(Nat.add(24n, Nat.mul(k, 19n))), 15790320), rows(k, c, f))
++
++def sample(+n: Nat, +os: List<&2, R.Op>, +prev: T.Tiles) -> IO(Unit):
++  match n:
++    case 0n: IO.pure(Unit, Unit{})
++    case 1n+k:
++      do IO<Unit>:
++        a : U32 <- P.Perf.us()
++        old : Nat = T.Plan.count(Ref.frame(os, prev))
++        +b : U32 <- P.Perf.us()
++        new : Nat = T.Plan.count(T.Frame.plan.k(True{}, 1400, 900, os, Pix{0}, prev, 0))
++        z : U32 <- P.Perf.us()
++        IO.print("sample," ++ Nat.show(k) ++ "," ++ U32.show((b - a : U32)) ++ "," ++ U32.show((z - b : U32)) ++ "," ++ Nat.show(old) ++ "," ++ Nat.show(new))
++        sample(k, os, prev)
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    K.main()
++    +f : X.Face <- X.Text.face(["monospace"], 14)
++    +c : Map<&2, X.TG> <- X.Text.warm(Map.new(&2, X.TG), f)
++    +tab : R.Tab = X.Text.table(c)
++    +os : List<&2, R.Op> = rows(44n, c, f)
++    +old : T.Tiles = T.Frame.make(1400, 900, os, Pix{0}, tab)
++    +changed : List<&2, R.Op> = List.append(&2, R.Op, X.Text.keydraw(c, f, "Backplane typed", D.Clip.all(), 300, 840, 16777215), os)
++    +a : Image = T.Tiles.image(T.Plan.run(Ref.frame(changed, old), 6n, tab))
++    +b : Image = T.Tiles.image(T.Plan.run(T.Frame.plan.k(True{}, 1400, 900, changed, Pix{0}, old, 0), 6n, tab))
++    C.Check.str("whole plan exact image", Bool.show(T.Eq.image(a, b)), "True")
++    sample(100n, changed, old)

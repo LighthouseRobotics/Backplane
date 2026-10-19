@@ -1,0 +1,21 @@
+cc   build/cc/release-child/u13.c
+cc   build/cc/release-child/u12.c
+cc   build/cc/release-child/u2.c
+cc   build/cc/release-child/u0.c
+cc   build/cc/release-child/u8.c
+cc   build/cc/release-child/u3.c
+cc   build/cc/release-child/u5.c
+cc   build/cc/release-child/u4.c
+cc   build/cc/release-child/u10.c
+cc   build/cc/release-child/u9.c
+cc   build/cc/release-child/u7.c
+cc   build/cc/release-child/u11.c
+cc   build/cc/release-child/u14.c
+cc   build/cc/release-child/u6.c
+cc   build/cc/release-child/u1.c
+scripts/build-app.sh: line 207: 13514 Terminated: 15          ( peak=0; while :; do
+    s=$(ps -eo pid=,ppid=,rss= 2>/dev/null | awk -v root="$me" '{ p[$1] = $2; r[$1] = $3 }
+      END { for (k in p) { q = k; while (q in p && q != root && q > 1) q = p[q]; if (q == root) t += r[k] } print t + 0 }'); [ "$s" -gt "$peak" ] && { peak=$s; echo "$peak" > "$work/cc.peak"; }; sleep 0.5;
+done )
+stages: emit (fresh) 51.8s split 0.2s cc 7.6s link 0.2s total 59.9s | objects hit 0 miss 15 | peak RSS: emit 2.18G, largest single cc 0.17G, this build's compiles together (sampled) 0.46G, cgroup all-together -
+build/release-child (15 units, 4 jobs)

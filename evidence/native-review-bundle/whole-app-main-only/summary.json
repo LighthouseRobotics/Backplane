@@ -1,0 +1,274 @@
+{
+  "result": "incomplete_or_fail",
+  "runs": {
+    "baseline-cold": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "normal",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "normal",
+          "check": "input p99<=16ms"
+        },
+        {
+          "phase": "normal",
+          "check": "key>frame p99<=16ms"
+        },
+        {
+          "phase": "normal",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "normal",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "idle",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "bg",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "bg",
+          "check": "no frame>16ms"
+        },
+        {
+          "phase": "bg",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "fg",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "fg",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "type",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "type",
+          "check": "input p99<=16ms"
+        },
+        {
+          "phase": "type",
+          "check": "key>frame p99<=16ms"
+        },
+        {
+          "phase": "type",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "displayed input p99<=16ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [
+        {
+          "phase": "normal",
+          "check": "Status tab observed"
+        }
+      ],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-cold/tmp/bp-perfload-Gqxj3x",
+      "trace_sha256": "0905ca51bc3effd6422c3250e84984b3204cb9f99b004601bd9a89ec9445b883",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-cold/tmp/bp-perfload-Gqxj3x/display-demands.jsonl"
+    },
+    "candidate-cold": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "normal",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "normal",
+          "check": "input p99<=16ms"
+        },
+        {
+          "phase": "normal",
+          "check": "key>frame p99<=16ms"
+        },
+        {
+          "phase": "normal",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "normal",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "idle",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "bg",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "bg",
+          "check": "no frame>16ms"
+        },
+        {
+          "phase": "bg",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "fg",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "fg",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "type",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "type",
+          "check": "input p99<=16ms"
+        },
+        {
+          "phase": "type",
+          "check": "key>frame p99<=16ms"
+        },
+        {
+          "phase": "type",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "displayed input p99<=16ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [
+        {
+          "phase": "normal",
+          "check": "Status tab observed"
+        }
+      ],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/candidate-cold/tmp/bp-perfload-tnJKzW",
+      "trace_sha256": "431803ed366c09d8d599ef46279eef6f9fd58e3b7ebe259d8f7d1181738a2518",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/candidate-cold/tmp/bp-perfload-tnJKzW/display-demands.jsonl"
+    },
+    "baseline-warm": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "open",
+          "check": "displayed open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-warm/tmp/bp-perfload-Q49ib3",
+      "trace_sha256": "0760735a73e7d1224741d6bb52c76602a1b5277ecae24adbcfd57571172a0866",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-warm/tmp/bp-perfload-Q49ib3/display-demands.jsonl"
+    },
+    "candidate-warm": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "open",
+          "check": "displayed open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/candidate-warm/tmp/bp-perfload-mhQNWQ",
+      "trace_sha256": "59839368f9329478bb47ae32bd6e5f648b4179eb948882716f4975832aefbd06",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/candidate-warm/tmp/bp-perfload-mhQNWQ/display-demands.jsonl"
+    }
+  },
+  "independent_reference_comparisons": {
+    "input": {
+      "status": "PASS",
+      "exit": 0,
+      "report_sha256": "9767dfef132e7f8f90793a8592bd99612c4bfe787e31b5949b4ca0aa649a1de5"
+    },
+    "title": {
+      "status": "PASS",
+      "exit": 0,
+      "report_sha256": "0baef81212d470f50ddca7804b9efdee26b774afa68c3fdc8ec6247676fa9785"
+    }
+  },
+  "limits": {
+    "frame_p99_ms": 8,
+    "streaming_or_input_ms": 16,
+    "open_ms": 50,
+    "agent_line_p99_ms": 2
+  },
+  "scope": "X-server composer/title content and trace processing. Status tab, full timeline and physical scanout are not certified. Configured secs=5 applies to timed phases; typing/open/normal use fixed event workloads."
+}

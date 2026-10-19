@@ -1,0 +1,14 @@
+{
+  "result": "pass",
+  "before_commit": "62fa318989b092aa8712825a4c75f1e4f0c6bcbf",
+  "current_uncommitted_tree": "328e208e407130d0fd7514116208b1fae40cd249",
+  "old_public_laws": 2173,
+  "current_public_laws": 2174,
+  "missing": [],
+  "changed_statements": [],
+  "added": [
+    "keep_step_exact"
+  ],
+  "laws_sha256": "97897e48a3890d2b65c43cb5d86b74dc8fe71501b6582c524ecaf01087cd37e8",
+  "scope": "All existing public law statements byte-identical to verified glyph candidate; kernel proof remains CI gate."
+}

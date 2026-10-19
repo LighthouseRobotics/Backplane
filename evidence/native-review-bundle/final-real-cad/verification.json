@@ -1,0 +1,188 @@
+{
+  "result": "pass",
+  "schema2_receipt_sha256": "ee6c0d114d87df9a05e05040ce29deec046d5593767bad3438b95106a26b4023",
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "producer": {
+    "receipt": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/plan-only-platform/7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3/native/build/result.json",
+    "receipt_sha256": "50186be7babb5cf037d763d24a79979b7a85229b8191334d0c2367fd1a4960a2",
+    "source_commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "source_sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "artifact_path": "dist/backplane",
+    "binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2"
+  },
+  "steps_and_all_log_hashes_verified": true,
+  "review_assertions": 41,
+  "history_assertions": 28,
+  "release_files": [
+    {
+      "path": "ecc83-pp-board.pdf",
+      "bytes": 83712,
+      "sha256": "fbe82000f77b74ada4751297dfbf3d35952d13c2d2501658e16f333968eb1978"
+    },
+    {
+      "path": "ecc83-pp-bom.csv",
+      "bytes": 817,
+      "sha256": "d26f1e8e837290c9e7df62b9ef927457b155f021c4f8cfd56aae526b009067c4"
+    },
+    {
+      "path": "ecc83-pp-cpl.csv",
+      "bytes": 1009,
+      "sha256": "de5d2b796296db2f8fcf5ef06fcac6fbd4e7bce0207c09ee133a8c4d449c7b0b"
+    },
+    {
+      "path": "ecc83-pp-schematic.pdf",
+      "bytes": 106813,
+      "sha256": "0394f9364e029e4ed782465c941814debc6ae37737277bd386a1e0900a1ffa29"
+    },
+    {
+      "path": "ecc83-pp.step",
+      "bytes": 60587,
+      "sha256": "b10545ece7c17a04fa2512760b242bcf07ae97e1f4303b611ddf9a2e04d7056b"
+    },
+    {
+      "path": "gerbers/ecc83-pp-B_Adhesive.gba",
+      "bytes": 480,
+      "sha256": "6263853fc84a32e42868716b7bb4887619391c1152d9608fb94cb31ad69052c7"
+    },
+    {
+      "path": "gerbers/ecc83-pp-B_Courtyard.gbr",
+      "bytes": 454,
+      "sha256": "e8a639628afce3d53393241261dbfb67b6b4df209e2d03fc1d49521d4d09667b"
+    },
+    {
+      "path": "gerbers/ecc83-pp-B_Fab.gbr",
+      "bytes": 463,
+      "sha256": "e08289b9f628ede69b70b58a5ed0d35e8f1e75e3baf358de7c72679c9b8ec2de"
+    },
+    {
+      "path": "gerbers/ecc83-pp-B_Mask.gbs",
+      "bytes": 1882,
+      "sha256": "6c23eea576508ef6802d72bb0e585496b97f066d22cbfa8fe397d93f2f5e99be"
+    },
+    {
+      "path": "gerbers/ecc83-pp-B_Paste.gbp",
+      "bytes": 481,
+      "sha256": "9e214171dd72621125df3debf7efce7820f0c533071c6ec305b119221fec5481"
+    },
+    {
+      "path": "gerbers/ecc83-pp-B_Silkscreen.gbo",
+      "bytes": 482,
+      "sha256": "d6d177a27ff19548de0312f310d7d172862eef2c96520a635f654ac257730677"
+    },
+    {
+      "path": "gerbers/ecc83-pp-Edge_Cuts.gm1",
+      "bytes": 715,
+      "sha256": "3b5cab6c8be2c21a39dc99d88774af4fdc1cd5acb8cd307bd02a65646ffbef04"
+    },
+    {
+      "path": "gerbers/ecc83-pp-F_Adhesive.gta",
+      "bytes": 480,
+      "sha256": "9d2eae379aefff7dfa2f3c2d31ee8c42a2de67b296d6d6e49dd8e383ea5863a3"
+    },
+    {
+      "path": "gerbers/ecc83-pp-F_Courtyard.gbr",
+      "bytes": 3425,
+      "sha256": "8f2802ad36310364503cf671c82f6b8bb87123d0628ad351c1038c6ae8007f0d"
+    },
+    {
+      "path": "gerbers/ecc83-pp-F_Fab.gbr",
+      "bytes": 58293,
+      "sha256": "a4d245304b9f1cf2935d62abb2772bd672186ef99a5fd0bb41565a020418f97c"
+    },
+    {
+      "path": "gerbers/ecc83-pp-F_Mask.gts",
+      "bytes": 1882,
+      "sha256": "8fd2d67c9aa4158d9126c2b9bb5c13cfee977b3302e419403899cf2aa41c824c"
+    },
+    {
+      "path": "gerbers/ecc83-pp-F_Paste.gtp",
+      "bytes": 481,
+      "sha256": "bc796b775d083e4da72475cd31a2e0ee1397b75c13d6919af935eaf40cc47b8d"
+    },
+    {
+      "path": "gerbers/ecc83-pp-F_Silkscreen.gto",
+      "bytes": 29488,
+      "sha256": "ae00e1b039d1145aca9478c48e1ec380b6e8cfe4dad6be5b9256c4ebcd60355a"
+    },
+    {
+      "path": "gerbers/ecc83-pp-Margin.gbr",
+      "bytes": 454,
+      "sha256": "e8a639628afce3d53393241261dbfb67b6b4df209e2d03fc1d49521d4d09667b"
+    },
+    {
+      "path": "gerbers/ecc83-pp-NPTH.drl",
+      "bytes": 292,
+      "sha256": "fb772d200bb7cb6e91855df697b7848a692fa476be50505a4bfdc6e9c493f7fc"
+    },
+    {
+      "path": "gerbers/ecc83-pp-PTH.drl",
+      "bytes": 1160,
+      "sha256": "6cdd16ac34c2e81389f687576d6a5b5cd2e130120b48fea7c249d3886a118a40"
+    },
+    {
+      "path": "gerbers/ecc83-pp-User_Comments.gbr",
+      "bytes": 1143,
+      "sha256": "54e48685bec8d3e32dd280d97774bbca67bee5477788316c0eba5bfa85aa9ad4"
+    },
+    {
+      "path": "gerbers/ecc83-pp-User_Drawings.gbr",
+      "bytes": 464,
+      "sha256": "eb539fb5ebc16e04a118872b2c9d531e7abb72e8d691131d516930ee39763308"
+    },
+    {
+      "path": "gerbers/ecc83-pp-User_Eco1.gbr",
+      "bytes": 454,
+      "sha256": "2d5352c92e763f3c0e53a5bf6bd64091fb3fe4abac6fbbcb07d490e15867e8a4"
+    },
+    {
+      "path": "gerbers/ecc83-pp-User_Eco2.gbr",
+      "bytes": 454,
+      "sha256": "b76b50e521f57dc9af0d2785dea99d621c0510e5bc5d836f3d5196c1ca07927a"
+    },
+    {
+      "path": "gerbers/ecc83-pp-bottom_cu.gbl",
+      "bytes": 54478,
+      "sha256": "723aa513de73862ab13c52ae971d246ca9f7f4edc984a80a9ca72b8a646548ef"
+    },
+    {
+      "path": "gerbers/ecc83-pp-job.gbrjob",
+      "bytes": 3824,
+      "sha256": "1a1cdb2a283903dac1724036fd52053962a54480abe131a5fb2eba9ed52a36c3"
+    },
+    {
+      "path": "gerbers/ecc83-pp-top_cu.gtl",
+      "bytes": 3126,
+      "sha256": "0c4263db20d3ded8346c1f945c2fe87001d17cf9a7c7685dd517e8263bb66841"
+    },
+    {
+      "path": "manifest.json",
+      "bytes": 945,
+      "sha256": "d42f5b216266b045d6922c20888f6ef3b337e1d3c8f809f9f02b4fe675745e97"
+    },
+    {
+      "path": "notes.md",
+      "bytes": 419,
+      "sha256": "eb130648ffac79e0c28d09d57076ba21d3dd4c3e3da685372ff37ff34f96a49b"
+    }
+  ],
+  "release_total_bytes": 419157,
+  "release_fixture_source_commit": "b1df702a2ba890d6130f1a3401ce84bdeaf088a2",
+  "release_fixture_tag_commit": "b1df702a2ba890d6130f1a3401ce84bdeaf088a2",
+  "release_fixture_annotated_tag_object": "e346fbdcccf7947e4ec102377ab6a0e5c7985fcf",
+  "source_tag_manifest_agree": true,
+  "runtime": {
+    "command": [
+      "/home/the-one/Documents/backplane-overnight-2026-10-19/cad-runtime/backplane-kicad-linux-x86_64-10.99.0-bp.4/bin/kicad-cli",
+      "--version"
+    ],
+    "status": 0,
+    "output": "10.99.0",
+    "minimum_major": 10
+  },
+  "scope": "Final source exact producer-matched binary with pinned real KiCad CLI and licensed generated demo fixture. Controls include dirty forced refusal and identical retry outputs/tag. Local test tag only; publish:false. Design findings exist, so this is not a clean-design assertion."
+}

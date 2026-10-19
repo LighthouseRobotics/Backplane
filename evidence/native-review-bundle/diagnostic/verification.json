@@ -1,0 +1,217 @@
+{
+  "result": "observer_empty_placeholder_blink_false_positive_reproduced_in_both_binaries",
+  "scope": "Separate untimed diagnosis; not an additional matched performance experiment or retroactive pass",
+  "sides": {
+    "baseline": {
+      "capture_count": 11,
+      "empty_states": [
+        "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1",
+        "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+      ],
+      "difference_bbox_roi": [
+        14,
+        15,
+        15,
+        18
+      ],
+      "different_pixels": 3,
+      "color_pairs": [
+        {
+          "first": [
+            21,
+            24,
+            29
+          ],
+          "second": [
+            19,
+            22,
+            27
+          ],
+          "count": 1
+        },
+        {
+          "first": [
+            44,
+            47,
+            57
+          ],
+          "second": [
+            19,
+            22,
+            27
+          ],
+          "count": 1
+        },
+        {
+          "first": [
+            67,
+            71,
+            85
+          ],
+          "second": [
+            19,
+            22,
+            27
+          ],
+          "count": 1
+        }
+      ],
+      "captures": {
+        "empty-before-0": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-before-1": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-before-2": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-before-3": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-before-4": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "text": {
+          "ppm_sha256": "30a253438dad74dd709197a9a9750f7a37be9f3b5af927d1e539d267a047a50c",
+          "normalized_sha256": "b66c26cd5e7dc3662ab0612652dbbca9dfe1ad69d73b897d785bff6c9c073d96"
+        },
+        "empty-after-0": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-after-1": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-after-2": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-after-3": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-after-4": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        }
+      }
+    },
+    "candidate": {
+      "capture_count": 11,
+      "empty_states": [
+        "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1",
+        "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+      ],
+      "difference_bbox_roi": [
+        14,
+        15,
+        15,
+        18
+      ],
+      "different_pixels": 3,
+      "color_pairs": [
+        {
+          "first": [
+            21,
+            24,
+            29
+          ],
+          "second": [
+            19,
+            22,
+            27
+          ],
+          "count": 1
+        },
+        {
+          "first": [
+            44,
+            47,
+            57
+          ],
+          "second": [
+            19,
+            22,
+            27
+          ],
+          "count": 1
+        },
+        {
+          "first": [
+            67,
+            71,
+            85
+          ],
+          "second": [
+            19,
+            22,
+            27
+          ],
+          "count": 1
+        }
+      ],
+      "captures": {
+        "empty-before-0": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-before-1": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-before-2": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-before-3": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-before-4": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "text": {
+          "ppm_sha256": "5b6c4e3ca7397b588763dc9247e96241dda32cb6aff2030369629e6d8fe91904",
+          "normalized_sha256": "b66c26cd5e7dc3662ab0612652dbbca9dfe1ad69d73b897d785bff6c9c073d96"
+        },
+        "empty-after-0": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-after-1": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-after-2": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        },
+        "empty-after-3": {
+          "ppm_sha256": "b9bd8b97feab22ddde3ee701df03fda82104b5c044ed3e123c260b3225e3de80",
+          "normalized_sha256": "40793bc68e3f859ab6b5ffc92eedd2372b9cbc9b6b59c5414cd10819fd1ef6c1"
+        },
+        "empty-after-4": {
+          "ppm_sha256": "b6444e04905d7dca6e8c4f58ffb7f98b913b9a1ca27c55b51d97635e10065215",
+          "normalized_sha256": "9c69d25a423e0498f135341249430715e7d851b9829a02123e6fb3954a7a4934"
+        }
+      }
+    }
+  },
+  "observer_sha256": "4f061be549654f91c210eaa4dc99910a9db828a23316683f01428b6c0d0824fa",
+  "diagnostic_source": "evidence/capture-empty-composer.ts",
+  "diagnostic_source_sha256": "5a81882d85e6f9ff6e73c9f56bc84415646a48724d028eadf6a8c6255e6f47bd",
+  "original_comparison": "evidence/native-app-perf-integrated-repeat3-20261019/compare-input.log",
+  "original_comparison_status": "FAIL, exit1; no JSON emitted",
+  "root_cause": "Blinking caret covers three pixels of the empty composer placeholder first A. Replacing solid caret colors with panel color removes the covered placeholder pixels; caret-off retains them. Both baseline and candidate reproduce the same two exact hashes. All eleven nonempty prefix references agree in the original comparison.",
+  "original_reports_edited": false,
+  "thresholds_deadlines_ROI_aliases_or_measured_harness_changed": false,
+  "performance_acceptance": "Failed budgets and original failed comparison remain failed."
+}

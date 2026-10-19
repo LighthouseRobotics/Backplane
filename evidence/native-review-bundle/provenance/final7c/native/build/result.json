@@ -1,0 +1,204 @@
+{
+  "schema": 2,
+  "lane": "build",
+  "started": "2026-10-19T13:37:48.616287+00:00",
+  "source": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "host": {
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "machine": "x86_64"
+  },
+  "toolchain": [
+    {
+      "command": [
+        "bend",
+        "version"
+      ],
+      "status": 0,
+      "output": "bend 2.0.36"
+    },
+    {
+      "command": [
+        "bun",
+        "--version"
+      ],
+      "status": 0,
+      "output": "1.4.3"
+    },
+    {
+      "command": [
+        "clang",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Ubuntu clang version 19.1.1 (1ubuntu1~24.04.2)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-19/bin"
+    },
+    {
+      "command": [
+        "git",
+        "--version"
+      ],
+      "status": 0,
+      "output": "git version 2.55.0"
+    },
+    {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "status": 0,
+      "output": "Python 3.12.3"
+    }
+  ],
+  "flags": {
+    "CC": null,
+    "BACKPLANE_CFLAGS": null,
+    "BACKPLANE_LOW_MEM": "1",
+    "BACKPLANE_JOBS": "2",
+    "BACKPLANE_CPUS": null,
+    "BACKPLANE_PREBUILT": null,
+    "BACKPLANE_GOOGLE_BAKE": "0",
+    "BACKPLANE_KICAD_CLI": null,
+    "BUN_JSC_forceRAMSize": "4294967296",
+    "BUN_JSC_useJIT": null,
+    "BACKPLANE_CHROME": "/usr/bin/google-chrome",
+    "BACKPLANE_TEST_BROWSERS": "chromium",
+    "BACKPLANE_X11": null,
+    "BACKPLANE_TEST_XVFB": null
+  },
+  "steps": [
+    {
+      "command": [
+        "scripts/build.sh"
+      ],
+      "result": "pass",
+      "exit_code": 0,
+      "seconds": 1328.0216485839999,
+      "reason": "",
+      "log": "00.log",
+      "log_sha256": "ea5ed46b5c5eea4e122545efb37217317d48c9fbce65ed4a785f22867d302cf8"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "dist/backplane",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+      "role": "hub_binary"
+    },
+    {
+      "path": "dist/backplane-browser",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-browser",
+      "bytes": 94627808,
+      "sha256": "17049780b4e6d3bd0b698ad20407c6cd38c42a5e7f5cc488adc3fedb80360dcd"
+    },
+    {
+      "path": "dist/backplane-kipc",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-kipc",
+      "bytes": 90904544,
+      "sha256": "0065edf330b5365970c7d92387bffb15b17a0e13e60e223c58de3496a984b1ea"
+    },
+    {
+      "path": "dist/backplane-serve",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-serve",
+      "bytes": 146234240,
+      "sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+      "role": "hub_binary"
+    },
+    {
+      "path": "dist/backplane-step2glb",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-step2glb",
+      "bytes": 98478048,
+      "sha256": "e99569d8cdf1a7a68ed56c2bc9cf4a4820e8a90277729746cf1c02843b1c4f7a"
+    },
+    {
+      "path": "dist/backplane-voice",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/backplane-voice",
+      "bytes": 90814432,
+      "sha256": "4fc694ffebc2b45d5d9949fe3cb7ac109289266f9eaf28f6ae3ed042c4e6ec79"
+    },
+    {
+      "path": "dist/web/apple-touch-icon-hw2kj0yh.png",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/apple-touch-icon-hw2kj0yh.png",
+      "bytes": 4277,
+      "sha256": "e6f1eae8c7f543dc3d72b1b12c77d2c0449cda6964dffba8e6fefabed0addbd2"
+    },
+    {
+      "path": "dist/web/chunk-18dwx26x.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-18dwx26x.js",
+      "bytes": 3700600,
+      "sha256": "0a952d81686e4465ab80cefb6990feb310823242e74957c3c7d779e9dda41023"
+    },
+    {
+      "path": "dist/web/chunk-18dwx26x.js.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-18dwx26x.js.gz",
+      "bytes": 620056,
+      "sha256": "b530b84c050cf00505d5a59cb1be10e2e3fb1be2cbdbb6e8fcda824a64b97fca"
+    },
+    {
+      "path": "dist/web/chunk-3hk1rdr5.css",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-3hk1rdr5.css",
+      "bytes": 55811,
+      "sha256": "5c2ce6cd604641f5a798949783f98af5b59383f87aeadd08d637589c11bd264c"
+    },
+    {
+      "path": "dist/web/chunk-3hk1rdr5.css.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/chunk-3hk1rdr5.css.gz",
+      "bytes": 10919,
+      "sha256": "bd701e2d007f9377c63b0bd3db535ba84745dcf74a00231f06ac52eca43befc7"
+    },
+    {
+      "path": "dist/web/favicon-7jbpzm5e.svg",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/favicon-7jbpzm5e.svg",
+      "bytes": 1207,
+      "sha256": "5b0f22a3329f59809216aabe58d8dbbedbd46d29e4a2373a727529daa2441a2c"
+    },
+    {
+      "path": "dist/web/index.html",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/index.html",
+      "bytes": 527,
+      "sha256": "34c083922f6eb985572603b887a6841be519c542fba22bba17b2568ac1a5a3dc"
+    },
+    {
+      "path": "dist/web/index.html.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/index.html.gz",
+      "bytes": 321,
+      "sha256": "ab0d599356b1aaeeb84175d6313c95fca6ec79ec5c33897f3016d1fb9e6766e1"
+    },
+    {
+      "path": "dist/web/sw.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/sw.js",
+      "bytes": 1324,
+      "sha256": "2d726573774359cdfa9c891db3cbab7918efcafe1c56fa9d4da5d6fc06eb1244"
+    },
+    {
+      "path": "dist/web/sw.js.gz",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/dist/web/sw.js.gz",
+      "bytes": 594,
+      "sha256": "81016633ffc7adf8cf1eb018b49993c64080ea6c6c1492231bae16f2e6c52c4e"
+    },
+    {
+      "path": "mobile/build/assets/bridge.js",
+      "resolved_path": "/home/runner/work/Backplane/Backplane/mobile/build/assets/bridge.js",
+      "bytes": 4224028,
+      "sha256": "d4ee8a6cdcd4b210d38840c52fbd6fbce12c5a4ccd4b8b3725745ca4405421ad"
+    }
+  ],
+  "consumed": {},
+  "provenance": {
+    "bend_version": "2.0.36"
+  },
+  "result": "pass",
+  "source_after": {
+    "commit": "7c7629dfb7b008ecfa6867c9e85f55f8a4d192e3",
+    "sha256": "b1e02c0b99d09de0765cce3073c18843485e3c600e9df2b32ba9ff5e1c1e2eeb",
+    "files": 1069,
+    "status": []
+  },
+  "finished": "2026-10-19T13:59:57.336332+00:00"
+}

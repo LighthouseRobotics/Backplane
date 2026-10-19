@@ -1,0 +1,21 @@
+ok target failures, stream failure and independent pixel failure remain separate
+ok self-consistent wrong candidate pixels cannot replace independent baseline
+ok a missing frame budget cannot disappear
+ok numeric frame metric cannot disagree with verdict
+ok Status null coverage cannot become true
+ok stale observed pixels fail demand validation
+ok incomplete composer coverage fails
+ok changed fixture fails
+ok changed measurement source fails
+ok physical scanout cannot be claimed
+ok false sustained label cannot hide unchanged 2s guard
+ok execution failure cannot become target-only failure
+ok target failures cannot become summary acceptance
+ok failed pixel verdict cannot become passing evidence
+ok changed source tree cannot pass receipt binding
+ok a later helper cannot replace historical experiment bytes
+ok original targets cannot be waived for a failing baseline
+ok actual missing-JSON failure is valid evidence
+ok fabricated passing JSON cannot replace failed comparator
+ok failed comparator requires its original error log
+20 selected-evidence controls passed; no apps, builds or retained evidence mutations

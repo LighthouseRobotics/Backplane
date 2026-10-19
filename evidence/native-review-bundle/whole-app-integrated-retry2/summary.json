@@ -1,0 +1,176 @@
+{
+  "result": "incomplete_or_fail",
+  "runs": {
+    "baseline-cold": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "normal",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "normal",
+          "check": "input p99<=16ms"
+        },
+        {
+          "phase": "normal",
+          "check": "key>frame p99<=16ms"
+        },
+        {
+          "phase": "normal",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "normal",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "bg",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "bg",
+          "check": "no frame>16ms"
+        },
+        {
+          "phase": "bg",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "fg",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "fg",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "type",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "type",
+          "check": "input p99<=16ms"
+        },
+        {
+          "phase": "type",
+          "check": "key>frame p99<=16ms"
+        },
+        {
+          "phase": "type",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "displayed input p99<=16ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "input-display",
+          "check": "agent_line p99<=2ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [
+        {
+          "phase": "normal",
+          "check": "Status tab observed"
+        }
+      ],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/baseline-cold/tmp/bp-perfload-hLJJx7",
+      "trace_sha256": "5171108935aceaee29d914e188da5c542e0c5f18ee1b5231a0518782cd32b232",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/baseline-cold/tmp/bp-perfload-hLJJx7/display-demands.jsonl"
+    },
+    "candidate-cold": {
+      "status": "EXECUTION_FAIL",
+      "execution_exit": 1,
+      "error": "driver exited nonzero; execution/workload is incomplete"
+    },
+    "baseline-warm": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "open",
+          "check": "displayed open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/baseline-warm/tmp/bp-perfload-1RfMMW",
+      "trace_sha256": "94e8e9a7f3ca92434f64855c2d9d913f0b9495f530dcd9485581e38adc3e4ce4",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/baseline-warm/tmp/bp-perfload-1RfMMW/display-demands.jsonl"
+    },
+    "candidate-warm": {
+      "status": "TARGET_FAIL",
+      "execution_exit": 0,
+      "failed_checks": [
+        {
+          "phase": "open",
+          "check": "displayed open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "frame p99<=8ms"
+        },
+        {
+          "phase": "open",
+          "check": "open<=50ms"
+        },
+        {
+          "phase": "open",
+          "check": "agent_line p99<=2ms"
+        }
+      ],
+      "unverified_checks": [],
+      "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/candidate-warm/tmp/bp-perfload-rOOA1h",
+      "trace_sha256": "84c35cc2d0bcc9b4b97d853c93bddbce99f008d273aa2655a01d83b642cb4c7c",
+      "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-integrated-retry2-20261019/candidate-warm/tmp/bp-perfload-rOOA1h/display-demands.jsonl"
+    }
+  },
+  "independent_reference_comparisons": {
+    "input": {
+      "status": "PASS",
+      "exit": 0,
+      "report_sha256": "f8463343601c8c893392232951c8d6c0b310a37aa971ba683b12820a0eeb7985"
+    },
+    "title": {
+      "status": "PASS",
+      "exit": 0,
+      "report_sha256": "ef509b5b63a7591c43d51fe809eba83289ff2c0484352dbff8e3c01320372e36"
+    }
+  },
+  "limits": {
+    "frame_p99_ms": 8,
+    "streaming_or_input_ms": 16,
+    "open_ms": 50,
+    "agent_line_p99_ms": 2
+  },
+  "scope": "X-server composer/title content and trace processing. Status tab, full timeline and physical scanout are not certified. Configured secs=5 applies to timed phases; typing/open/normal use fixed event workloads."
+}

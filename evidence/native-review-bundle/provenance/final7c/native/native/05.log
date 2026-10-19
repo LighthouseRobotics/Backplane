@@ -1,0 +1,19 @@
+cc   build/cc/worktree_carry_test/u2.c
+cc   build/cc/worktree_carry_test/u1.c
+cc   build/cc/worktree_carry_test/u0.c
+cc   build/cc/worktree_carry_test/u3.c
+cc   build/cc/worktree_carry_test/u14.c
+cc   build/cc/worktree_carry_test/u13.c
+cc   build/cc/worktree_carry_test/u15.c
+cc   build/cc/worktree_carry_test/u9.c
+cc   build/cc/worktree_carry_test/u11.c
+cc   build/cc/worktree_carry_test/u4.c
+cc   build/cc/worktree_carry_test/u7.c
+cc   build/cc/worktree_carry_test/u10.c
+cc   build/cc/worktree_carry_test/u6.c
+cc   build/cc/worktree_carry_test/u12.c
+cc   build/cc/worktree_carry_test/u8.c
+cc   build/cc/worktree_carry_test/u5.c
+cc   build/cc/worktree_carry_test/u16.c
+stages: emit (fresh) 2.4s split 0.0s cc 2.7s link 0.0s total 5.2s | objects hit 0 miss 17 | peak RSS: emit 0.74G, largest single cc 0.15G, this build's compiles together (sampled) 0.25G, cgroup all-together -
+build/worktree_carry_test (17 units, 2 jobs)

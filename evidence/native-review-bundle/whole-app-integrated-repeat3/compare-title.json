@@ -1,0 +1,12 @@
+{
+  "verdict": "pass",
+  "input_targets": 0,
+  "title_targets": 21,
+  "baseline_binary_sha256": "ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48",
+  "candidate_binary_sha256": "6e0906044805f64128bd42ea63b6493c397c2c72c54cf2dc2282b7d9ab482fb2",
+  "baseline_source": "b39a80e56da5b1a352e6b8811252906c03073f54",
+  "candidate_source": "d8bf7863ec6f2aed95abc6ba26765f40e8bce415",
+  "fixture_sha256": "ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543",
+  "harness_sha256": "d071a38cc1d3f7c726e4327fb9fb8ccd1367f66a7489e4fffdde9bff24799cbd",
+  "scope": "Exact calibrated RGB content and observer/workload identity agree with the independent baseline. Latency budgets and fresh-render semantic correctness require separate evidence."
+}

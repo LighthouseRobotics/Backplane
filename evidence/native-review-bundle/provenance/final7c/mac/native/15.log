@@ -1,0 +1,18 @@
+ok   the permission prompt opened an ask
+ok   a message sent meanwhile is posted at once
+ok   and Claude's running turn takes it
+ok   nothing waits in a queue
+ok   the parked request was answered
+ok   exactly one deny (1: {"jsonrpc":"2.0","id":7,"result":{"content":[{"type":"text","text":"{\"behavior\":\"deny\",\"message\":\"The user declined this tool call.\"}"}]}})
+ok   the ask closed
+ok   claude got the interrupt
+ok   the thread stays interrupted after the late result (running,running,interrupted)
+ok   no Completed from the stopped turn's result
+ok   the stopped turn's late delta streams nowhere
+ok   nothing starts the stopped thread again
+ok   archive interrupted the running turn (running,interrupted)
+ok   after unarchive it is not running (interrupted)
+ok   the switch started a new process
+ok   the old process wrote its result as it ended
+ok   the new turn still runs (running,running)
+all ok

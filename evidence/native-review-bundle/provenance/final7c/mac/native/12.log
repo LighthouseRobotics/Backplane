@@ -1,0 +1,115 @@
+ok captured reader fixture stops
+ok native reader preserves the exact non-ASCII bytes
+ok captured reader fixture stops
+ok native reader counts an 8 MiB file without overflowing the stack
+ok captured reader fixture stops
+ok native reader rejects a short read with the path and byte counts
+ok large and incomplete native reads preserve every source byte
+ok captured reader fixture stops
+ok native reader refuses the 2 GiB allocation boundary before reading
+ok rejected 2 GiB read preserves the size and both boundaries
+ok backplane missing log starts and serves hub metadata
+ok backplane missing log preserves the existing log prefix
+ok backplane missing log invokes no provider turn
+ok backplane missing log captured hub stops
+ok backplane empty log starts and serves hub metadata
+ok backplane empty log preserves the existing log prefix
+ok backplane empty log invokes no provider turn
+ok backplane empty log captured hub stops
+ok backplane valid history starts and serves hub metadata
+ok backplane valid history replays the original thread metadata
+ok backplane valid history replays both original non-ASCII messages once and in order
+ok backplane valid history preserves the existing log prefix
+ok backplane valid history invokes no provider turn
+ok backplane valid history captured hub stops
+ok backplane torn tail starts and serves hub metadata
+ok backplane torn tail replays the original thread metadata
+ok backplane torn tail replays both original non-ASCII messages once and in order
+ok backplane torn tail preserves the existing log prefix
+ok backplane torn tail accepts the next whole event
+ok backplane torn tail separates the fragment before appending
+ok backplane torn tail invokes no provider turn
+ok backplane torn tail captured hub stops
+ok backplane repaired torn tail starts again
+ok backplane next event after a torn tail replays on restart
+ok backplane torn-tail restart retains both original messages
+ok backplane torn-tail restarted hub stops
+ok backplane permission fixture actually denies reads
+ok backplane write-only log exits nonzero before serving
+ok backplane write-only log captured process stops
+ok backplane write-only log names the event log and why it cannot be read
+ok backplane write-only log opens no listener
+ok backplane write-only log invokes no provider turn
+ok backplane failed read preserves the log permissions
+ok backplane failed read leaves every original log byte unchanged
+ok backplane repairing read permission lets the hub start
+ok backplane repaired permission replays the original thread metadata
+ok backplane repaired permission replays both original non-ASCII messages once and in order
+ok backplane permission-repaired captured hub stops
+ok backplane oversized log exits nonzero before serving
+ok backplane oversized log captured process stops
+ok backplane oversized log names the event log and why it cannot be read
+ok backplane oversized log opens no listener
+ok backplane oversized log invokes no provider turn
+ok backplane oversized log fails promptly without reading 4 GiB
+ok backplane oversized read preserves the exact log size
+ok backplane oversized read preserves both original boundaries
+ok backplane directory log exits nonzero before serving
+ok backplane directory log captured process stops
+ok backplane directory log names the event log and why it cannot be read
+ok backplane directory log opens no listener
+ok backplane directory log invokes no provider turn
+ok backplane refused directory keeps its contents
+ok backplane-serve missing log starts and serves hub metadata
+ok backplane-serve missing log preserves the existing log prefix
+ok backplane-serve missing log invokes no provider turn
+ok backplane-serve missing log captured hub stops
+ok backplane-serve empty log starts and serves hub metadata
+ok backplane-serve empty log preserves the existing log prefix
+ok backplane-serve empty log invokes no provider turn
+ok backplane-serve empty log captured hub stops
+ok backplane-serve valid history starts and serves hub metadata
+ok backplane-serve valid history replays the original thread metadata
+ok backplane-serve valid history replays both original non-ASCII messages once and in order
+ok backplane-serve valid history preserves the existing log prefix
+ok backplane-serve valid history invokes no provider turn
+ok backplane-serve valid history captured hub stops
+ok backplane-serve torn tail starts and serves hub metadata
+ok backplane-serve torn tail replays the original thread metadata
+ok backplane-serve torn tail replays both original non-ASCII messages once and in order
+ok backplane-serve torn tail preserves the existing log prefix
+ok backplane-serve torn tail accepts the next whole event
+ok backplane-serve torn tail separates the fragment before appending
+ok backplane-serve torn tail invokes no provider turn
+ok backplane-serve torn tail captured hub stops
+ok backplane-serve repaired torn tail starts again
+ok backplane-serve next event after a torn tail replays on restart
+ok backplane-serve torn-tail restart retains both original messages
+ok backplane-serve torn-tail restarted hub stops
+ok backplane-serve permission fixture actually denies reads
+ok backplane-serve write-only log exits nonzero before serving
+ok backplane-serve write-only log captured process stops
+ok backplane-serve write-only log names the event log and why it cannot be read
+ok backplane-serve write-only log opens no listener
+ok backplane-serve write-only log invokes no provider turn
+ok backplane-serve failed read preserves the log permissions
+ok backplane-serve failed read leaves every original log byte unchanged
+ok backplane-serve repairing read permission lets the hub start
+ok backplane-serve repaired permission replays the original thread metadata
+ok backplane-serve repaired permission replays both original non-ASCII messages once and in order
+ok backplane-serve permission-repaired captured hub stops
+ok backplane-serve oversized log exits nonzero before serving
+ok backplane-serve oversized log captured process stops
+ok backplane-serve oversized log names the event log and why it cannot be read
+ok backplane-serve oversized log opens no listener
+ok backplane-serve oversized log invokes no provider turn
+ok backplane-serve oversized log fails promptly without reading 4 GiB
+ok backplane-serve oversized read preserves the exact log size
+ok backplane-serve oversized read preserves both original boundaries
+ok backplane-serve directory log exits nonzero before serving
+ok backplane-serve directory log captured process stops
+ok backplane-serve directory log names the event log and why it cannot be read
+ok backplane-serve directory log opens no listener
+ok backplane-serve directory log invokes no provider turn
+ok backplane-serve refused directory keeps its contents
+114 checks, 0 failures

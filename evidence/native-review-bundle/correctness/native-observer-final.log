@@ -1,0 +1,2 @@
+native display demand: changed target accepted; stale, wrong, indistinguishable and late content rejected
+composer observer: caret blink ignored; missing/corrupt glyph pixels and wrong region size distinguished

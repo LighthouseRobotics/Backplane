@@ -1,0 +1,99 @@
+{
+  "status": "TARGET_FAIL",
+  "execution_exit": 0,
+  "failed_checks": [
+    {
+      "phase": "normal",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "normal",
+      "check": "input p99<=16ms"
+    },
+    {
+      "phase": "normal",
+      "check": "key>frame p99<=16ms"
+    },
+    {
+      "phase": "normal",
+      "check": "open<=50ms"
+    },
+    {
+      "phase": "normal",
+      "check": "agent_line p99<=2ms"
+    },
+    {
+      "phase": "idle",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "bg",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "bg",
+      "check": "no frame>16ms"
+    },
+    {
+      "phase": "bg",
+      "check": "agent_line p99<=2ms"
+    },
+    {
+      "phase": "fg",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "fg",
+      "check": "agent_line p99<=2ms"
+    },
+    {
+      "phase": "type",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "type",
+      "check": "input p99<=16ms"
+    },
+    {
+      "phase": "type",
+      "check": "key>frame p99<=16ms"
+    },
+    {
+      "phase": "type",
+      "check": "agent_line p99<=2ms"
+    },
+    {
+      "phase": "input-display",
+      "check": "displayed input p99<=16ms"
+    },
+    {
+      "phase": "input-display",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "input-display",
+      "check": "agent_line p99<=2ms"
+    },
+    {
+      "phase": "open",
+      "check": "frame p99<=8ms"
+    },
+    {
+      "phase": "open",
+      "check": "open<=50ms"
+    },
+    {
+      "phase": "open",
+      "check": "agent_line p99<=2ms"
+    }
+  ],
+  "unverified_checks": [
+    {
+      "phase": "normal",
+      "check": "Status tab observed"
+    }
+  ],
+  "raw_root": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-cold/tmp/bp-perfload-Gqxj3x",
+  "trace_sha256": "0905ca51bc3effd6422c3250e84984b3204cb9f99b004601bd9a89ec9445b883",
+  "demands_log": "/home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-main-only-20261019/baseline-cold/tmp/bp-perfload-Gqxj3x/display-demands.jsonl"
+}

@@ -1,0 +1,51 @@
+ok shared 9: original request IDs cross a digit boundary
+ok shared 9: reconnect preserves exact request bytes and order
+ok shared 9: repeated reconnect preserves exact request bytes and order
+ok shared 9: pending messages retain send order
+ok shared 9: acknowledging first retains only second
+ok shared 9: acknowledging second retains only first
+ok shared 9: out-of-order acknowledgements empty the outbox
+ok shared 99: original request IDs cross a digit boundary
+ok shared 99: reconnect preserves exact request bytes and order
+ok shared 99: repeated reconnect preserves exact request bytes and order
+ok shared 99: pending messages retain send order
+ok shared 99: acknowledging first retains only second
+ok shared 99: acknowledging second retains only first
+ok shared 99: out-of-order acknowledgements empty the outbox
+ok phone: offline sends cross both digit boundaries
+ok phone: kept state loads
+ok phone: save/load reconnect preserves every request byte and hub in send order
+ok phone: another reconnect keeps the same send order
+ok backplane: isolated hub starts
+ok backplane 9: every replayed request is accepted
+ok backplane 9: stored user messages retain send order
+ok backplane 9: stored user IDs equal original retry IDs
+ok backplane 9: fake provider completes a turn
+ok backplane 9: a fresh connection accepts exact retries
+ok backplane 9: retries append no duplicate user messages
+ok backplane 9: the other thread receives no messages
+ok backplane 99: every replayed request is accepted
+ok backplane 99: stored user messages retain send order
+ok backplane 99: stored user IDs equal original retry IDs
+ok backplane 99: fake provider completes a turn
+ok backplane 99: a fresh connection accepts exact retries
+ok backplane 99: retries append no duplicate user messages
+ok backplane 99: the other thread receives no messages
+ok backplane: only stand-in providers handled the messages
+ok backplane-serve: isolated hub starts
+ok backplane-serve 9: every replayed request is accepted
+ok backplane-serve 9: stored user messages retain send order
+ok backplane-serve 9: stored user IDs equal original retry IDs
+ok backplane-serve 9: fake provider completes a turn
+ok backplane-serve 9: a fresh connection accepts exact retries
+ok backplane-serve 9: retries append no duplicate user messages
+ok backplane-serve 9: the other thread receives no messages
+ok backplane-serve 99: every replayed request is accepted
+ok backplane-serve 99: stored user messages retain send order
+ok backplane-serve 99: stored user IDs equal original retry IDs
+ok backplane-serve 99: fake provider completes a turn
+ok backplane-serve 99: a fresh connection accepts exact retries
+ok backplane-serve 99: retries append no duplicate user messages
+ok backplane-serve 99: the other thread receives no messages
+ok backplane-serve: only stand-in providers handled the messages
+50 assertions, 0 failures

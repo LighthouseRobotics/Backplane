@@ -1,0 +1,4 @@
+ok production codec replays both BotSet events with correct thread identity
+ok production codec retains room and uberbot identity
+ok production codec rejects unknown bot-event negative control
+3 production codec controls passed

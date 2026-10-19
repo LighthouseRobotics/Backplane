@@ -1,0 +1,10 @@
+ff0a3b18b3e3f3ceac54d8b0ac84b62169c48a6042a141b5d935130dfa1c2c48  /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-baseline/dist/backplane
+470e92153fbf700eff31ec16d92bcf66af1e989c96c53e7c8061d77cd73bc210  /home/the-one/Documents/backplane-overnight-2026-10-19/artifacts/native-candidate/artifacts/dist/backplane
+7ce7d6b654eddeec20afddf2396317fba6dc19ab52788a27e894e1806bf8f24b  /tmp/backplane-contrib-tools/bun-linux-x64/bun
+bbe1d93f26cfe3aa9ab3c46530230357a96b7c3bb5f844fcb9a83d7a1a8756f4  /home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/build/xpoke
+a1f72e3685d8466ff1dc78a4b8c18248532fd08606b746952e3c145b9f3d2d5d  /home/the-one/Documents/backplane-overnight-2026-10-19/toolchain/bin/Xvfb
+d071a38cc1d3f7c726e4327fb9fb8ccd1367f66a7489e4fffdde9bff24799cbd  /home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/perf_load.ts
+a0eeacde7a2a765679775f5c6c22f8b307c28796ff5d2e8205e541afab49ce6e  /home/the-one/Documents/backplane-overnight-2026-10-19/native-glyph/test/tools/native_display_compare.ts
+376053ba7b21ef826b0e031d8977f839f54ae0d9cb5451af167390cdc3a1ba81  /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-app-perf-evidence.py
+ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543  /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/native-fixture-bots.jsonl
+1cc0e438aca421d7443947b0b7e00fe85f3df18de5019891892c54221db39b7c  /home/the-one/Documents/backplane-overnight-2026-10-19/evidence/run-native-app-perf.sh
