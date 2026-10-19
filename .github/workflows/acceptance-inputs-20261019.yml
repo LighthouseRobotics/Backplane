@@ -22,6 +22,7 @@ jobs:
       matrix:
         include:
           - {scope: native, minutes: 90}
+          - {scope: combined, minutes: 45}
     env:
       CHECK_JOBS: '1'
       CHECK_SHARDS: '4'
