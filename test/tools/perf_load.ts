@@ -15,11 +15,30 @@
 // stopped.
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, openSync, readSync, closeSync, statSync } from "node:fs";
 import { homedir, tmpdir, hostname, arch, platform, release, cpus } from "node:os";
-import { awaitDisplay, displayPixels } from "./native_display";
+import { awaitDisplay, calibrateDisplay, displayPixels } from "./native_display";
 import { standinScript as claude } from "./perf_standin";
 import { completeOpens, FixtureBots, streamWindow } from "./perf_guard";
 import { dirname, join, resolve } from "node:path";
 
+const ownedPids: {pid:number;what:string;kill:()=>void;exited:Promise<any>}[]=[];
+const ownedTimers=new Set<ReturnType<typeof setInterval>>();
+const partial:any={schema_version:1,complete:false,execution_status:"starting",phases:[]};
+let outputOnFailure="",cleanupPromise:Promise<void>|null=null;
+async function cleanup(){
+  if(cleanupPromise)return cleanupPromise;
+  cleanupPromise=(async()=>{
+    for(const timer of ownedTimers)clearInterval(timer);
+    for(const p of [...ownedPids].reverse()){try{p.kill();}catch{}await Promise.race([p.exited,new Promise(r=>setTimeout(r,5000))]);}
+  })();
+  return cleanupPromise;
+}
+function failed(error:unknown){
+  const report={...partial,complete:false,execution_status:"failed",error:String(error),stack:error instanceof Error?error.stack:undefined};
+  const text=JSON.stringify(report,(_,value)=>value instanceof Map?Object.fromEntries(value):value,2);
+  if(partial.root)writeFileSync(join(partial.root,"failure.json"),text);
+  if(outputOnFailure)writeFileSync(outputOnFailure,text);
+}
+async function main(){
 const argv = process.argv.slice(2);
 if (argv.includes("--help")) {
   console.log("bun test/tools/perf_load.ts --bin BUILD --log SNAPSHOT [--agents 10] [--secs 20] [--phases normal,idle,bg,fg,type,open,plane,mail] [--out results.json] [--shots DIR] [--fail-on-target] [--pixel-opens] [--pixel-inputs] [--keep]");
@@ -42,6 +61,7 @@ const display = opt("display", ":77");
 const nAgents = Number(opt("agents", "10"));
 const secs = Number(opt("secs", "20"));
 const outPath = opt("out", "");
+outputOnFailure=outPath;
 const keep = argv.includes("--keep");
 const pixelOpens = argv.includes("--pixel-opens");
 const pixelInputs = argv.includes("--pixel-inputs");
@@ -72,6 +92,7 @@ try {
 }
 
 const root = mkdtempSync(join(tmpdir(), "bp-perfload-"));
+Object.assign(partial,{root,bin,source_sha_declared:opt("source-sha","unspecified"),build_flags_declared:opt("build-flags","unspecified"),display,port});
 const home = join(root, "home");
 const user = join(root, "user");
 const fake = join(root, "bin");
@@ -80,6 +101,7 @@ const proj = join(root, mailReuseHome ? "ui-replay-project" : "proj");
 for (const d of [home, user, fake, locks, proj]) mkdirSync(d, { recursive: true });
 if (shots) mkdirSync(shots, { recursive: true });
 const trace = join(root, "trace.json");
+partial.trace=trace;
 const fakeLog = join(root, "agents.log");
 
 // The log, copied and sanitized
@@ -252,7 +274,7 @@ function cborDec(b: Uint8Array): any {
 
 // The app
 // -------
-const ownPids: { pid: number; what: string; kill: () => void; exited: Promise<any> }[] = [];
+const ownPids=ownedPids;
 let xvfbPid = 0;
 const xsock = `/tmp/.X11-unix/X${display.replace(/^:/, "").split(".")[0]}`;
 if (argv.includes("--exclusive-display") && existsSync(xsock)) throw new Error(`exclusive X display ${display} already exists; refusing to share another job's X server`);
@@ -282,16 +304,7 @@ const app = Bun.spawn([bin, "--home", home, "--port", String(port), "--no-tailsc
 ownPids.push({ pid: app.pid, what: "backplane", kill: () => app.kill(), exited: app.exited });
 say(`app pid ${app.pid}, home ${home}`);
 
-async function cleanup() {
-  for (const p of ownPids.reverse()) {
-    try { p.kill(); } catch {}
-    await Promise.race([p.exited, sleep(5000)]);
-  }
-}
-process.on("SIGINT", async () => { await cleanup(); process.exit(130); });
-const bail = async (e: any) => { console.error(e); await cleanup(); process.exit(1); };
-process.on("uncaughtException", bail);
-process.on("unhandledRejection", bail);
+process.once("SIGINT",async()=>{failed(new Error("interrupted by SIGINT"));await cleanup();process.exit(130);});
 
 const pj = async (path: string) => (await fetch(`http://127.0.0.1:${port}${path}`)).json();
 let ready = false;
@@ -509,24 +522,23 @@ const composerPixels = () => regionPixels(composerRegion, true);
 const inputProbe = "Backplane42";
 const inputRepeats = 6; // 66 additions and 66 independent Backspace demands
 const inputTargets = new Map<string,string>();
+Object.assign(partial,{demand_journal:displayDemandLog,input_targets:inputTargets,title_targets:displayTargets,demands:displayDemands});
+let emptyComposerTarget="";
 async function calibratedComposer() {
   await composer();
-  const capture = async (draft:string) => {
-    await sleep(100);
-    const first = await composerPixels();
-    await sleep(80);
-    if (first !== await composerPixels()) throw new Error(`unstable composer glyph pixels for ${JSON.stringify(draft)}`);
-    inputTargets.set(draft, first);
+  const capture = async (draft:string,before?:string) => {
+    partial.calibration={surface:"composer",draft};
+    const target=await calibrateDisplay(composerPixels,{before,expected:draft===""?emptyComposerTarget:undefined});
+    inputTargets.set(draft,target);
   };
   // These runs start with a generated empty draft. Avoid sending Return:
   // this phase never starts a turn from the measured text.
   await capture("");
   let draft = "";
-  for (const key of inputProbe) { await poke("type",key); draft += key; await capture(draft); }
+  for (const key of inputProbe) {const before=inputTargets.get(draft);await poke("type",key);draft+=key;await capture(draft,before);}
   if (new Set(inputTargets.values()).size !== inputTargets.size) throw new Error("composer region does not distinguish every input prefix after caret normalization");
   for (let i=0;i<inputProbe.length;i++) await poke("key","BackSpace");
-  await sleep(200);
-  if (await composerPixels() !== inputTargets.get("")) throw new Error("composer calibration did not return to its empty glyph state");
+  await calibrateDisplay(composerPixels,{expected:inputTargets.get("")});
 }
 async function displayedInputs() {
   let draft = "", before = await composerPixels();
@@ -588,6 +600,7 @@ async function reading(): Promise<Reading> {
 const upMs = async () => (await reading()).up;
 let rssMax = 0;
 const rssTimer = setInterval(() => { rssMax = Math.max(rssMax, rssKb()); }, 500);
+ownedTimers.add(rssTimer);
 
 type Phase = { name: string; what: string; a: Reading; b: Reading; rssMax: number; trafficBefore: Record<string, number>; trafficAfter: Record<string, number>; streamStart: number; streamEnd: number; marks?: [number, number][]; notes?: string[]; mailReads?: number[]; mailTraffic?: number; mailSeed?: object };
 const phases: Phase[] = [];
@@ -597,6 +610,7 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
   rssMax = 0;
   const p: Phase = { name, what, a: await reading(), b: null as any, rssMax: 0, trafficBefore: traffic(), trafficAfter: {}, streamStart: performance.now(), streamEnd: 0, marks: [], notes: [] };
   activePhase = name;
+  partial.active_phase=name;
   await body(p);
   activePhase = "setup";
   p.b = await reading();
@@ -610,6 +624,7 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
   }
   p.rssMax = Math.max(rssMax, p.b.rss);
   phases.push(p);
+  partial.phases.push({name,what,complete:true});
 }
 
 // Streaming
@@ -638,6 +653,7 @@ const startPosts = () => {
     if (!postedRooms.has(r.id)) postedRooms.set(r.id, { at: performance.now(), bots: roomBots(r) });
     send("bots.post", { room: r.id, text: `zqshort a quick note for the room, post ${posts}` });
   }, 4000);
+  ownedTimers.add(posting);
 };
 const stopPosts = () => { if (posting) clearInterval(posting); posting = null; };
 const typeKeys = async (n: number, gapMs: number) => {
@@ -685,6 +701,10 @@ await phase("fg", "streaming; the window shows a streaming thread with its Subag
   await sleep(secs * 1000);
 });
 
+if(pixelInputs && phasesWanted.includes("input-display")){
+  await composer();
+  emptyComposerTarget=await calibrateDisplay(composerPixels);
+}
 await phase("type", "streaming; 60 keys typed into the streaming thread's composer (8/s), then deleted", async () => {
   await composer();
   await typeKeys(60, 125);
@@ -700,14 +720,14 @@ await phase("input-display", "streaming; 66 ASCII additions and 66 Backspaces, e
 if (pixelOpens && phasesWanted.includes("open")) {
   calibratingDisplay = true;
   for (const title of ["zqlong", ...openTs.map((_,i) => `zqopen${String.fromCharCode(97+i)}`), ...ours.map((t:any) => t.title.split(" ")[0])]) {
+    const before=await headerPixels();
     await openByTitle(title);
-    const first = await headerPixels();
-    await sleep(80);
-    if (first !== await headerPixels()) throw new Error(`unstable native title pixels for ${title}`);
-    displayTargets.set(title, first);
+    partial.calibration={surface:"title",title};
+    displayTargets.set(title,await calibrateDisplay(headerPixels,{before}));
   }
   if (new Set(displayTargets.values()).size !== displayTargets.size) throw new Error("native header region does not distinguish every target");
   await openByTitle("zqlong");
+  await calibrateDisplay(headerPixels,{expected:displayTargets.get("zqlong")});
   calibratingDisplay = false;
   displayReady = true;
 }
@@ -957,3 +977,5 @@ async function statusPlaneImpl(_p: Phase): Promise<boolean> {
   _p.notes!.push("Uberbot selection observed through desk.look; Status tab itself is unverified (strict coverage check remains n/a).");
   return false;
 }
+}
+try{await main();}catch(error){console.error(error);failed(error);process.exitCode=1;}finally{await cleanup();}
