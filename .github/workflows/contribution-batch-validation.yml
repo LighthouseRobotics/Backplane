@@ -48,7 +48,8 @@ jobs:
             a87025a20bceb526f795c62c6043820dc9c68cba \
             830c421bbdd983bc86d777d27fa9ceba33d774da \
             6a5f36ca32b91f6239fe542d4e6786c6015efd87 \
-            d2623b81daf94fddb3ede87605f401895789a0fe; do
+            d2623b81daf94fddb3ede87605f401895789a0fe \
+            2d7f965f56771f656744bc7538cc3b04d4246b2c; do
             git fetch --no-tags --depth=1 origin "$source"
             git merge-base --is-ancestor "$source" HEAD
           done
