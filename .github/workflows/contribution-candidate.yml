@@ -28,16 +28,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang-19 libx11-dev
           sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: contribution-linux-llvm19-${{ github.sha }}
+          restore-keys: contribution-linux-llvm19-
       - run: scripts/build.sh
       - name: Record source, toolchain and artifact hashes
         run: |
           git rev-parse HEAD > build/candidate-source.txt
           git status --porcelain >> build/candidate-source.txt
           clang --version > build/candidate-toolchain.txt
-          bend --version >> build/candidate-toolchain.txt
+          bend version >> build/candidate-toolchain.txt
           bun --version >> build/candidate-toolchain.txt
           sha256sum dist/backplane dist/backplane-serve dist/web/* > build/candidate-artifacts.sha256
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: candidate-linux-${{ github.ref_name == 'validation/native-baseline' && 'baseline' || 'combined' }}
           path: |
@@ -46,5 +52,7 @@ jobs:
             build/candidate-artifacts.sha256
             build/cc/backplane/stages.txt
             build/cc/backplane-serve/stages.txt
+            build/cc/backplane/*.rss
+            build/cc/backplane-serve/*.rss
           if-no-files-found: error
           retention-days: 7
