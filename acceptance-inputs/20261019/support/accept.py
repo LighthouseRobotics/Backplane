@@ -40,10 +40,10 @@ def status(name):
     except (OSError,ValueError):return None
 if a.operation=='apply':
     validate_payload()
+    for name in ['manifest.json',scope['files'],scope['patch']]:shutil.copy2(payload/name,out/pathlib.Path(name).name)
     subprocess.run(['git','-C',str(root),'checkout','--detach',base],check=True)
     subprocess.run(['git','-C',str(root),'apply','--index',str(payload/scope['patch'])],check=True)
     result=verify();write('applied-source.json',result)
-    for name in ['manifest.json',scope['files'],scope['patch']]:shutil.copy2(payload/name,out/pathlib.Path(name).name)
     print(json.dumps(result))
 elif a.operation=='verify':
     result=verify();write('source-after.json',result);print(json.dumps(result))

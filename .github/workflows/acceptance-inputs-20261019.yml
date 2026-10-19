@@ -37,6 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Preserve payload and apply exact source tree
         shell: bash
@@ -46,8 +47,13 @@ jobs:
           echo "ACCEPTANCE_EVIDENCE=$ACCEPTANCE_EVIDENCE" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/acceptance-inputs" "$ACCEPTANCE_EVIDENCE"
           cp -a acceptance-inputs/20261019/. "$RUNNER_TEMP/acceptance-inputs/"
+          code=0
           python3 "$RUNNER_TEMP/acceptance-inputs/support/accept.py" apply \
-            --scope "$ACCEPTANCE_SCOPE" --workspace "$GITHUB_WORKSPACE" --evidence "$ACCEPTANCE_EVIDENCE"
+            --scope "$ACCEPTANCE_SCOPE" --workspace "$GITHUB_WORKSPACE" --evidence "$ACCEPTANCE_EVIDENCE" \
+            > "$ACCEPTANCE_EVIDENCE/apply.log" 2>&1 || code=$?
+          printf '%s\n' "$code" > "$ACCEPTANCE_EVIDENCE/apply.exit"
+          cat "$ACCEPTANCE_EVIDENCE/apply.log"
+          exit "$code"
       - name: Bounded temporary proof swap
         shell: bash
         run: |
