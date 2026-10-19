@@ -1,5 +1,5 @@
 diff --git a/LAWS.bend b/LAWS.bend
-index d7539d32921b69ba91b7c1f98212214a8ff7cb50..abbdf1875f91d32a6d2ee10583a03816a1680bdd 100644
+index d7539d32921b69ba91b7c1f98212214a8ff7cb50..ba62b616aab6f4ccac72a27fadc6d65d9735c54c 100644
 --- a/LAWS.bend
 +++ b/LAWS.bend
 @@ -1215,6 +1215,7 @@ law tailnet_link_token:
@@ -132,7 +132,7 @@ index d7539d32921b69ba91b7c1f98212214a8ff7cb50..abbdf1875f91d32a6d2ee10583a03816
    for k: Nat
    for +e: Nat
    for +cs: List<&2, R.Op>
-@@ -8337,7 +8348,7 @@ law tiles_recat_exact:
+@@ -8337,11 +8348,21 @@ law tiles_recat_exact:
    for +rx: U32
    for +ry: U32
    for +n: U32
@@ -141,7 +141,21 @@ index d7539d32921b69ba91b7c1f98212214a8ff7cb50..abbdf1875f91d32a6d2ee10583a03816
  # ---- end win-lean-frame cat frames ----
  # ---- gfx-runs: tile plans that build only changed nodes' ops ----
  # comparing a child's ops as they reach it, straight from its parent's, is
-@@ -10676,3 +10687,36 @@ law pcb2_hidden_text_draws_nothing:
+ # exactly comparing the list Region.keep would build
++law keep_step_exact:
++  for +o: R.Op
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.step(o, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)} : T.KeepStep}
++
+ law keep_eq:
+   for ops: List<&2, R.Op>
+   for +px: U32
+@@ -10676,3 +10697,36 @@ law pcb2_hidden_text_draws_nothing:
    for +sig: U32
    for +ctx: String
    {PCB2.Text.visible.k(True{}, at, angle, x, text, up, key, sig, ctx) == Nil{} : List<&2, B.Item>}
@@ -179,7 +193,7 @@ index d7539d32921b69ba91b7c1f98212214a8ff7cb50..abbdf1875f91d32a6d2ee10583a03816
 +  {T.Table.agrees(ops, old, new) == True{} : Bool}
 +# ---- end glyph delta fast guard ----
 diff --git a/PROOF.bend b/PROOF.bend
-index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170afc2bbe28 100644
+index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..018c8501cc5caafa68ffeffce90fbf70d60f306a 100644
 --- a/PROOF.bend
 +++ b/PROOF.bend
 @@ -1851,42 +1851,50 @@ def eq_run_sound(a, b, h):
@@ -557,36 +571,25 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
      case False{}:
 -      tnode_cong(ops, base1, T.Tiles.again(j, e, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base1, 0n), T.Tiles.make(j, e, R.Region.keep(old, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base0, 0n), rx, ry, U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, rx, ry, U32.shr(n)), T.Tiles.make(j, e, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base1, 0n), rx, ry, U32.shr(n)), T.Tiles.again(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base1, 1n), T.Tiles.make(j, e, R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base0, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Tiles.make(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base1, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Tiles.again(j, e, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 2n), T.Tiles.make(j, e, R.Region.keep(old, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Tiles.make(j, e, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Tiles.again(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 3n), T.Tiles.make(j, e, R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Tiles.make(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), ha, hb, hc, hd)
 +      tnode_cong(ops, base1, T.Tiles.again(j, e, tab, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base1, 0n), T.Tiles.make(j, e, tab, R.Region.keep(old, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base0, 0n), rx, ry, U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, rx, ry, U32.shr(n)), T.Tiles.make(j, e, tab, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base1, 0n), rx, ry, U32.shr(n)), T.Tiles.again(j, e, tab, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base1, 1n), T.Tiles.make(j, e, tab, R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base0, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Tiles.make(j, e, tab, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base1, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Tiles.again(j, e, tab, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 2n), T.Tiles.make(j, e, tab, R.Region.keep(old, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Tiles.make(j, e, tab, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Tiles.again(j, e, tab, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 3n), T.Tiles.make(j, e, tab, R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Tiles.make(j, e, tab, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base1, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), ha, hb, hc, hd)
- 
--def Laws.tiles_again_exact(k, e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy):
++
 +def Laws.tiles_again_exact(tab, k, e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy):
-   match k:
-     case 0n:
--      Equal.cong(T.Tile, T.Tiles, t => T.TLeaf{t}, T.Tile.again(e, ops, base1, T.Tile.make(e, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n), T.Tile.make(e, ops, base1, rx, ry, n),
--        tile_again_k(T.Eq.tile(ops, old, base1, base0), e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy, {==}))
++  match k:
++    case 0n:
 +      Equal.cong(T.Tile, T.Tiles, t => T.TLeaf{t}, T.Tile.again(e, tab, ops, base1, T.Tile.make(e, tab, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, tab, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n), T.Tile.make(e, tab, ops, base1, rx, ry, n),
 +        tile_again_k(tab, T.Eq.tile(ops, old, base1, base0), e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy, {==}))
-     case 1n+j0:
-       +j = j0
--      again_node_k(T.Eq.tile(ops, old, base1, base0), j, e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy, {==},
--        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), R.Region.keep(old, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base0, 0n), T.Img.q(base1, 0n), rx, ry, U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
--        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base0, 1n), T.Img.q(base1, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
--        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), R.Region.keep(old, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 2n), T.Img.q(base1, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
--        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 3n), T.Img.q(base1, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy))
++    case 1n+j0:
++      +j = j0
 +      again_node_k(tab, T.Eq.tile(ops, old, base1, base0), j, e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy, {==},
 +        Laws.tiles_again_exact(tab, j, e, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), R.Region.keep(old, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base0, 0n), T.Img.q(base1, 0n), rx, ry, U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
 +        Laws.tiles_again_exact(tab, j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base0, 1n), T.Img.q(base1, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
 +        Laws.tiles_again_exact(tab, j, e, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), R.Region.keep(old, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 2n), T.Img.q(base1, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
 +        Laws.tiles_again_exact(tab, j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 3n), T.Img.q(base1, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy))
- 
--def Laws.tile_keep(e, ops, l, base, img, p, rx, ry, n):
--  %Equal.sym(Bool, T.Eq.ops(ops, ops), True{}, eq_ops_refl(ops)) : {T.Tile.again.k(T.Eq.tile.k(_, base, base), e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}
--  %Equal.sym(Bool, T.Eq.image(base, base), True{}, eq_image_refl(base)) : {T.Tile.again.k(_, e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}
++
 +def Laws.tile_keep(tab, e, ops, l, base, img, keys, p, rx, ry, n):
 +  %Equal.sym(Bool, T.Eq.ops(ops, ops), True{}, eq_ops_refl(ops)) : {T.Tile.again.k(T.Eq.tile.k(_, base, base), e, tab, ops, base, T.Tile{ops, l, base, img, keys}, p, rx, ry, n) == T.Tile{ops, l, base, img, keys} : T.Tile}
 +  %Equal.sym(Bool, T.Eq.image(base, base), True{}, eq_image_refl(base)) : {T.Tile.again.k(_, e, tab, ops, base, T.Tile{ops, l, base, img, keys}, p, rx, ry, n) == T.Tile{ops, l, base, img, keys} : T.Tile}
-   {==}
- 
++  {==}
++
 +# ---- glyph delta/key-summary soundness ----
 +law glyph_or_false_l:
 +  for a: Bool
@@ -1036,7 +1039,8 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
 +      %eh : {R.Op{x0, y0, x1, y1, c, a, R.Res.shape(sh, old)} <> R.Res.ops(t, old) == R.Op{x0, y0, x1, y1, c, a, _} <> R.Res.ops(t, new) : List<&2, R.Op>}
 +      %et : {R.Op{x0, y0, x1, y1, c, a, R.Res.shape(sh, old)} <> R.Res.ops(t, old) == R.Op{x0, y0, x1, y1, c, a, R.Res.shape(sh, old)} <> _ : List<&2, R.Op>}
 +      {==}
-+
+ 
+-def Laws.tiles_again_exact(k, e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy):
 +# The optimized predicate implies the original resolved-op agreement.
 +def Laws.glyph_delta_agreement(old, new, ops, hc):
 +  e = keys_ops_agree(ops, T.KNil{}, old, new, hc)
@@ -1057,11 +1061,18 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
 +  {T.Tiles.agrees(T.Tiles.make(k, e, old, ops, base, rx, ry, n), old, new) == True{} : Bool}
 +
 +def tiles_delta_agreement(k, e, old, new, ops, base, rx, ry, n, h):
-+  match k:
-+    case 0n:
+   match k:
+     case 0n:
+-      Equal.cong(T.Tile, T.Tiles, t => T.TLeaf{t}, T.Tile.again(e, ops, base1, T.Tile.make(e, old, base0, rx, ry, n), T.Past{pk, T.Tiles.make(pk, e, old2, base2, prx, pry, pn), qn, dy}, rx, ry, n), T.Tile.make(e, ops, base1, rx, ry, n),
+-        tile_again_k(T.Eq.tile(ops, old, base1, base0), e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy, {==}))
 +      Laws.glyph_delta_agreement(old, new, T.Loc.ops(ops, rx, ry, T.Tile.size(e)), h)
-+    case 1n+j0:
-+      +j = j0
+     case 1n+j0:
+       +j = j0
+-      again_node_k(T.Eq.tile(ops, old, base1, base0), j, e, ops, old, base0, base1, rx, ry, n, pk, old2, base2, prx, pry, pn, qn, dy, {==},
+-        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, rx, ry, U32.shr(n)), R.Region.keep(old, rx, ry, rx, ry, U32.shr(n)), T.Img.q(base0, 0n), T.Img.q(base1, 0n), rx, ry, U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
+-        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), ry, U32.shr(n)), T.Img.q(base0, 1n), T.Img.q(base1, 1n), (rx + U32.shr(n) : U32), ry, U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
+-        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), R.Region.keep(old, rx, ry, rx, (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 2n), T.Img.q(base1, 2n), rx, (ry + U32.shr(n) : U32), U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy),
+-        Laws.tiles_again_exact(j, e, R.Region.keep(ops, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), R.Region.keep(old, rx, ry, (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n)), T.Img.q(base0, 3n), T.Img.q(base1, 3n), (rx + U32.shr(n) : U32), (ry + U32.shr(n) : U32), U32.shr(n), pk, old2, base2, prx, pry, pn, qn, dy))
 +      +half = U32.shr(n)
 +      +oa = R.Region.keep(ops, rx, ry, rx, ry, half)
 +      +ob = R.Region.keep(ops, rx, ry, (rx + half : U32), ry, half)
@@ -1103,11 +1114,14 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
 +  for +base: Image
 +  for h: {T.Table.agrees(l, old, new) == True{} : Bool}
 +  {T.Tile.draw(e, new, l, base) == T.Tile.draw(e, old, l, base) : Image}
-+
+ 
+-def Laws.tile_keep(e, ops, l, base, img, p, rx, ry, n):
+-  %Equal.sym(Bool, T.Eq.ops(ops, ops), True{}, eq_ops_refl(ops)) : {T.Tile.again.k(T.Eq.tile.k(_, base, base), e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}
+-  %Equal.sym(Bool, T.Eq.image(base, base), True{}, eq_image_refl(base)) : {T.Tile.again.k(_, e, ops, base, T.Tile{ops, l, base, img}, p, rx, ry, n) == T.Tile{ops, l, base, img} : T.Tile}
 +def draw_table_agreement(e, old, new, l, base, h):
 +  %Laws.glyph_table_agreement(old, new, l, h) : {T.Tile.draw.r(e, _, base) == T.Tile.draw.r(e, R.Res.ops(l, old), base) : Image}
-+  {==}
-+
+   {==}
+ 
 +def Laws.tiles_table_extension_exact(k, e, old, new, ops, base, rx, ry, n, h):
 +  match k:
 +    case 0n:
@@ -1724,7 +1738,84 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
  # ---- end win-lean-frame cat frames ----
  
  # ---- gfx-runs: tile plans that build only changed nodes' ops (laws keep_eq,
-@@ -10163,9 +10862,9 @@ law tile_plan2:
+@@ -10080,6 +10779,66 @@ def keep_step(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, rest, ys):
+     case False{}:
+       {==}
+ 
++law keep_step_k_exact:
++  for k: Bool
++  for +x0: U32
++  for +y0: U32
++  for +x1: U32
++  for +y1: U32
++  for +c: U32
++  for +a: U32
++  for +s: R.Shape
++  for +ys: List<&2, R.Op>
++  {T.Keep.step.k(k, x0, y0, x1, y1, c, a, s, ys) == T.KStep{T.Keep.ys.k(k, ys), T.Keep.ok.k(k, x0, y0, x1, y1, c, a, s, ys)} : T.KeepStep}
++
++def keep_step_k_exact(k, x0, y0, x1, y1, c, a, s, ys):
++  match k:
++    case True{}: {==}
++    case False{}: {==}
++
++law keep_step_h_exact:
++  for hit: Bool
++  for +x0: U32
++  for +y0: U32
++  for +x1: U32
++  for +y1: U32
++  for +c: U32
++  for +a: U32
++  for +s: R.Shape
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.step.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys) == T.KStep{T.Keep.ys.h(hit, s, px, py, rx, ry, n, ys), T.Keep.ok.h(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)} : T.KeepStep}
++
++def keep_step_h_exact(hit, x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys):
++  match hit:
++    case True{}:
++      keep_step_k_exact(Bool.not(R.Region.empty(R.Region.move(s, px, py, rx, ry, n))), x0, y0, x1, y1, c, a, R.Region.move(s, px, py, rx, ry, n), ys)
++    case False{}: {==}
++
++def Laws.keep_step_exact(o, px, py, rx, ry, n, ys):
++  match o:
++    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
++      keep_step_h_exact(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
++
++law keep_eq_cons:
++  for +o: R.Op
++  for +t: List<&2, R.Op>
++  for +px: U32
++  for +py: U32
++  for +rx: U32
++  for +ry: U32
++  for +n: U32
++  for +ys: List<&2, R.Op>
++  {T.Keep.eq(o <> t, px, py, rx, ry, n, ys, True{}) == T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)) : Bool}
++
++def keep_eq_cons(o, t, px, py, rx, ry, n, ys):
++  Equal.cong(T.KeepStep, Bool, +p => T.Keep.eq(t, px, py, rx, ry, n, T.Keep.step.ys(p), T.Keep.step.same(p)),
++    T.Keep.step(o, px, py, rx, ry, n, ys), T.KStep{T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys)}, Laws.keep_step_exact(o, px, py, rx, ry, n, ys))
++
+ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
+   match ops ok:
+     case Nil{} False{}:
+@@ -10089,6 +10848,9 @@ def Laws.keep_eq(ops, px, py, rx, ry, n, ys, ok):
+     case Nil{} True{}:
+       {==}
+     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s} <> +t True{}:
++      %Equal.sym(Bool, T.Keep.eq(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n, ys, True{}),
++        T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
++        keep_eq_cons(R.Op{x0, y0, x1, y1, c, a, s}, t, px, py, rx, ry, n, ys)) : {_ == T.Eq.ops.go(R.Region.keep(R.Op{x0, y0, x1, y1, c, a, s} <> t, px, py, rx, ry, n), ys, True{}) : Bool}
+       Equal.trans(Bool, T.Keep.eq(t, px, py, rx, ry, n, T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+         T.Eq.ops.go(R.Region.keep(t, px, py, rx, ry, n), T.Keep.ys.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), s, px, py, rx, ry, n, ys), T.Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)),
+         T.Eq.ops.go(R.Region.keep.op(R.Region.hits(x0, y0, x1, y1, rx, ry, n), R.Op{x0, y0, x1, y1, c, a, s}, px, py, rx, ry, n, R.Region.keep(t, px, py, rx, ry, n)), ys, True{}),
+@@ -10163,9 +10925,9 @@ law tile_plan2:
  
  def tile_plan2(e, c, base, t, p, rx, ry, n):
    match t:
@@ -1737,7 +1828,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
  
  law plan2_child:
    for +j: Nat
-@@ -10281,6 +10980,7 @@ def Laws.plan_cut_same(k, e, ops, base, prev, p, rx, ry, n):
+@@ -10281,6 +11043,7 @@ def Laws.plan_cut_same(k, e, ops, base, prev, p, rx, ry, n):
    plan2_go(k, e, T.CAll{ops}, base, prev, p, rx, ry, n, T.Cut.same(T.CAll{ops}, base, prev))
  
  law plan_run_cut:
@@ -1745,7 +1836,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
    for k: Nat
    for +e: Nat
    for +ops: List<&2, R.Op>
-@@ -10291,12 +10991,13 @@ law plan_run_cut:
+@@ -10291,12 +11054,13 @@ law plan_run_cut:
    for +ry: U32
    for +n: U32
    for +d: Nat
@@ -1762,7 +1853,7 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
    for s: Bool
    for +w: U32
    for +h: U32
-@@ -10304,26 +11005,26 @@ law frame_par_k:
+@@ -10304,26 +11068,26 @@ law frame_par_k:
    for +base: Image
    for +prev: T.Tiles
    for +dy: U32
@@ -1799,6 +1890,120 @@ index d909ea0a151b2cb7ffa072eb600f239c1e9532a9..a4b7e1a87f144e337023d9135ab9170a
  # ---- end gfx-runs ----
  # ---- sent-draft ----
  def Laws.draft_clear_tells_host(u):
+diff --git a/docs/native-perf-reproduce.md b/docs/native-perf-reproduce.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..97bf522dc906dee881f82450532417c124223720
+--- /dev/null
++++ b/docs/native-perf-reproduce.md
+@@ -0,0 +1,108 @@
++# Reproduce native before/after measurements
++
++Use Linux x86-64, Bun 1.4.3, an existing Xvfb and the same system fonts and
++hardware for both binaries. Obtain baseline and candidate artifacts with their
++source/toolchain/hash receipts. Both apps must use LLVM 19, `-O3`,
++`BACKPLANE_LOW_MEM=1`, `BACKPLANE_JOBS=2` and `BACKPLANE_GOOGLE_BAKE=0`.
++Check the actual binary hashes against those receipts before running. Build
++the shared helper before taking measurements, if it is not already available:
++
++```sh
++mkdir -p build
++cc -O2 test/tools/xpoke.c -o build/xpoke -lX11
++bun test/tools/perf_fixture_test.ts
++# Requires an already-built production shared-client bridge:
++bun test/tools/perf_fixture_codec_test.ts mobile/build/assets/bridge.js
++```
++
++Generate the same fixture for both apps. It contains 12 history threads, 1,500
++messages, two local bot threads, their bot events, a room and an uberbot. The
++history-only predecessor lacked the room/uberbot required by normal mode; its
++failed workload is not valid performance acceptance. The current generated
++fixture is **1,520 events, 556,794 bytes**, SHA-256
++`ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543`.
++No copied user history or provider credentials are needed.
++
++```sh
++OUT=$(mktemp -d "${TMPDIR:-/tmp}/bp-native-comparison.XXXXXX")
++bun test/tools/perf_fixture.ts "$OUT/fixture.jsonl" > "$OUT/fixture-receipt.json"
++sha256sum "$OUT/fixture.jsonl"
++```
++
++Set `BASE_BIN` and `CAND_BIN` to the downloaded native `dist/backplane` files,
++and set `BASE_SOURCE` and `CAND_SOURCE` to their full 40-character source labels.
++Save the original artifact receipts alongside the results. For a CI-applied
++snapshot, the candidate label is the immutable **input commit containing the
++patch**; also retain its checkout commit, expected applied tree, patch hash and
++artifact hash. An older product HEAD does not identify an uncommitted snapshot.
++The declared labels/flags in a report do not substitute for artifact receipts.
++
++The following four fresh processes share the same fixture, driver, helper and
++flags. Run them serially while holding the actual build/measurement lock.
++The dedicated displays and ports must be unused; the driver refuses to share
++an existing display. It creates private app homes and stand-in executables.
++Do not pass a live log or an installed app path.
++
++```bash
++[[ $BASE_SOURCE =~ ^[0-9a-f]{40}$ && $CAND_SOURCE =~ ^[0-9a-f]{40}$ ]] || exit 2
++FLAGS='LLVM=19;CFLAGS=-O3;LOW_MEM=1;JOBS=2;GOOGLE_BAKE=0'
++sha256sum "$BASE_BIN" "$CAND_BIN" build/xpoke test/tools/perf_load.ts \
++  test/tools/native_display.ts test/tools/native_display_compare.ts > "$OUT/inputs.sha256"
++(
++  exec 9>/tmp/bp-wt-build.lock
++  flock -x 9
++  run() {
++    side=$1; mode=$2; binary=$3; source=$4; display=$5; port=$6
++    dir="$OUT/$side-$mode"; mkdir -p "$dir/tmp" "$dir/controller-home"
++    phases=(--phases idle,bg,fg,type,input-display,open,normal --pixel-inputs)
++    [[ $mode = cold ]] || phases=(--phases open --pixel-opens)
++    code=0
++    env TMPDIR="$dir/tmp" HOME="$dir/controller-home" LANG=C.UTF-8 LC_ALL=C.UTF-8 \
++      bun test/tools/perf_load.ts --bin "$binary" --log "$OUT/fixture.jsonl" \
++      --xpoke "$PWD/build/xpoke" --xvfb /usr/bin/Xvfb --exclusive-display \
++      --display "$display" --port "$port" --agents 10 --secs 5 \
++      --source-sha "$source" --build-flags "$FLAGS" "${phases[@]}" \
++      --out "$dir/raw.json" --keep > "$dir/stdout.log" 2> "$dir/stderr.log" || code=$?
++    printf '%s\n' "$code" > "$dir/execution.exit"
++  }
++  run baseline cold "$BASE_BIN" "$BASE_SOURCE" :91 3891
++  run candidate cold "$CAND_BIN" "$CAND_SOURCE" :92 3892
++  run baseline warm "$BASE_BIN" "$BASE_SOURCE" :91 3891
++  run candidate warm "$CAND_BIN" "$CAND_SOURCE" :92 3892
++  for surface in input title; do
++    mode=cold; [[ $surface = input ]] || mode=warm
++    code=0
++    bun test/tools/native_display_compare.ts "$OUT/baseline-$mode/raw.json" \
++      "$OUT/candidate-$mode/raw.json" --out "$OUT/compare-$surface.json" \
++      > "$OUT/compare-$surface.log" 2>&1 || code=$?
++    printf '%s\n' "$code" > "$OUT/compare-$surface.exit"
++  done
++)
++```
++
++The configured five seconds applies to timed phases. Typing, displayed input,
++opens and normal mode run fixed event workloads and take longer. Do not stop
++the candidate because the baseline misses a budget. Keep every run's execution
++exit, phase checks and missing-sample verdicts. A zero driver exit does not mean
++every target passed. Each comparison needs exit zero **and** a parsed `pass`
++verdict with the expected identities; file existence alone proves nothing.
++
++The cold run does not calibrate the ten thread-open targets before measuring
++their first visits. Input-display separately warms its composer glyphs during
++calibration, then observes all 132 additions/Backspaces at the X-server boundary.
++The separate warm run calibrates titles and observes ten opens. Reference
++comparisons require all 12 composer prefixes or all 21 title targets and reject
++self-consistent candidate calibration errors relative to the baseline. Existing
++direct fresh-render glyph regressions remain a separate correctness anchor.
++
++Preserve the original targets: frame p99 8 ms, streaming/input 16 ms, open 50 ms
++and agent-line p99 2 ms. Report failing baseline and candidate results explicitly.
++The normal workload's **Status tab remains visually unverified** (`null` check).
++The observers cover the selected title and an ASCII composer region, not the
++entire timeline, other UI regions, compositor, physical input or scanout.
++
++Keep raw reports, traces and demand journals outside Git. A reviewable report
++should contain source/artifact/fixture hashes, the actual flags/toolchain and
++hardware, sample counts, per-phase p99/max values, budget verdicts, independent
++reference verdicts and links to the raw artifacts. Do not commit large traces or
++claim simulator/microbenchmark results establish whole-app or physical budgets.
 diff --git a/docs/perf-bench.md b/docs/perf-bench.md
 index 8411f2567f83f62f14b9fb8b006b8996356346a2..98aa55cb6f733672aeb0abf2aa339ee400f2c324 100644
 --- a/docs/perf-bench.md
@@ -2595,7 +2800,7 @@ index 8ee7c854583b1fe783f76d485620be294ed6ae6d..70618a50f8053582e4849b9bafb9ed18
 +def Text.keyline(+cache: Map<&2, TG>, +f: Face, s: String, +c: D.Clip, +x: U32, +y: U32, +lh: U32, +color: U32) -> List<&2, R.Op>:
 +  Text.keydraw(cache, f, s, c, x, Text.baseline(f, y, lh), color)
 diff --git a/src/gfx/tiles.bend b/src/gfx/tiles.bend
-index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34dc1c8004b 100644
+index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..0cae6d4935e70b6db3cf0a13b8dea0eac0832132 100644
 --- a/src/gfx/tiles.bend
 +++ b/src/gfx/tiles.bend
 @@ -50,13 +50,26 @@ def Eq.run(a: R.Run, b: R.Run) -> Bool:
@@ -3037,7 +3242,58 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # Tiles.make's plan: every tile to draw
  def Tiles.plan.make(k: Nat, +e: Nat, +ops: List<&2, R.Op>, +base: Image, +rx: U32, +ry: U32, +n: U32) -> Plan:
-@@ -656,8 +832,8 @@ def Tile.plan2.k(same: Bool, +e: Nat, c: Cut, +base: Image, t: Tile, p: Past, +r
+@@ -614,6 +790,40 @@ def Keep.ok(o: R.Op, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, ys: List<&
+     case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
+       Keep.ok.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
+ 
++# Advance the old list and compare its head from one clipped shape. The
++# former Keep.ys/Keep.ok pair clipped every run or polygon twice at every
++# visited child, including the unchanged children that the plan keeps.
++type KeepStep is Data:
++  KStep{ys: List<&2, R.Op>, same: Bool}
++
++def Keep.step.ys(s: KeepStep) -> List<&2, R.Op>:
++  match s:
++    case KStep{ys, _}: ys
++
++def Keep.step.same(s: KeepStep) -> Bool:
++  match s:
++    case KStep{_, same}: same
++
++def Keep.step.k(kept: Bool, +x0: U32, +y0: U32, +x1: U32, +y1: U32, +c: U32, +a: U32, s2: R.Shape, +ys: List<&2, R.Op>) -> KeepStep:
++  match kept:
++    case True{}:
++      KStep{Keep.drop1(ys), Keep.ok.c(x0, y0, x1, y1, c, a, s2, ys)}
++    case False{}:
++      KStep{ys, True{}}
++
++def Keep.step.h(hit: Bool, +x0: U32, +y0: U32, +x1: U32, +y1: U32, +c: U32, +a: U32, +s: R.Shape, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>) -> KeepStep:
++  match hit:
++    case True{}:
++      +s2 = R.Region.move(s, px, py, rx, ry, n)
++      Keep.step.k(Bool.not(R.Region.empty(s2)), x0, y0, x1, y1, c, a, s2, ys)
++    case False{}:
++      KStep{ys, True{}}
++
++def Keep.step(o: R.Op, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>) -> KeepStep:
++  match o:
++    case R.Op{+x0, +y0, +x1, +y1, +c, +a, +s}:
++      Keep.step.h(R.Region.hits(x0, y0, x1, y1, rx, ry, n), x0, y0, x1, y1, c, a, s, px, py, rx, ry, n, ys)
++
+ # Eq.ops.go(Region.keep(ops, px, py, rx, ry, n), ys, ok) without building
+ # the list (law keep_eq); it stops at the first op that differs
+ def Keep.eq(ops: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>, ok: Bool) -> Bool:
+@@ -623,7 +833,8 @@ def Keep.eq(ops: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32
+     case Nil{} True{}:
+       Eq.ops.go(Nil{}, ys, True{})
+     case +o <> t True{}:
+-      Keep.eq(t, px, py, rx, ry, n, Keep.ys(o, px, py, rx, ry, n, ys), Keep.ok(o, px, py, rx, ry, n, ys))
++      +step = Keep.step(o, px, py, rx, ry, n, ys)
++      Keep.eq(t, px, py, rx, ry, n, Keep.step.ys(step), Keep.step.same(step))
+ 
+ # Eq.ops(Cut.get(c), ys) (law cut_eq)
+ def Cut.eq(c: Cut, +ys: List<&2, R.Op>) -> Bool:
+@@ -656,8 +867,8 @@ def Tile.plan2.k(same: Bool, +e: Nat, c: Cut, +base: Image, t: Tile, p: Past, +r
  # Tile.plan of Cut.get(c)
  def Tile.plan2(+e: Nat, +c: Cut, +base: Image, t: Tile, p: Past, +rx: U32, +ry: U32, +n: U32) -> Plan:
    match t:
@@ -3048,7 +3304,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # Tiles.plan.go of Cut.get(c) (law plan2_go): a changed node builds its ops
  # and hands its children theirs uncut
-@@ -739,14 +915,14 @@ type Drawn is Data:
+@@ -739,14 +950,14 @@ type Drawn is Data:
    DOne{l: List<&2, R.Op>, base: Image, img: Image}
    DTwo{a: Drawn, b: Drawn}
  
@@ -3066,7 +3322,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
        DTwo{x, y}
  
  # the bits of i, lowest first (as many as a list of 2^24 needs)
-@@ -757,50 +933,50 @@ def Jobs.path(+d: Nat, +i: Nat) -> List<&2, Bool>:
+@@ -757,50 +968,50 @@ def Jobs.path(+d: Nat, +i: Nat) -> List<&2, Bool>:
      case 1n+k:
        Nat.is_eq(Nat.mod(i, 2n), 1n) <> Jobs.path(k, Nat.div(i, 2n))
  
@@ -3133,7 +3389,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  def Frame.plan.k(same: Bool, +w: U32, +h: U32, +ops: List<&2, R.Op>, +base: Image, +prev: Tiles, +dy: U32) -> Plan:
    match same:
-@@ -810,16 +986,16 @@ def Frame.plan.k(same: Bool, +w: U32, +h: U32, +ops: List<&2, R.Op>, +base: Imag
+@@ -810,16 +1021,16 @@ def Frame.plan.k(same: Bool, +w: U32, +h: U32, +ops: List<&2, R.Op>, +base: Imag
        Tiles.plan.make(Frame.levels(w, h), Frame.edge(w, h), ops, base, 0, 0, U32.shln(1, R.Frame.depth(w, h)))
  
  # Frame.again's plan
@@ -3155,7 +3411,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  
  # Caret blinks
-@@ -882,18 +1058,18 @@ def Caret.fresh.go(ops: List<&2, R.Op>, +on: Bool, ok: Bool) -> Bool:
+@@ -882,18 +1093,18 @@ def Caret.fresh.go(ops: List<&2, R.Op>, +on: Bool, ok: Bool) -> Bool:
  def Caret.fresh(ops: List<&2, R.Op>, +on: Bool) -> Bool:
    Caret.fresh.go(ops, on, True{})
  
@@ -3180,7 +3436,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # a node's carets are all as on says already (a leaf: Tile.blink looks)
  def Tiles.fresh(t: Tiles, +on: Bool) -> Bool:
-@@ -906,26 +1082,26 @@ def Tiles.fresh(t: Tiles, +on: Bool) -> Bool:
+@@ -906,26 +1117,26 @@ def Tiles.fresh(t: Tiles, +on: Bool) -> Bool:
  # the tiles with every caret shown (on) or hidden: a node already so is
  # kept whole, and only the tiles under a caret that changed are drawn
  # again (fresh: Tiles.fresh of t; law tiles_blink_exact)
@@ -3214,7 +3470,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
  
  # Cat frames
  # ----------
-@@ -955,20 +1131,20 @@ def Ops.after(cs: List<&2, R.Op>, o: List<&2, R.Op>) -> List<&2, R.Op>:
+@@ -955,20 +1166,20 @@ def Ops.after(cs: List<&2, R.Op>, o: List<&2, R.Op>) -> List<&2, R.Op>:
      case c <> ct Nil{}:
        Nil{}
  
@@ -3240,7 +3496,7 @@ index cae3a551dc3e626d5f2811828c16f6a7de66d8e1..e37956eda9197f26adcd3cdff5b5f34d
      case 1n+j0 TNode{o, b, +pa, +pb, +pc, +pd} False{}:
        +j = j0
        +h = U32.shr(n)
-@@ -980,18 +1156,18 @@ def Tiles.recat.go(k: Nat, +e: Nat, +cs: List<&2, R.Op>, +cs2: List<&2, R.Op>, t
+@@ -980,18 +1191,18 @@ def Tiles.recat.go(k: Nat, +e: Nat, +cs: List<&2, R.Op>, +cs2: List<&2, R.Op>, t
        +dc = R.Region.keep(cs2, rx, ry, rx, (ry + h : U32), h)
        +cd = R.Region.keep(cs, rx, ry, (rx + h : U32), (ry + h : U32), h)
        +dd = R.Region.keep(cs2, rx, ry, (rx + h : U32), (ry + h : U32), h)
@@ -3379,6 +3635,77 @@ index d8d168e60e9246ce7c2ebfde6d4bd031c04430b2..0481a754d0a209638907e085f8118128
  
  def ja() -> U.Ui:
    U.Lang.apply(U.Ui.scratch_set(U.Ui.init(100n), "@lang.preview", "1"), "ja", "ja-JP")
+diff --git a/test/keep_step_test.bend b/test/keep_step_test.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..c294a7eb1cca8917ebee1dfdac3358e741cafdfe
+--- /dev/null
++++ b/test/keep_step_test.bend
+@@ -0,0 +1,65 @@
++import Base
++import ./check.bend as C
++import ./glyph_table_test.bend as G
++import ../src/gfx/raster.bend as R
++import ../src/gfx/draw.bend as D
++import ../src/gfx/text.bend as X
++import ../src/gfx/tiles.bend as T
++
++# Compare with the independently materialized Region.keep list, including
++# drops, empty clipped runs, missing/extra/changed ops and changed bases.
++def ops() -> List<&2, R.Op>:
++  List.concat(&2, R.Op, [
++    X.Text.keydraw(G.cache(4294967295), G.face(), "A日A日", D.Clip.all(), 61, 8, 16777215),
++    [R.Op{30, 1, 78, 35, 16711680, 145, R.SPoly{False{}, [R.Edge{30.0, 1.0, 78.0, 12.0}, R.Edge{78.0, 12.0, 38.0, 35.0}, R.Edge{38.0, 35.0, 30.0, 1.0}]}},
++     R.Op{2, 2, 79, 39, 65535, 255, R.SRun{0, 0, R.RNone{}}},
++     D.Draw.rect(D.Clip.all(), 76, 30, 4, 9, 255, 127),
++     D.Draw.rect(D.Clip.all(), 0, 0, 80, 40, 2236962, 255)]])
++
++def polygon(os: List<&2, R.Op>) -> List<&2, R.Op>:
++  match os:
++    case Nil{}: Nil{}
++    case R.Op{x0, y0, x1, y1, _, a, R.SPoly{i, es}} <> t:
++      R.Op{x0, y0, x1, y1, 65280, a, R.SPoly{i, es}} <> t
++    case o <> t:
++      o <> polygon(t)
++
++def region(+os: List<&2, R.Op>, +x: U32, +y: U32, +n: U32, +ys: List<&2, R.Op>, +label: String) -> IO(Unit):
++  do IO<Unit>:
++    C.Check.str(label, Bool.show(T.Keep.eq(os, 0, 0, x, y, n, ys, True{})), Bool.show(T.Eq.ops(R.Region.keep(os, 0, 0, x, y, n), ys)))
++    C.Check.str(label ++ " false flag", Bool.show(T.Keep.eq(os, 0, 0, x, y, n, ys, False{})), "False")
++
++def regions(+os: List<&2, R.Op>, +x: U32, +y: U32, +n: U32) -> IO(Unit):
++  +ys = R.Region.keep(os, 0, 0, x, y, n)
++  +tag = U32.show(x) ++ "," ++ U32.show(y) ++ "," ++ U32.show(n)
++  do IO<Unit>:
++    region(os, x, y, n, ys, tag ++ " equal")
++    region(os, x, y, n, Nil{}, tag ++ " removed")
++    region(os, x, y, n, D.Draw.rect(D.Clip.all(), 0, 0, 1, 1, 99, 255) <> ys, tag ++ " inserted")
++    region(os, x, y, n, List.reverse(&2, R.Op, ys), tag ++ " reordered")
++
++def exact(+os: List<&2, R.Op>, +base: Image, +prev: T.Frames, +dy: U32, label: String) -> IO(Unit):
++  +tab = X.Text.table(G.cache(4294967295))
++  +img = T.Tiles.image(T.Frame.par(80, 40, os, base, tab, prev, dy))
++  +fresh = T.Tiles.image(T.Frame.make(80, 40, os, base, tab))
++  C.Check.str(label, G.same(img, fresh), "True")
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    +os : List<&2, R.Op> = ops()
++    regions(os, 0, 0, 128)
++    regions(os, 0, 0, 64)
++    regions(os, 64, 0, 64)
++    regions(os, 16, 16, 16)
++    regions(os, 256, 256, 32)
++    +tab : R.Tab = X.Text.table(G.cache(4294967295))
++    +prev : T.Frames = T.FSome{80, 40, tab, T.Frame.make(80, 40, os, Pix{0}, tab)}
++    +changed : List<&2, R.Op> = X.Text.keydraw(G.cache(4294967295), G.face(), "日日AA", D.Clip.all(), 61, 8, 16777215)
++    exact(os, Pix{0}, prev, 0, "unchanged exact pixels")
++    exact(changed, Pix{0}, prev, 0, "changed run exact pixels")
++    exact(List.reverse(&2, R.Op, os), Pix{0}, prev, 0, "reordered ops exact pixels")
++    exact(os, Qua{Pix{1}, Pix{2}, Pix{3}, Pix{4}}, prev, 0, "changed base exact pixels")
++    exact(changed, Pix{0}, prev, 64, "scroll hint still exact pixels")
++    exact(polygon(os), Pix{0}, prev, 0, "changed polygon exact pixels")
++    C.Check.str("changed polygon negative control", G.same(T.Tiles.image(T.Frame.make(80, 40, polygon(os), Pix{0}, tab)), T.Tiles.image(T.Frame.make(80, 40, os, Pix{0}, tab))), "False")
++    C.Check.str("changed run negative control", G.same(T.Tiles.image(T.Frame.make(80, 40, changed, Pix{0}, tab)), T.Tiles.image(T.Frame.make(80, 40, os, Pix{0}, tab))), "False")
 diff --git a/test/native/agents_bench.bend b/test/native/agents_bench.bend
 index fe9729dce88b2aa713fdb192636773bcaa78fdf9..3928334e73c1570a4dd2ba6f1c7643211dab557c 100644
 --- a/test/native/agents_bench.bend
@@ -3668,6 +3995,95 @@ index 0000000000000000000000000000000000000000..c79ad2796afd11caf85b3cca464fc2c8
 +    +masks : T.Tiles = T.Tiles.make(T.Frame.levels(1400, 900), T.Frame.edge(1400, 900), R.TNil{}, os, Pix{0}, 0, 0, 2048)
 +    +grown : R.Tab = X.Text.table(Map.set(&2, X.TG, c, X.Text.key(X.Face.id(f), 26412), X.Text.get(c, f, 65)))
 +    plans(100n, os, R.Key.ops(os), tab, grown, keys, masks)
+diff --git a/test/native/keep_plan_bench.bend b/test/native/keep_plan_bench.bend
+new file mode 100644
+index 0000000000000000000000000000000000000000..c4b2e9d285c82473df151b46dcb7de4801b00131
+--- /dev/null
++++ b/test/native/keep_plan_bench.bend
+@@ -0,0 +1,83 @@
++import Base
++import ../check.bend as C
++import ../glyph_table_test.bend as G
++import ../keep_step_test.bend as K
++import ../../src/gfx/text.bend as X
++import ../../src/gfx/raster.bend as R
++import ../../src/gfx/draw.bend as D
++import ../../src/gfx/tiles.bend as T
++import ../../src/server/perf.bend as P
++
++# The previous production comparator, kept independent of Keep.step.
++def Ref.keep(os: List<&2, R.Op>, +px: U32, +py: U32, +rx: U32, +ry: U32, +n: U32, +ys: List<&2, R.Op>, ok: Bool) -> Bool:
++  match os ok:
++    case _ False{}: False{}
++    case Nil{} True{}: T.Eq.ops.go(Nil{}, ys, True{})
++    case +o <> t True{}:
++      Ref.keep(t, px, py, rx, ry, n, T.Keep.ys(o, px, py, rx, ry, n, ys), T.Keep.ok(o, px, py, rx, ry, n, ys))
++
++def Ref.eq(c: T.Cut, +ys: List<&2, R.Op>) -> Bool:
++  match c:
++    case T.CAll{o}: T.Eq.ops(o, ys)
++    case T.CIn{o, px, py, rx, ry, n}: Ref.keep(o, px, py, rx, ry, n, ys, True{})
++
++def Ref.same(c: T.Cut, +base: Image, t: T.Tiles) -> Bool:
++  match t:
++    case T.TLeaf{_}: False{}
++    case T.TNode{o, b, _, _, _, _}: T.Eq.tile.k(Ref.eq(c, o), base, b)
++
++def Ref.leaf(+e: Nat, +c: T.Cut, +base: Image, t: T.Tile, p: T.Past, +rx: U32, +ry: U32, +n: U32) -> T.Plan:
++  match t:
++    case T.Tile{+o, l, +b, i, keys}:
++      T.Tile.plan2.k(T.Eq.tile.k(Ref.eq(c, o), base, b), e, c, base, T.Tile{o, l, b, i, keys}, p, rx, ry, n)
++
++def Ref.plan(+k: Nat, +e: Nat, c: T.Cut, +base: Image, prev: T.Tiles, +p: T.Past, +rx: U32, +ry: U32, +n: U32, same: Bool) -> T.Plan:
++  match k prev same:
++    case 0n T.TLeaf{t} _: Ref.leaf(e, c, base, t, p, rx, ry, n)
++    case 1n+j0 T.TNode{o, b, pa, pb, pc, pd} True{}: T.PKeepN{T.TNode{o, b, pa, pb, pc, pd}}
++    case 1n+j0 T.TNode{_, _, +pa, +pb, +pc, +pd} False{}:
++      +j = j0
++      +h = U32.shr(n)
++      +os = T.Cut.get(c)
++      T.Plan.node(os, base,
++        Ref.plan(j, e, T.CIn{os, rx, ry, rx, ry, h}, T.Img.q(base, 0n), pa, p, rx, ry, h, Ref.same(T.CIn{os, rx, ry, rx, ry, h}, T.Img.q(base, 0n), pa)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, (rx + h : U32), ry, h}, T.Img.q(base, 1n), pb, p, (rx + h : U32), ry, h, Ref.same(T.CIn{os, rx, ry, (rx + h : U32), ry, h}, T.Img.q(base, 1n), pb)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, rx, (ry + h : U32), h}, T.Img.q(base, 2n), pc, p, rx, (ry + h : U32), h, Ref.same(T.CIn{os, rx, ry, rx, (ry + h : U32), h}, T.Img.q(base, 2n), pc)),
++        Ref.plan(j, e, T.CIn{os, rx, ry, (rx + h : U32), (ry + h : U32), h}, T.Img.q(base, 3n), pd, p, (rx + h : U32), (ry + h : U32), h, Ref.same(T.CIn{os, rx, ry, (rx + h : U32), (ry + h : U32), h}, T.Img.q(base, 3n), pd)))
++    case _ _ _: T.Tiles.plan.make(k, e, T.Cut.get(c), base, rx, ry, n)
++
++def Ref.frame(+os: List<&2, R.Op>, +prev: T.Tiles) -> T.Plan:
++  Ref.plan(5n, 6n, T.CAll{os}, Pix{0}, prev, T.Past{5n, prev, 2048, 0}, 0, 0, 2048, T.Tiles.same(os, Pix{0}, prev))
++
++def rows(+n: Nat, +c: Map<&2, X.TG>, +f: X.Face) -> List<&2, R.Op>:
++  match n:
++    case 0n: Nil{}
++    case 1n+k:
++      List.append(&2, R.Op, X.Text.keydraw(c, f, "The regulator enable pin is pulled up through R12 to VBAT; check U3 footprint, then rerun DRC.", D.Clip.all(), 300, U32.from_nat(Nat.add(24n, Nat.mul(k, 19n))), 15790320), rows(k, c, f))
++
++def sample(+n: Nat, +os: List<&2, R.Op>, +prev: T.Tiles) -> IO(Unit):
++  match n:
++    case 0n: IO.pure(Unit, Unit{})
++    case 1n+k:
++      do IO<Unit>:
++        a : U32 <- P.Perf.us()
++        old : Nat = T.Plan.count(Ref.frame(os, prev))
++        +b : U32 <- P.Perf.us()
++        new : Nat = T.Plan.count(T.Frame.plan.k(True{}, 1400, 900, os, Pix{0}, prev, 0))
++        z : U32 <- P.Perf.us()
++        IO.print("sample," ++ Nat.show(k) ++ "," ++ U32.show((b - a : U32)) ++ "," ++ U32.show((z - b : U32)) ++ "," ++ Nat.show(old) ++ "," ++ Nat.show(new))
++        sample(k, os, prev)
++
++def main() -> IO(Unit):
++  do IO<Unit>:
++    K.main()
++    +f : X.Face <- X.Text.face(["monospace"], 14)
++    +c : Map<&2, X.TG> <- X.Text.warm(Map.new(&2, X.TG), f)
++    +tab : R.Tab = X.Text.table(c)
++    +os : List<&2, R.Op> = rows(44n, c, f)
++    +old : T.Tiles = T.Frame.make(1400, 900, os, Pix{0}, tab)
++    +changed : List<&2, R.Op> = List.append(&2, R.Op, X.Text.keydraw(c, f, "Backplane typed", D.Clip.all(), 300, 840, 16777215), os)
++    +a : Image = T.Tiles.image(T.Plan.run(Ref.frame(changed, old), 6n, tab))
++    +b : Image = T.Tiles.image(T.Plan.run(T.Frame.plan.k(True{}, 1400, 900, changed, Pix{0}, old, 0), 6n, tab))
++    C.Check.str("whole plan exact image", Bool.show(T.Eq.image(a, b)), "True")
++    sample(100n, changed, old)
 diff --git a/test/native/lay_prof.bend b/test/native/lay_prof.bend
 index e9d6e9e78f7d0057ceaa3785b8d47a93e66c4688..195591b76ca888e653bfbf8907692bff849cfcc2 100644
 --- a/test/native/lay_prof.bend
@@ -4239,10 +4655,10 @@ index 0000000000000000000000000000000000000000..284d53585242efc01851bba6d6ab5440
 +    print("705 complete native glyph samples summarized")
 diff --git a/test/tools/native_display.ts b/test/tools/native_display.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..434b5bc95cf118188b4b89bebde8ef8c30753e55
+index 0000000000000000000000000000000000000000..59cc51bd0f4a1e10386f1f40c76923488089ee84
 --- /dev/null
 +++ b/test/tools/native_display.ts
-@@ -0,0 +1,41 @@
+@@ -0,0 +1,62 @@
 +// A demand comes from the driver before dispatch. An independent pixel
 +// reader must observe the calibrated target region after dispatch.
 +// This is X-server content acceptance, not compositor/physical scanout.
@@ -4283,6 +4699,27 @@ index 0000000000000000000000000000000000000000..434b5bc95cf118188b4b89bebde8ef8c
 +    await pause(4);
 +  }
 +  throw new Error("display demand timed out: expected content never reached the X-server region");
++}
++
++// Calibration is outside measured demand latency. A dispatched key is queued,
++// so two early reads can straddle its first frame. Require changed content (or
++// a known pristine empty target) to remain exactly stable for a bounded period.
++export async function calibrateDisplay(
++  read: () => Promise<string>,
++  options: { before?: string; expected?: string; stableMs?: number; timeoutMs?: number } = {},
++  now: () => number = () => performance.now(),
++  pause: (ms: number) => Promise<void> = ms => new Promise(r => setTimeout(r, ms)),
++): Promise<string> {
++  const started=now(),stableMs=options.stableMs ?? 300,timeoutMs=options.timeoutMs ?? 5000;
++  let value="",since=started,samples=0;
++  while(now()-started<=timeoutMs) {
++    const actual=await read(),at=now();
++    const allowed=actual && actual!==options.before && (!options.expected || actual===options.expected);
++    if(!allowed || actual!==value){value=allowed?actual:"";since=at;samples=0;}
++    if(allowed && value===actual && ++samples>=3 && at-since>=stableMs && at-started<=timeoutMs)return actual;
++    await pause(40);
++  }
++  throw new Error("calibration timed out: changed/expected pixels never became stable");
 +}
 diff --git a/test/tools/native_display_compare.ts b/test/tools/native_display_compare.ts
 new file mode 100644
@@ -4512,12 +4949,12 @@ index 0000000000000000000000000000000000000000..7554560e4754acc96e846097948ea74f
 +} finally {fx?.kill();xs.kill();if(fx)await fx.exited;await xs.exited;}
 diff --git a/test/tools/native_display_test.ts b/test/tools/native_display_test.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..a88f112140801953cc57a05f436b21fc2309b532
+index 0000000000000000000000000000000000000000..63ad4270bbc18c0c2d68f137fe34f09ebfbfdffc
 --- /dev/null
 +++ b/test/tools/native_display_test.ts
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,39 @@
 +import { strict as assert } from "node:assert";
-+import { awaitDisplay, displayPixels } from "./native_display";
++import { awaitDisplay, calibrateDisplay, displayPixels } from "./native_display";
 +async function scenario(values: string[], target = "target", before = "old") {
 +  let t = 0;
 +  return awaitDisplay(target, before, async () => { t += 2; return values.shift() ?? "stale"; }, () => t, async ms => {t += ms;}, 0, 20);
@@ -4540,48 +4977,217 @@ index 0000000000000000000000000000000000000000..a88f112140801953cc57a05f436b21fc
 +assert.notDeepEqual(displayPixels(ppm([14277092,1250843]),2,1,true), displayPixels(ppm([14277093,1250843]),2,1,true));
 +assert.throws(() => displayPixels(ppm([1,2]),3,1), /expected RGB PPM/);
 +console.log("composer observer: caret blink ignored; missing/corrupt glyph pixels and wrong region size distinguished");
++
++async function calibration(values:string[],options:{before?:string;expected?:string}={}){
++  let now=0,index=0;
++  return calibrateDisplay(async()=>values[Math.min(index++,values.length-1)],{...options,stableMs:120,timeoutMs:500},()=>now,async ms=>{now+=ms;});
++}
++assert.equal(await calibration(["old","old","new","new","new","new"],{before:"old"}),"new");
++assert.equal(await calibration(["wrong","wrong","empty","empty","empty","empty"],{expected:"empty"}),"empty");
++assert.equal(await calibration(["old","new","old","new","new","new","new"],{before:"old"}),"new");
++await assert.rejects(calibration(["old"],{before:"old"}),/timed out/);
++await assert.rejects(calibration(["wrong"],{expected:"empty"}),/timed out/);
++let clock=0,step=0;
++await assert.rejects(calibrateDisplay(async()=>++step%2?"a":"b",{stableMs:120,timeoutMs:500},()=>clock,async ms=>{clock+=ms;}),/timed out/);
++let lateCalibration=0;
++await assert.rejects(calibrateDisplay(async()=>{lateCalibration=501;return "new";},{timeoutMs:500},()=>lateCalibration,async()=>{}),/timed out/);
++console.log("calibration: delayed/transient frames settle; unchanged, wrong-empty, oscillating and late pixels rejected (7 controls)");
 diff --git a/test/tools/perf_fixture.ts b/test/tools/perf_fixture.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..dd13e35ed79dfebefddabebe8970aa2541007e2f
+index 0000000000000000000000000000000000000000..36100ea6ff9643d9a41200f4c6f2f703855da440
 --- /dev/null
 +++ b/test/tools/perf_fixture.ts
-@@ -0,0 +1,21 @@
-+// Deterministic generated fixture for native before/after comparisons.
-+// No copied user events, credentials, repositories, or live providers.
-+import { writeFileSync } from "node:fs";
-+const output = process.argv[2];
-+if (!output) throw new Error("usage: bun test/tools/perf_fixture.ts OUTPUT.jsonl");
-+const events: object[] = [{ $: "ProjectCreated", id: "fixture-project", title: "Synthetic hardware review", root: "/tmp/native-fixture-project", at: 1 }];
-+for (let t=0;t<12;t++) {
-+  const id = `fixture-thread-${t}`;
-+  events.push({ $: "ThreadCreated", id, project: "fixture-project", title: `Synthetic board review ${String(t).padStart(2,"0")}`, env: "local", branch: "", worktree: "", provider: "claude", model: "", at: 2+t });
-+  for (let m=0;m<180-t*10;m++) {
-+    let text = `Message ${String(m).padStart(3,"0")}: regulator U3 enable through R12 to VBAT; inspect layout branch ${t}.\n\n`;
-+    text += "The next check compares routing, top and bottom assembly labels, and connector pin 1. ";
-+    if (t%3===1) text += "日本語の基板検査、電源と信号。 ";
-+    if (t%3===2) text += "Café α→β and 5 µF capacitor. ";
-+    text += "\n\n- Confirm clearance\n- Rebuild DRC\n- Save review notes";
-+    events.push({ $: "MessagePosted", thread: id, msg: `fixture-message-${t}-${m}`, role: m%2 ? "assistant" : "user", text, at:1000+t*200+m });
+@@ -0,0 +1,48 @@
++// Generated native before/after fixture. No user history or live providers.
++// The output argument is required; importing this module performs no IO.
++import { existsSync, readFileSync, writeFileSync } from "node:fs";
++
++export const fixtureSha256 = "ac5f4374d7946569b420d7b2ca2d5890c99d54d323a819a6d66beaf2d824b543";
++export const historySha256 = "242a722701dfca4c8b7d763575e3c8e6260eaa70a001abb52bef63a2fb9c098b";
++
++export function fixtureEvents(): Record<string, unknown>[] {
++  const events: Record<string, unknown>[] = [{$:"ProjectCreated",id:"fixture-project",title:"Synthetic hardware review",root:"/tmp/native-fixture-project",at:1}];
++  for(let t=0;t<12;t++) {
++    const id=`fixture-thread-${t}`;
++    events.push({$:"ThreadCreated",id,project:"fixture-project",title:`Synthetic board review ${String(t).padStart(2,"0")}`,env:"local",branch:"",worktree:"",provider:"claude",model:"",at:2+t});
++    for(let m=0;m<180-t*10;m++) {
++      let text=`Message ${String(m).padStart(3,"0")}: regulator U3 enable through R12 to VBAT; inspect layout branch ${t}.\n\n`;
++      text+="The next check compares routing, top and bottom assembly labels, and connector pin 1. ";
++      if(t%3===1)text+="日本語の基板検査、電源と信号。 ";
++      if(t%3===2)text+="Café α→β and 5 µF capacitor. ";
++      text+="\n\n- Confirm clearance\n- Rebuild DRC\n- Save review notes";
++      events.push({$:"MessagePosted",thread:id,msg:`fixture-message-${t}-${m}`,role:m%2?"assistant":"user",text,at:1000+t*200+m});
++    }
 +  }
++  // Normal mode selects the uberbot and posts to a room. An otherwise valid
++  // history-only fixture cannot meet those workload guards.
++  for(const [index,name] of ["Fixture Steward","Fixture Inspector"].entries()) {
++    const thread=`fixture-bot-thread-${index}`,id=`fixture-bot-${index}`;
++    events.push({$:"ThreadCreated",id:thread,project:"",title:name,env:"local",branch:"",worktree:"",provider:"claude",model:"",at:4000+index*2});
++    events.push({$:"BotSet",id,name,thread,look:index,persona:"",at:4001+index*2});
++  }
++  events.push({$:"UberSet",bot:"fixture-bot-0",uid:"fixture-uber-identity",at:4010});
++  events.push({$:"RoomSet",id:"fixture-review-room",name:"Synthetic board review",members:"fixture-bot-0\nfixture-bot-1",at:4011});
++  events.push({$:"SettingSet",key:"restart.continue",value:"off",at:4012});
++  return events;
 +}
-+const bytes = events.map(e => JSON.stringify(e)).join("\n")+"\n";
-+writeFileSync(output,bytes);
-+console.log(JSON.stringify({events:events.length,bytes:Buffer.byteLength(bytes),sha256:new Bun.CryptoHasher("sha256").update(bytes).digest("hex")}));
++
++export function fixtureJSONL(events=fixtureEvents()): string {
++  return events.map(event=>JSON.stringify(event)).join("\n")+"\n";
++}
++
++if(import.meta.main) {
++  const [output,...extra]=process.argv.slice(2);
++  if(!output || extra.length) throw new Error("usage: bun test/tools/perf_fixture.ts OUTPUT.jsonl");
++  const events=fixtureEvents(),bytes=fixtureJSONL(events);
++  const sha256=new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
++  if(sha256!==fixtureSha256)throw new Error("generated fixture bytes differ from the reviewed fixture");
++  if(existsSync(output) && readFileSync(output,"utf8")!==bytes)throw new Error("refusing to replace a different existing fixture");
++  writeFileSync(output,bytes);
++  console.log(JSON.stringify({events:events.length,bytes:Buffer.byteLength(bytes),sha256}));
++}
+diff --git a/test/tools/perf_fixture_codec_test.ts b/test/tools/perf_fixture_codec_test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..1102c71385fc006d95394a315b63dff2ce8ed062
+--- /dev/null
++++ b/test/tools/perf_fixture_codec_test.ts
+@@ -0,0 +1,33 @@
++// Requires an already-built production shared-client bridge. No app/hub runs.
++// bun test/tools/perf_fixture_codec_test.ts mobile/build/assets/bridge.js
++import assert from "node:assert/strict";
++import { readFileSync } from "node:fs";
++import { fixtureEvents } from "./perf_fixture";
++const [bridge,...extra]=process.argv.slice(2);
++if(!bridge || extra.length)throw new Error("usage: bun test/tools/perf_fixture_codec_test.ts BRIDGE.js");
++(0,eval)(readFileSync(bridge,"utf8"));
++const B=(globalThis as any).Backplane;
++assert(B,"production Backplane bridge export missing");
++function cbor(value:any):string {
++  const out:number[]=[];
++  function head(major:number,n:number){const tag=major<<5;if(n<24)out.push(tag|n);else if(n<256)out.push(tag|24,n);else if(n<65536)out.push(tag|25,n>>8,n&255);else out.push(tag|26,(n>>>24)&255,(n>>>16)&255,(n>>>8)&255,n&255);}
++  function item(v:any){
++    if(v===null)out.push(0xf6);else if(typeof v==="boolean")out.push(v?0xf5:0xf4);
++    else if(typeof v==="number"){assert(Number.isInteger(v)&&v>=0);head(0,v);}
++    else if(typeof v==="string"){const bytes=Buffer.from(v);head(3,bytes.length);for(const b of bytes)out.push(b);}
++    else if(Array.isArray(v)){head(4,v.length);for(const entry of v)item(entry);}
++    else{const entries=Object.entries(v);head(5,entries.length);for(const [key,entry]of entries){item(key);item(entry);}}
++  }
++  item(value);return Buffer.from(out).toString("base64");
++}
++const added=fixtureEvents().slice(-7);
++function decoded(events:any[]){B.start("fixture-codec","{}");B.hubs(["fixture"]);B.recv("fixture",cbor({t:"log",since:0,head:events.length,items:events}),false,false);return JSON.parse(B.save());}
++const state=decoded(added),bot=(node:any)=>typeof node?.$==="string"&&node.$.endsWith("/bot.Bot");
++assert(state.nodes.filter(bot).length===2 && state.nodes.some((node:any)=>bot(node)&&node.id==="fixture-bot-0") && state.nodes.some((node:any)=>bot(node)&&node.thread==="fixture-bot-thread-1"));
++console.log("ok production codec replays both BotSet events with correct thread identity");
++assert(JSON.stringify(state).includes("fixture-review-room")&&JSON.stringify(state).includes("fixture-uber-identity"));
++console.log("ok production codec retains room and uberbot identity");
++const unknown=decoded(added.map(event=>event.$==="BotSet"?{...event,$:"UnknownFixtureEvent"}:event));
++assert(unknown.nodes.filter(bot).length===0);
++console.log("ok production codec rejects unknown bot-event negative control");
++console.log("3 production codec controls passed");
+diff --git a/test/tools/perf_fixture_test.ts b/test/tools/perf_fixture_test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..80372da2d0371767b870da496c4e25ffbdac01be
+--- /dev/null
++++ b/test/tools/perf_fixture_test.ts
+@@ -0,0 +1,63 @@
++// Fixture/stand-in controls only; no hub or native app is launched.
++// Normally run in the repo. --repo ROOT supports reviewing an isolated proposal.
++import assert from "node:assert/strict";
++import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
++import { tmpdir } from "node:os";
++import { join, resolve } from "node:path";
++import { pathToFileURL } from "node:url";
++import { spawnSync } from "node:child_process";
++import { fixtureEvents, fixtureJSONL, fixtureSha256, historySha256 } from "./perf_fixture";
++
++const args=process.argv.slice(2);
++assert(args.length===0 || (args.length===2 && args[0]==="--repo"),"usage: bun test/tools/perf_fixture_test.ts [--repo ROOT]");
++const repo=resolve(args[1] ?? join(import.meta.dir,"../.."));
++const {FixtureBots}=await import(pathToFileURL(join(repo,"test/tools/perf_guard.ts")).href);
++const {standinScript}=await import(pathToFileURL(join(repo,"test/tools/perf_standin.ts")).href);
++let checks=0;
++function check(name:string,condition:unknown) {assert(condition,name);console.log(`ok ${name}`);checks++;}
++const rows=fixtureEvents(),bytes=fixtureJSONL(rows),history=rows.slice(0,-7);
++const hash=(value:string)=>new Bun.CryptoHasher("sha256").update(value).digest("hex");
++function prerequisites(events:Record<string,unknown>[]) {
++  const bots=new FixtureBots(),rooms:any[]=[];
++  for(const event of events){bots.apply(event);if(event.$==="RoomSet")rooms.push(event);}
++  return {bots,rooms:rooms.filter(room=>room.members.split("\n").some((id:string)=>bots.threads.get(id)))};
++}
++const before=prerequisites(history),after=prerequisites(rows);
++check("fixture generation is deterministic",bytes===fixtureJSONL());
++check("reviewed fixture count/bytes/hash match",rows.length===1520 && Buffer.byteLength(bytes)===556794 && hash(bytes)===fixtureSha256);
++check("all original history bytes are preserved",history.length===1513 && hash(fixtureJSONL(history))===historySha256);
++check("history-only negative control misses normal prerequisites",before.rooms.length===0 && !before.bots.uber);
++check("uberbot maps to a fixture thread",Boolean(after.bots.threads.get(after.bots.uber)));
++check("room participants map to two local fixture bots",after.rooms.length===1 && after.rooms[0].members.split("\n").length===2 && after.rooms[0].members.split("\n").every((id:string)=>after.bots.threads.get(id)));
++check("twelve non-bot history threads remain",rows.filter(event=>event.$==="ThreadCreated" && ![...after.bots.threads.values()].includes(event.id as string)).length===12);
++check("persisted events cannot resume a turn or schedule a wake",rows.every(event=>["ProjectCreated","ThreadCreated","MessagePosted","BotSet","RoomSet","UberSet","SettingSet"].includes(event.$ as string)));
++check("all fixture providers use the stand-in protocol",rows.filter(event=>event.$==="ThreadCreated").every(event=>event.provider==="claude" && event.worktree===""));
++check("restart continuation is disabled",rows.some(event=>event.$==="SettingSet" && event.key==="restart.continue" && event.value==="off"));
++
++const temp=mkdtempSync(join(tmpdir(),"bp-perf-fixture-test-"));
++try {
++  const env={HOME:temp,PATH:"/usr/bin:/bin"};
++  const generator=join(import.meta.dir,"perf_fixture.ts"),output=join(temp,"fixture.jsonl");
++  const missing=spawnSync(process.execPath,[generator],{env,encoding:"utf8"});
++  check("generator requires an explicit output argument",missing.status!==0 && missing.stderr.includes("OUTPUT.jsonl"));
++  const generated=spawnSync(process.execPath,[generator,output],{env,encoding:"utf8"});
++  check("standalone generator writes the reviewed bytes and receipt",generated.status===0 && readFileSync(output,"utf8")===bytes && JSON.parse(generated.stdout).sha256===fixtureSha256);
++  writeFileSync(output,"retain previous fixture\n");
++  const overwritten=spawnSync(process.execPath,[generator,output],{env,encoding:"utf8"});
++  check("generator preserves an existing different fixture",overwritten.status!==0 && readFileSync(output,"utf8")==="retain previous fixture\n");
++  const fake=join(temp,"fake"),blocks=join(temp,"blocks"),fallback=join(temp,"fallback"),marker=join(temp,"fallback-used"),log=join(temp,"agents.log");
++  for(const path of [fake,blocks,fallback])mkdirSync(path);
++  writeFileSync(join(fake,"claude"),standinScript);chmodSync(join(fake,"claude"),0o755);
++  for(const name of ["claude","codex","grok","muse"]){writeFileSync(join(fallback,name),`#!/bin/sh\nprintf used > '${marker}'\n`);chmodSync(join(fallback,name),0o755);}
++  const source=readFileSync(join(repo,"src/core/standin.bend"),"utf8");
++  const body=source.split("def Standin.sh() -> String:\n")[1].split("\n\ndef ")[0];
++  const shell=[...body.matchAll(/"(?:[^"\\]|\\.)*"/g)].map(match=>JSON.parse(match[0])).join("");
++  const isolated={...env,PATH:`${fake}:${blocks}:${fallback}:/usr/bin:/bin`,FAKE_LOG:log};
++  const prepared=spawnSync("/bin/sh",["-c",shell,"sh",fake,blocks,"BACKPLANE-STANDIN-MISSING","claude","codex","grok","muse"],{env:isolated,encoding:"utf8"});
++  check("production stand-in binding prepares private blocks",prepared.status===0 && prepared.stdout===fake);
++  const protocol=spawnSync(join(fake,"claude"),[],{env:isolated,input:"",encoding:"utf8"});
++  check("production stand-in starts no turn on empty input",protocol.status===0 && existsSync(log) && !readFileSync(log,"utf8").includes("TURN"));
++  const blocked=spawnSync("/bin/sh",["-c","codex"],{env:isolated,encoding:"utf8"});
++  check("absent provider cannot fall through to another executable",blocked.status===127 && blocked.stderr.includes("never used") && !existsSync(marker));
++} finally {rmSync(temp,{recursive:true,force:true});}
++console.log(`${checks} fixture/isolation controls passed`);
 diff --git a/test/tools/perf_load.ts b/test/tools/perf_load.ts
-index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd465d65a446 100644
+index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..9e89c06ee7374cab51e09c23f33aef496e58661d 100644
 --- a/test/tools/perf_load.ts
 +++ b/test/tools/perf_load.ts
-@@ -14,14 +14,15 @@
+@@ -14,14 +14,34 @@
  // stand-in `claude` first on PATH, and only the PIDs started here are
  // stopped.
  import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync, openSync, readSync, closeSync, statSync } from "node:fs";
 -import { homedir, tmpdir } from "node:os";
 +import { homedir, tmpdir, hostname, arch, platform, release, cpus } from "node:os";
-+import { awaitDisplay, displayPixels } from "./native_display";
++import { awaitDisplay, calibrateDisplay, displayPixels } from "./native_display";
  import { standinScript as claude } from "./perf_standin";
  import { completeOpens, FixtureBots, streamWindow } from "./perf_guard";
  import { dirname, join, resolve } from "node:path";
  
++const ownedPids: {pid:number;what:string;kill:()=>void;exited:Promise<any>}[]=[];
++const ownedTimers=new Set<ReturnType<typeof setInterval>>();
++const partial:any={schema_version:1,complete:false,execution_status:"starting",phases:[]};
++let outputOnFailure="",cleanupPromise:Promise<void>|null=null;
++async function cleanup(){
++  if(cleanupPromise)return cleanupPromise;
++  cleanupPromise=(async()=>{
++    for(const timer of ownedTimers)clearInterval(timer);
++    for(const p of [...ownedPids].reverse()){try{p.kill();}catch{}await Promise.race([p.exited,new Promise(r=>setTimeout(r,5000))]);}
++  })();
++  return cleanupPromise;
++}
++function failed(error:unknown){
++  const report={...partial,complete:false,execution_status:"failed",error:String(error),stack:error instanceof Error?error.stack:undefined};
++  const text=JSON.stringify(report,(_,value)=>value instanceof Map?Object.fromEntries(value):value,2);
++  if(partial.root)writeFileSync(join(partial.root,"failure.json"),text);
++  if(outputOnFailure)writeFileSync(outputOnFailure,text);
++}
++async function main(){
  const argv = process.argv.slice(2);
  if (argv.includes("--help")) {
 -  console.log("bun test/tools/perf_load.ts --bin BUILD --log SNAPSHOT [--agents 10] [--secs 20] [--phases normal,idle,bg,fg,type,open,plane,mail] [--out results.json] [--shots DIR] [--fail-on-target] [--keep]");
@@ -4589,16 +5195,18 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
    process.exit(0);
  }
  const opt = (name: string, d: string) => {
-@@ -42,6 +43,8 @@ const nAgents = Number(opt("agents", "10"));
+@@ -41,7 +61,10 @@ const display = opt("display", ":77");
+ const nAgents = Number(opt("agents", "10"));
  const secs = Number(opt("secs", "20"));
  const outPath = opt("out", "");
++outputOnFailure=outPath;
  const keep = argv.includes("--keep");
 +const pixelOpens = argv.includes("--pixel-opens");
 +const pixelInputs = argv.includes("--pixel-inputs");
  const failOnTarget = argv.includes("--fail-on-target");
  const shots = opt("shots", ""); // a folder: a screenshot at the end of each phase (ImageMagick's import)
  const phasesWanted = opt("phases", "normal,idle,bg,fg,type,open,plane").split(",");
-@@ -54,8 +57,9 @@ const say = (s: string) => console.error(`[perf_load] ${s}`);
+@@ -54,8 +77,9 @@ const say = (s: string) => console.error(`[perf_load] ${s}`);
  if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error("--port must be 1024..65535");
  if (!Number.isInteger(nAgents) || nAgents < 1 || nAgents > 26) throw new Error("--agents must be 1..26");
  if (!Number.isFinite(secs) || secs <= 0) throw new Error("--secs must be positive");
@@ -4609,7 +5217,50 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  if (port === 3787) throw new Error("3787 is the live hub's port");
  if (!existsSync(bin)) throw new Error(`no binary at ${bin}`);
  if (realpathSync(bin).startsWith(join(homedir(), ".local/share/backplane"))) throw new Error("refusing to run the installed binary");
-@@ -458,6 +462,88 @@ const W = 1400, H = 900;
+@@ -68,6 +92,7 @@ try {
+ }
+ 
+ const root = mkdtempSync(join(tmpdir(), "bp-perfload-"));
++Object.assign(partial,{root,bin,source_sha_declared:opt("source-sha","unspecified"),build_flags_declared:opt("build-flags","unspecified"),display,port});
+ const home = join(root, "home");
+ const user = join(root, "user");
+ const fake = join(root, "bin");
+@@ -76,6 +101,7 @@ const proj = join(root, mailReuseHome ? "ui-replay-project" : "proj");
+ for (const d of [home, user, fake, locks, proj]) mkdirSync(d, { recursive: true });
+ if (shots) mkdirSync(shots, { recursive: true });
+ const trace = join(root, "trace.json");
++partial.trace=trace;
+ const fakeLog = join(root, "agents.log");
+ 
+ // The log, copied and sanitized
+@@ -248,7 +274,7 @@ function cborDec(b: Uint8Array): any {
+ 
+ // The app
+ // -------
+-const ownPids: { pid: number; what: string; kill: () => void; exited: Promise<any> }[] = [];
++const ownPids=ownedPids;
+ let xvfbPid = 0;
+ const xsock = `/tmp/.X11-unix/X${display.replace(/^:/, "").split(".")[0]}`;
+ if (argv.includes("--exclusive-display") && existsSync(xsock)) throw new Error(`exclusive X display ${display} already exists; refusing to share another job's X server`);
+@@ -278,16 +304,7 @@ const app = Bun.spawn([bin, "--home", home, "--port", String(port), "--no-tailsc
+ ownPids.push({ pid: app.pid, what: "backplane", kill: () => app.kill(), exited: app.exited });
+ say(`app pid ${app.pid}, home ${home}`);
+ 
+-async function cleanup() {
+-  for (const p of ownPids.reverse()) {
+-    try { p.kill(); } catch {}
+-    await Promise.race([p.exited, sleep(5000)]);
+-  }
+-}
+-process.on("SIGINT", async () => { await cleanup(); process.exit(130); });
+-const bail = async (e: any) => { console.error(e); await cleanup(); process.exit(1); };
+-process.on("uncaughtException", bail);
+-process.on("unhandledRejection", bail);
++process.once("SIGINT",async()=>{failed(new Error("interrupted by SIGINT"));await cleanup();process.exit(130);});
+ 
+ const pj = async (path: string) => (await fetch(`http://127.0.0.1:${port}${path}`)).json();
+ let ready = false;
+@@ -458,6 +475,87 @@ const W = 1400, H = 900;
  const MAINX = 264 + (W - 264) / 2, MIDY = H / 2;
  // a thread by its (unique) title: ctrl+k, the title, Return. Answers the
  // trace window of the Return alone (the open).
@@ -4660,24 +5311,23 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
 +const inputProbe = "Backplane42";
 +const inputRepeats = 6; // 66 additions and 66 independent Backspace demands
 +const inputTargets = new Map<string,string>();
++Object.assign(partial,{demand_journal:displayDemandLog,input_targets:inputTargets,title_targets:displayTargets,demands:displayDemands});
++let emptyComposerTarget="";
 +async function calibratedComposer() {
 +  await composer();
-+  const capture = async (draft:string) => {
-+    await sleep(100);
-+    const first = await composerPixels();
-+    await sleep(80);
-+    if (first !== await composerPixels()) throw new Error(`unstable composer glyph pixels for ${JSON.stringify(draft)}`);
-+    inputTargets.set(draft, first);
++  const capture = async (draft:string,before?:string) => {
++    partial.calibration={surface:"composer",draft};
++    const target=await calibrateDisplay(composerPixels,{before,expected:draft===""?emptyComposerTarget:undefined});
++    inputTargets.set(draft,target);
 +  };
 +  // These runs start with a generated empty draft. Avoid sending Return:
 +  // this phase never starts a turn from the measured text.
 +  await capture("");
 +  let draft = "";
-+  for (const key of inputProbe) { await poke("type",key); draft += key; await capture(draft); }
++  for (const key of inputProbe) {const before=inputTargets.get(draft);await poke("type",key);draft+=key;await capture(draft,before);}
 +  if (new Set(inputTargets.values()).size !== inputTargets.size) throw new Error("composer region does not distinguish every input prefix after caret normalization");
 +  for (let i=0;i<inputProbe.length;i++) await poke("key","BackSpace");
-+  await sleep(200);
-+  if (await composerPixels() !== inputTargets.get("")) throw new Error("composer calibration did not return to its empty glyph state");
++  await calibrateDisplay(composerPixels,{expected:inputTargets.get("")});
 +}
 +async function displayedInputs() {
 +  let draft = "", before = await composerPixels();
@@ -4698,7 +5348,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  async function openByTitle(title: string): Promise<[number, number]> {
    const expected = title === "zqlong" ? longT.id
      : /^zqopen[a-j]$/.test(title) ? openTs[title.charCodeAt(title.length - 1) - 97]?.id
-@@ -467,8 +553,13 @@ async function openByTitle(title: string): Promise<[number, number]> {
+@@ -467,8 +565,13 @@ async function openByTitle(title: string): Promise<[number, number]> {
    await sleep(250);
    await poke("type", title);
    await sleep(600);
@@ -4713,17 +5363,52 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
    await sleep(700);
    const b = await upMs();
    // The native client reports its selection through the existing desk.look
-@@ -505,7 +596,9 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
+@@ -497,6 +600,7 @@ async function reading(): Promise<Reading> {
+ const upMs = async () => (await reading()).up;
+ let rssMax = 0;
+ const rssTimer = setInterval(() => { rssMax = Math.max(rssMax, rssKb()); }, 500);
++ownedTimers.add(rssTimer);
+ 
+ type Phase = { name: string; what: string; a: Reading; b: Reading; rssMax: number; trafficBefore: Record<string, number>; trafficAfter: Record<string, number>; streamStart: number; streamEnd: number; marks?: [number, number][]; notes?: string[]; mailReads?: number[]; mailTraffic?: number; mailSeed?: object };
+ const phases: Phase[] = [];
+@@ -505,7 +609,10 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
    say(`phase ${name}: ${what}`);
    rssMax = 0;
    const p: Phase = { name, what, a: await reading(), b: null as any, rssMax: 0, trafficBefore: traffic(), trafficAfter: {}, streamStart: performance.now(), streamEnd: 0, marks: [], notes: [] };
 +  activePhase = name;
++  partial.active_phase=name;
    await body(p);
 +  activePhase = "setup";
    p.b = await reading();
    p.trafficAfter = traffic();
    p.streamEnd = performance.now();
-@@ -598,6 +691,26 @@ await phase("type", "streaming; 60 keys typed into the streaming thread's compos
+@@ -517,6 +624,7 @@ async function phase(name: string, what: string, body: (p: Phase) => Promise<voi
+   }
+   p.rssMax = Math.max(rssMax, p.b.rss);
+   phases.push(p);
++  partial.phases.push({name,what,complete:true});
+ }
+ 
+ // Streaming
+@@ -545,6 +653,7 @@ const startPosts = () => {
+     if (!postedRooms.has(r.id)) postedRooms.set(r.id, { at: performance.now(), bots: roomBots(r) });
+     send("bots.post", { room: r.id, text: `zqshort a quick note for the room, post ${posts}` });
+   }, 4000);
++  ownedTimers.add(posting);
+ };
+ const stopPosts = () => { if (posting) clearInterval(posting); posting = null; };
+ const typeKeys = async (n: number, gapMs: number) => {
+@@ -592,12 +701,36 @@ await phase("fg", "streaming; the window shows a streaming thread with its Subag
+   await sleep(secs * 1000);
+ });
+ 
++if(pixelInputs && phasesWanted.includes("input-display")){
++  await composer();
++  emptyComposerTarget=await calibrateDisplay(composerPixels);
++}
+ await phase("type", "streaming; 60 keys typed into the streaming thread's composer (8/s), then deleted", async () => {
+   await composer();
+   await typeKeys(60, 125);
    await sleep(1000);
  });
  
@@ -4736,21 +5421,21 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
 +if (pixelOpens && phasesWanted.includes("open")) {
 +  calibratingDisplay = true;
 +  for (const title of ["zqlong", ...openTs.map((_,i) => `zqopen${String.fromCharCode(97+i)}`), ...ours.map((t:any) => t.title.split(" ")[0])]) {
++    const before=await headerPixels();
 +    await openByTitle(title);
-+    const first = await headerPixels();
-+    await sleep(80);
-+    if (first !== await headerPixels()) throw new Error(`unstable native title pixels for ${title}`);
-+    displayTargets.set(title, first);
++    partial.calibration={surface:"title",title};
++    displayTargets.set(title,await calibrateDisplay(headerPixels,{before}));
 +  }
 +  if (new Set(displayTargets.values()).size !== displayTargets.size) throw new Error("native header region does not distinguish every target");
 +  await openByTitle("zqlong");
++  await calibrateDisplay(headerPixels,{expected:displayTargets.get("zqlong")});
 +  calibratingDisplay = false;
 +  displayReady = true;
 +}
  await phase("open", "streaming; 10 real threads opened one after another (ctrl+k, title, Return)", async (p) => {
    for (let i = 0; i < 10; i++) p.marks!.push(await openByTitle(`zqopen${String.fromCharCode(97 + i)}`));
  });
-@@ -711,8 +824,11 @@ const stat = (es: Ev[], name: string | RegExp): Sum => {
+@@ -711,8 +844,11 @@ const stat = (es: Ev[], name: string | RegExp): Sum => {
    return { n: d.length, p50: pctOf(d, 50), p99: pctOf(d, 99), max: d.length ? Math.max(...d) : NaN, sum: d.reduce((a, b) => a + b, 0), over8: d.filter((x) => x > 8).length, over16: d.filter((x) => x > 16).length };
  };
  const f1 = (x: number) => (Number.isFinite(x) ? (x >= 100 ? x.toFixed(0) : x.toFixed(1)) : "-");
@@ -4764,7 +5449,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  const rows: string[] = [];
  const verdicts: string[] = [];
  for (const name of order) {
-@@ -752,7 +868,11 @@ for (const name of order) {
+@@ -752,7 +888,11 @@ for (const name of order) {
    const key = { n: keys.length, p50: pctOf(keys, 50), p99: pctOf(keys, 99), max: keys.length ? Math.max(...keys) : NaN };
    const streamingCounts = Object.fromEntries(ours.map((t: any) => [t.id, (p.trafficAfter[t.id] ?? 0) - (p.trafficBefore[t.id] ?? 0)]));
    const streamWindows = Object.fromEntries(ours.map((t: any) => [t.id, streamWindow(deltaTimes.get(t.id) ?? [], p.streamStart, p.streamEnd)]));
@@ -4776,7 +5461,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
      ...(name !== "idle" ? [["all agents streaming", Object.values(streamWindows).every((w) => w.sustained)] as [string, boolean | null]] : []),
      ...(["open", "mail"].includes(name) ? [["all ten opens sampled", completeOpens(opens, 10)] as [string, boolean | null]] : []),
      ...(name === "mail" ? [["Mailroom and ten conversation selections visually verified", null] as [string, boolean | null]] : []),
-@@ -781,7 +901,7 @@ for (const name of order) {
+@@ -781,7 +921,7 @@ for (const name of order) {
    const mailHitBefore = p.a.rows.get("ui.mail.body.hit");
    const mailHitAfter = p.b.rows.get("ui.mail.body.hit");
    const mailBodyCache = { frames: (mailHitAfter?.n ?? 0) - (mailHitBefore?.n ?? 0), hits: (mailHitAfter?.sum ?? 0) - (mailHitBefore?.sum ?? 0) };
@@ -4785,7 +5470,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  }
  console.log(`\nperf_load: ${bin}\n  log ${logSrc} (${kept.length} lines; sha256 ${logSha256}), ${nAgents} agents, ${botRooms.length} bot rooms, ${secs} s phases, port ${port}, display ${display}`);
  console.log(`  ms; frame = ui.frame n p50/p99/max >8/>16; input = ui.input; key>frame = ui.msg.win + ui.input; open = the slowest thread open, Return to frame; line = hub.agent_line n p50/p99/max; hub% = hub.* span time / wall; cpu% = whole app process`);
-@@ -789,6 +909,14 @@ console.log(`phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 rast
+@@ -789,6 +929,14 @@ console.log(`phase    wall     n  frame p50/p99/max  >8/>16  layout p50/p99 rast
  for (const r of rows) console.log(r);
  console.log("\ntargets: frame p99<=8, no frame>16 from streaming (idle/bg), typing input p99<=16, thread open<=50, agent_line p99<=2");
  for (const v of verdicts) console.log(v);
@@ -4800,7 +5485,7 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  for (const p of results.phases) {
    console.log(`\n${p.name}: heaviest spans (total ms in phase, n, mean, max)`);
    for (const t of p.top.slice(0, 8)) console.log(`  ${t.name.padEnd(28)} ${String(t.sum_ms).padStart(9)} ${String(t.n).padStart(6)} ${String(t.mean_ms).padStart(8)} ${String(t.max_ms).padStart(8)}`);
-@@ -806,6 +934,7 @@ results.open_selections = openEvidence;
+@@ -806,6 +954,7 @@ results.open_selections = openEvidence;
  results.stray_agents = strays;
  results.agentsLog = readFileSync(fakeLog, "utf8").split("\n").filter((l) => l.startsWith("TURN")).length;
  results.appErrTail = appLogTail;
@@ -4808,6 +5493,12 @@ index 328c54d81b61ed49fbfd4f6868a5add6947cc29f..450e1e967d3c6eb3a0c63f1d0d16bd46
  if (outPath) { writeFileSync(outPath, JSON.stringify(results, null, 1)); console.log(`\nraw JSON: ${outPath}`); }
  if (!keep) rmSync(root, { recursive: true, force: true });
  else console.log(`kept ${root}`);
+@@ -828,3 +977,5 @@ async function statusPlaneImpl(_p: Phase): Promise<boolean> {
+   _p.notes!.push("Uberbot selection observed through desk.look; Status tab itself is unverified (strict coverage check remains n/a).");
+   return false;
+ }
++}
++try{await main();}catch(error){console.error(error);failed(error);process.exitCode=1;}finally{await cleanup();}
 diff --git a/test/tools/present_observer_fixture.c b/test/tools/present_observer_fixture.c
 new file mode 100644
 index 0000000000000000000000000000000000000000..7cafb5f5cbd48199b2d9398dfce35a6d278c4ff6

@@ -21,9 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {scope: browser, minutes: 45}
-          - {scope: lifecycle, minutes: 45}
-          - {scope: combined, minutes: 45}
+          - {scope: native, minutes: 90}
     env:
       CHECK_JOBS: '1'
       CHECK_SHARDS: '4'
