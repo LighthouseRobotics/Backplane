@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup-bend
       - run: scripts/check.sh all
@@ -28,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup-bend
       - uses: oven-sh/setup-bun@v2
