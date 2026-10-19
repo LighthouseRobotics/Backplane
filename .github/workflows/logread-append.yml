@@ -51,7 +51,7 @@ jobs:
           done
           cat > build/append-bin/backplane-test <<'SH'
           #!/bin/sh
-          exec "$BP_APPEND_BINARY" "$@" --foreground --host 127.0.0.1
+          exec "$BP_APPEND_BINARY" "$@" --headless --foreground --host 127.0.0.1
           SH
           chmod +x build/append-bin/backplane-test build/append-dist/backplane
           export HOME="$PWD/build/append-home"
