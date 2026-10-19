@@ -1,0 +1,148 @@
+name: Isolated Mac stock KiCad acceptance (temporary)
+on:
+  push:
+    branches: [validation/mac-stock-kicad-20261019]
+permissions:
+  contents: read
+concurrency:
+  group: mac-stock-kicad-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  emit:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Emit exact production parse and discovery probes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BACKPLANE_LOW_MEM: '1'
+      BACKPLANE_GOOGLE_BAKE: '0'
+      BUN_JSC_forceRAMSize: '4294967296'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup-bend
+      - name: Emit existing production probes, no source changes
+        run: |
+          set -euo pipefail
+          mkdir -p build/mac-stock-inputs
+          git rev-parse HEAD > build/mac-stock-inputs/source-commit.txt
+          bend version > build/mac-stock-inputs/toolchain.txt
+          BACKPLANE_EMIT_ONLY=1 scripts/build-app.sh test/native/kicad_platform.bend build/kicad_platform
+          bend test/tools/solid_roundtrip.bend -o build/mac-stock-inputs/solid-roundtrip.mjs
+          sha256sum build/cc/kicad_platform/all.c build/mac-stock-inputs/solid-roundtrip.mjs \
+            test/native/kicad_platform.bend test/tools/solid_roundtrip.bend \
+            src/server/kicad.bend src/core/kicadcli.bend src/core/glb.bend src/core/plot.bend \
+            src/web/solid.js > build/mac-stock-inputs/inputs.sha256
+          test -z "$(git status --porcelain)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-stock-production-probes
+          path: |
+            build/cc/kicad_platform/all.c
+            build/cc/kicad_platform/stages.txt
+            build/mac-stock-inputs
+          if-no-files-found: error
+  stock:
+    name: Actual private Mac stock CLI, resolver and GLB export
+    needs: emit
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      BACKPLANE_LOW_MEM: '1'
+      BACKPLANE_JOBS: '1'
+      BACKPLANE_GOOGLE_BAKE: '0'
+      BACKPLANE_PREBUILT: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: ./.github/actions/setup-bend
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac-stock-production-probes
+          path: build
+      - name: Compile only the exact emitted production resolver probe
+        run: |
+          set -euo pipefail
+          test "$(cat build/mac-stock-inputs/source-commit.txt)" = "$GITHUB_SHA"
+          shasum -a 256 -c build/mac-stock-inputs/inputs.sha256
+          scripts/build-app.sh test/native/kicad_platform.bend build/kicad_platform
+      - name: Private official package, actual CLI and native discovery
+        run: python3 test/tools/mac_stock_kicad.py --probe build/kicad_platform
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-stock-cli-and-export
+          path: |
+            build/mac-stock
+            build/cc/kicad_platform/stages.txt
+          if-no-files-found: error
+          retention-days: 7
+  parse:
+    name: Real Mac export through production parser and web decoder
+    needs: [emit, stock]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac-stock-production-probes
+          path: build
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac-stock-cli-and-export
+          path: build
+      - name: Production parse with explicit diagnostic Node stack
+        run: |
+          set -euo pipefail
+          test "$(cat build/mac-stock-inputs/source-commit.txt)" = "$GITHUB_SHA"
+          sha256sum -c build/mac-stock-inputs/inputs.sha256
+          ulimit -s 262144
+          node --stack-size=196608 test/tools/mac_stock_view.mjs encode \
+            build/mac-stock-inputs/solid-roundtrip.mjs build/mac-stock/ecc83-board.glb build/mac-stock/view
+      - name: Actual production WebGL view on Linux
+        run: |
+          bun install --cwd tools/browser --frozen-lockfile
+          bun tools/browser/node_modules/playwright-core/cli.js install --with-deps chromium
+          node test/tools/mac_stock_view.mjs render build/mac-stock/view
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-stock-production-web-view
+          path: build/mac-stock/view
+          if-no-files-found: error
+          retention-days: 7
+  mac-view:
+    name: Observe the exact exported packet in actual Mac WebGL
+    needs: parse
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: mac-stock-production-web-view
+          path: build/mac-stock/view
+      - name: Actual Mac production decoder and WebGL screenshot
+        run: |
+          bun install --cwd tools/browser --frozen-lockfile
+          bun tools/browser/node_modules/playwright-core/cli.js install chromium
+          node test/tools/mac_stock_view.mjs render build/mac-stock/view
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-stock-macos-web-view
+          path: build/mac-stock/view
+          if-no-files-found: error
+          retention-days: 7
