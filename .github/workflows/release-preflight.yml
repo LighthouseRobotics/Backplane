@@ -1,0 +1,52 @@
+name: Release export native preflight
+on:
+  push:
+    branches: [ci/release-preflight]
+permissions:
+  contents: read
+concurrency:
+  group: release-preflight-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  SOURCE_REV: 6e44d7ab6c4cf9fc8371b13471ac908804d40ea2
+  BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+jobs:
+  regression:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BUN_JSC_maxPerThreadStackUsage: "536870912"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Pure tests and native child
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 1048576
+          bend test/release_test.bend | tee "$RUNNER_TEMP/release-pure.log"
+          if grep -q '^FAIL ' "$RUNNER_TEMP/release-pure.log"; then exit 1; fi
+          mkdir -p build
+          bend test/native/release_child.bend -o build/release-child
+          bun test/tools/release_exports_e2e.ts build/release-child
+      - name: Reproduce original failure with the same native child
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REV"
+          git worktree add --detach "$RUNNER_TEMP/release-baseline" "$BASE_REV"
+          cp test/native/release_child.bend "$RUNNER_TEMP/release-baseline/test/native/release_child.bend"
+          cp test/tools/release_exports_e2e.ts "$RUNNER_TEMP/release-baseline/test/tools/release_exports_e2e.ts"
+          cd "$RUNNER_TEMP/release-baseline"
+          test "$(git rev-parse HEAD)" = "$BASE_REV"
+          mkdir -p build
+          bend test/native/release_child.bend -o build/release-child
+          bun test/tools/release_exports_e2e.ts build/release-child --expect-broken
