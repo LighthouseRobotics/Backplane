@@ -1,0 +1,213 @@
+name: Files validation
+
+on:
+  push:
+    branches: [ci/files-validation]
+
+concurrency:
+  group: files-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SOURCE_REV: 8b5aee17fd7d8c42e03859c06e3bd388eb1462cc
+  BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+
+jobs:
+  focused:
+    name: Files regressions and negative control
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BUN_JSC_maxPerThreadStackUsage: "536870912"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify the exact source and healthy fixed regressions
+        run: |
+          set -o pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 1048576
+          . scripts/bendok.sh
+          bend_check test/files_state_test.bend
+          bend test/files_state_test.bend | tee "$RUNNER_TEMP/files-fixed.log"
+          ! grep -q '^FAIL ' "$RUNNER_TEMP/files-fixed.log"
+          test "$(grep -c '^ok ' "$RUNNER_TEMP/files-fixed.log")" = 38
+          bend test/files_test.bend | tee "$RUNNER_TEMP/files-existing-fixed.log"
+          ! grep -q '^FAIL ' "$RUNNER_TEMP/files-existing-fixed.log"
+          test "$(grep -c '^ok ' "$RUNNER_TEMP/files-existing-fixed.log")" = 13
+      - name: Reproduce named failures on the previous client
+        run: |
+          set -o pipefail
+          ulimit -s 1048576
+          git fetch --no-tags --depth=1 origin "$BASE_REV"
+          git worktree add --detach "$RUNNER_TEMP/files-baseline" "$BASE_REV"
+          cp test/files_state_test.bend "$RUNNER_TEMP/files-baseline/test/files_state_test.bend"
+          cd "$RUNNER_TEMP/files-baseline"
+          test "$(git rev-parse HEAD)" = "$BASE_REV"
+          . scripts/bendok.sh
+          bend_check test/files_state_test.bend
+          bend test/files_test.bend | tee "$RUNNER_TEMP/files-existing-baseline.log"
+          ! grep -q '^FAIL ' "$RUNNER_TEMP/files-existing-baseline.log"
+          test "$(grep -c '^ok ' "$RUNNER_TEMP/files-existing-baseline.log")" = 13
+          bend test/files_state_test.bend | tee "$RUNNER_TEMP/files-baseline.log"
+          test "$(grep -Ec '^(ok|FAIL) ' "$RUNNER_TEMP/files-baseline.log")" = 38
+          grep -Fq 'ok empty root waits for its reply' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'ok latest reply marks its folder ready' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'ok current failure remains visible' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'FAIL successful empty root is ready:' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'FAIL late old reply cannot unset readiness:' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'FAIL same path old generation cannot replace new listing:' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'FAIL root reconnect sends one new listing request:' "$RUNNER_TEMP/files-baseline.log"
+          grep -Fq 'FAIL late failure cannot show an obsolete error:' "$RUNNER_TEMP/files-baseline.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: files-focused-logs
+          path: ${{ runner.temp }}/files-*.log
+          if-no-files-found: warn
+          retention-days: 1
+
+  check:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Type-check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: CHECK_JOBS=$(nproc) scripts/check.sh check
+
+  proof:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Prove laws
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: scripts/check.sh proof
+
+  # Kept as the single gate other jobs depend on; it passes when both
+  # halves above pass, so the check and the proof run in parallel on
+  # separate runners instead of one after the other in one job.
+  laws:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Check and prove
+    needs: [check, proof]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "type-check and proof both passed"
+
+  test:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Tests ${{ matrix.shard }}/4
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TEST_SHARD: ${{ matrix.shard }}
+      TEST_SHARD_COUNT: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: TEST_JOBS=$(nproc) scripts/test.sh
+
+  build:
+    needs: focused
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Build ${{ matrix.target }}
+    # runs beside "laws" (which checks every file); nothing is published here
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64,    os: ubuntu-24.04 }
+          - { target: linux-arm64,  os: ubuntu-24.04-arm }
+          # macOS is on hold; scripts/build.sh builds it as hub + web server
+          # - { target: darwin-arm64, os: macos-15 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Swap for the compile
+        # bend's emit of the app takes 16-22 GB; the Linux runners have 16, so
+        # without swap it can be killed. (The clang compiles no longer need
+        # it: scripts/build-app.sh cuts the C into 16 units of about 2.5 GB.)
+        if: runner.os == 'Linux'
+        # the swap file goes on /mnt when the runner has it, and never takes
+        # more than the free space less 8 GB (a full disk kills the runner)
+        run: |
+          dir=/; [ -d /mnt ] && dir=/mnt
+          df -h / /mnt || true
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -gt 16 ] && size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          else
+            echo "only ${free_gb} GB free on $dir: no swap"
+          fi
+          free -h
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Object cache
+        # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
+        # unchanged unit is not compiled again. Never holds the Google client
+        # (a unit that includes it is not cached).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: objs-${{ matrix.target }}-${{ github.sha }}
+          restore-keys: objs-${{ matrix.target }}-
+      - run: clang --version
+      - run: scripts/build.sh
+        env:
+          BACKPLANE_SKIP_CHECK: "1" # the laws job checks every file
+      - run: scripts/smoke.sh
+      - name: Verify native Files navigation state
+        run: |
+          set -o pipefail
+          . scripts/bendok.sh
+          bend_check test/files_state_test.bend
+          scripts/build-app.sh test/files_state_test.bend build/files-state-test
+          build/files-state-test | tee build/files-state-test.log
+          ! grep -q '^FAIL ' build/files-state-test.log
+          test "$(grep -c '^ok ' build/files-state-test.log)" = 38
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backplane-${{ matrix.target }}
+          path: dist/
+          retention-days: 7
