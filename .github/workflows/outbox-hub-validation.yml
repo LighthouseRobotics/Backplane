@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      SOURCE_REV: 6656464b95d88d5eec3526403a13f7709fa236e5
+      SOURCE_REV: 884e603eb4ab4d3f001ef990dc31741c5ab101c2
       SERVER_REV: c38f92e44696fd7d2acce4976f4b237ab45d7272
       SERVER_REFERENCE: 30884966ef59c383581bcd1b7653f8f739cf009e
       SERVER_RUN: "39204428027"
