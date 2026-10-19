@@ -5007,9 +5007,9 @@
   {
     "path": "test/native/worktree_lifecycle_test.bend",
     "mode": "100644",
-    "git_blob": "e08ded7e713f02ddb036c818357328644717c71b",
-    "bytes": 6138,
-    "sha256": "8c86239b3285fb116aa2429c3e7da1af3d8e39c5ed8e8eab74b5897e2bc01ba0"
+    "git_blob": "849c14aa2536cd79a8213fe2d2e9cf6a66176882",
+    "bytes": 6772,
+    "sha256": "e90c0e4ace158026ac514e9029893c8d4db82c3d1330f51e6580734278ae661a"
   },
   {
     "path": "test/native/wrap_bench.bend",

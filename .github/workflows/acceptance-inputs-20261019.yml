@@ -22,6 +22,7 @@ jobs:
       matrix:
         include:
           - {scope: browser, minutes: 45}
+          - {scope: lifecycle, minutes: 45}
           - {scope: combined, minutes: 45}
     env:
       CHECK_JOBS: '1'
@@ -116,6 +117,26 @@ jobs:
           test "$code" -eq 0
           grep -q '^ok ' "$ACCEPTANCE_EVIDENCE/bots-test.log"
           ! grep -q -E '^(FAIL|Error:)' "$ACCEPTANCE_EVIDENCE/bots-test.log"
+      - name: Compile and run physical-root lifecycle regression
+        if: matrix.scope == 'lifecycle' || matrix.scope == 'combined'
+        env:
+          BACKPLANE_SKIP_CHECK: '1'
+          BACKPLANE_LOW_MEM: '1'
+          BACKPLANE_JOBS: '2'
+          BACKPLANE_GOOGLE_BAKE: '0'
+          BUN_JSC_forceRAMSize: '4294967296'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+          clang --version > "$ACCEPTANCE_EVIDENCE/regression-clang.log"
+          scripts/build-app.sh test/native/worktree_lifecycle_test.bend "$ACCEPTANCE_EVIDENCE/worktree-lifecycle" > "$ACCEPTANCE_EVIDENCE/lifecycle-build.log" 2>&1
+          "$ACCEPTANCE_EVIDENCE/worktree-lifecycle" > "$ACCEPTANCE_EVIDENCE/lifecycle-run.log" 2>&1
+          cat "$ACCEPTANCE_EVIDENCE/lifecycle-run.log"
+          test "$(grep -c '^ok ' "$ACCEPTANCE_EVIDENCE/lifecycle-run.log")" -eq 17
+          ! grep -q -E '^(FAIL|Error:)' "$ACCEPTANCE_EVIDENCE/lifecycle-run.log"
       - name: Native candidate build dependencies
         if: matrix.scope == 'native'
         shell: bash

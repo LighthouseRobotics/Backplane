@@ -23,9 +23,9 @@
   {
     "path": ".github/workflows/contribution-validation.yml",
     "mode": "100644",
-    "git_blob": "c83c3373ff7af6087472e2f806e38afa1c6ef264",
-    "bytes": 10913,
-    "sha256": "3dd963b15135c38b1fedee3d0b45fd521a34ee32dc5a7d352a50f35aa7545a20"
+    "git_blob": "245d2f58200ee9d0ced13f22eaef73c60a90c61f",
+    "bytes": 10996,
+    "sha256": "6a7afba18943e0aee988ca7f35a6c6fdc6dd8a74d9295e69ce7f0eb72b2cefb0"
   },
   {
     "path": ".github/workflows/nightly.yml",
@@ -3698,9 +3698,9 @@
   {
     "path": "test/bots_test.bend",
     "mode": "100644",
-    "git_blob": "8894dff84ef9e8eb589d5cfc6315e16c2c6b0df5",
-    "bytes": 53242,
-    "sha256": "c491029f1289808f490e110220a68ba20ae6c4aac30c9b96220384adf275e1ee"
+    "git_blob": "bc550874105c5ef1545cae12c6376f736878d736",
+    "bytes": 53253,
+    "sha256": "069e77b1adc89004c03428ffdad479f2bacc81ba09408b8d7239179d9bad7d7e"
   },
   {
     "path": "test/browser_test.bend",
@@ -5245,9 +5245,9 @@
   {
     "path": "test/native/worktree_lifecycle_test.bend",
     "mode": "100644",
-    "git_blob": "e08ded7e713f02ddb036c818357328644717c71b",
-    "bytes": 6138,
-    "sha256": "8c86239b3285fb116aa2429c3e7da1af3d8e39c5ed8e8eab74b5897e2bc01ba0"
+    "git_blob": "849c14aa2536cd79a8213fe2d2e9cf6a66176882",
+    "bytes": 6772,
+    "sha256": "e90c0e4ace158026ac514e9029893c8d4db82c3d1330f51e6580734278ae661a"
   },
   {
     "path": "test/native/wrap_bench.bend",
@@ -6127,16 +6127,16 @@
   {
     "path": "test/tools/ios_simulator_smoke.py",
     "mode": "100644",
-    "git_blob": "9a7eb5eb9c06d1d7267e2da8c5bc25efc686f40b",
-    "bytes": 5376,
-    "sha256": "bf87b200b56b7d08a4b7bc619b401c36e3c3169c5a346d95d8098ba7365509ac"
+    "git_blob": "36d23721692c97280277281192ef150fb2dc177e",
+    "bytes": 6613,
+    "sha256": "369ee5539f66dbed80a6555964d2336e6e5b422cd9470f9da930b651b5831337"
   },
   {
     "path": "test/tools/ios_simulator_smoke_test.py",
     "mode": "100644",
-    "git_blob": "00332c2b6f40d92e650da4a39b513c956c9b3345",
-    "bytes": 3726,
-    "sha256": "f2fb12ae2d6a45a96b7037f87947cb582d1d348910994c681c6711c2503a2b09"
+    "git_blob": "319337b9e9027b3c1d2ea50a625c838a9b3173c4",
+    "bytes": 4573,
+    "sha256": "1c2dae3abd204ffe61c8371bffccfbfe91c1eae3e46b610d57ad0997196d2fc9"
   },
   {
     "path": "test/tools/ios_test_cbor.ts",

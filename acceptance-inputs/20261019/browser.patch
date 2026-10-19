@@ -853,7 +853,7 @@ index b179cd0dc7d6f962a8819927c812aee8e016e50e..f3df772ee5fdc4cd6422c24bba88898b
  # The Mechanical page (client.bend's Mpage): a chip per part, Open in 3D
  # and Refresh, the part's renders (a click opens one in the lightbox), and
 diff --git a/test/bots_test.bend b/test/bots_test.bend
-index feca4a87d1e12db5af29dcacd56562a986f8c8ce..8894dff84ef9e8eb589d5cfc6315e16c2c6b0df5 100644
+index feca4a87d1e12db5af29dcacd56562a986f8c8ce..bc550874105c5ef1545cae12c6376f736878d736 100644
 --- a/test/bots_test.bend
 +++ b/test/bots_test.bend
 @@ -159,6 +159,21 @@ def st.body(st: B.Step) -> String:
@@ -888,7 +888,7 @@ index feca4a87d1e12db5af29dcacd56562a986f8c8ce..8894dff84ef9e8eb589d5cfc6315e16c
 +    C.Check.str("missing browser owner has no events or action", st.tags(missingBrowser), "| send:reply ")
 +    +missingReply : J.Json = json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}")))
 +    C.Check.str("missing browser owner rejected", J.Json.get_str(missingReply, "error", ""), "no such bot")
-+    C.Check.str("missing browser owner reply is failure", J.Json.show(J.Json.get(json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}"))), "ok")), "false")
++    C.Check.str("missing browser owner reply is failure", Bool.show(J.Json.get_bool(json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}"))), "ok", True{})), "False")
 +    C.Check.str("empty browser owner has no action", st.tags(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"\",\"op\":\"takeover\"}")), "| send:reply ")
      C.Check.str("browser request", st.tags(ask(s, 1309n, "bots.browser", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"click\"}")), "| out ")
      C.Check.str("teach request", st.tags(ask(s, 1309n, "bots.teach", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"start\"}")), "| out ")

@@ -176,10 +176,10 @@ index 3ba8e76799eabe3321eeaa94329680eed2f50c25..f88b7f95d789fc1d5118d96e5dcfb7f7
            retention-days: 7
 diff --git a/.github/workflows/contribution-validation.yml b/.github/workflows/contribution-validation.yml
 new file mode 100644
-index 0000000000000000000000000000000000000000..c83c3373ff7af6087472e2f806e38afa1c6ef264
+index 0000000000000000000000000000000000000000..245d2f58200ee9d0ced13f22eaef73c60a90c61f
 --- /dev/null
 +++ b/.github/workflows/contribution-validation.yml
-@@ -0,0 +1,301 @@
+@@ -0,0 +1,303 @@
 +name: Contribution acceptance
 +
 +on:
@@ -455,6 +455,7 @@ index 0000000000000000000000000000000000000000..c83c3373ff7af6087472e2f806e38afa
 +          name: contribution-bridge
 +          path: mobile/build/assets
 +      - name: Build simulator app without publishing
++        id: ios_build
 +        run: |
 +          cp mobile/build/assets/bridge.js mobile/ios/Backplane/bridge.js
 +          xcodebuild -version
@@ -477,6 +478,7 @@ index 0000000000000000000000000000000000000000..c83c3373ff7af6087472e2f806e38afa
 +          path: build/ios-simulator-smoke
 +          if-no-files-found: error
 +      - uses: actions/upload-artifact@v4
++        if: always() && steps.ios_build.outcome == 'success'
 +        with:
 +          name: contribution-ios-simulator
 +          path: ${{ runner.temp }}/Backplane-simulator.zip
@@ -24610,7 +24612,7 @@ index b179cd0dc7d6f962a8819927c812aee8e016e50e..9f045e33cee9537cf7ffec9ac0285259
  # the page in the device's language, looked up once here and passed down
  def View.page(+u: U.Ui) -> D.Node:
 diff --git a/test/bots_test.bend b/test/bots_test.bend
-index feca4a87d1e12db5af29dcacd56562a986f8c8ce..8894dff84ef9e8eb589d5cfc6315e16c2c6b0df5 100644
+index feca4a87d1e12db5af29dcacd56562a986f8c8ce..bc550874105c5ef1545cae12c6376f736878d736 100644
 --- a/test/bots_test.bend
 +++ b/test/bots_test.bend
 @@ -159,6 +159,21 @@ def st.body(st: B.Step) -> String:
@@ -24645,7 +24647,7 @@ index feca4a87d1e12db5af29dcacd56562a986f8c8ce..8894dff84ef9e8eb589d5cfc6315e16c
 +    C.Check.str("missing browser owner has no events or action", st.tags(missingBrowser), "| send:reply ")
 +    +missingReply : J.Json = json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}")))
 +    C.Check.str("missing browser owner rejected", J.Json.get_str(missingReply, "error", ""), "no such bot")
-+    C.Check.str("missing browser owner reply is failure", J.Json.show(J.Json.get(json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}"))), "ok")), "false")
++    C.Check.str("missing browser owner reply is failure", Bool.show(J.Json.get_bool(json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}"))), "ok", True{})), "False")
 +    C.Check.str("empty browser owner has no action", st.tags(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"\",\"op\":\"takeover\"}")), "| send:reply ")
      C.Check.str("browser request", st.tags(ask(s, 1309n, "bots.browser", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"click\"}")), "| out ")
      C.Check.str("teach request", st.tags(ask(s, 1309n, "bots.teach", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"start\"}")), "| out ")
@@ -26750,10 +26752,10 @@ index 0000000000000000000000000000000000000000..be2e4f22bd63317b0ddba0d74d153a4f
 +  IO.bind(P.Ran, Unit, P.Proc.run("mktemp", ["-d", "/tmp/bp-worktree-carry.XXXXXX"], "/tmp"), created)
 diff --git a/test/native/worktree_lifecycle_test.bend b/test/native/worktree_lifecycle_test.bend
 new file mode 100644
-index 0000000000000000000000000000000000000000..e08ded7e713f02ddb036c818357328644717c71b
+index 0000000000000000000000000000000000000000..849c14aa2536cd79a8213fe2d2e9cf6a66176882
 --- /dev/null
 +++ b/test/native/worktree_lifecycle_test.bend
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,79 @@
 +import Base
 +import ./checkpoint_ignored_test.bend as T
 +import ../../src/server/proc.bend as P
@@ -26814,9 +26816,21 @@ index 0000000000000000000000000000000000000000..e08ded7e713f02ddb036c81835732864
 +    removed : P.Ran <- P.Proc.run("rm", ["-rf", root], "/tmp")
 +    T.finish(Bool.and(linked, ok))
 +
++def physical(+root: String, r: P.Ran) -> IO(Unit):
++  match r:
++    case P.Ran{0, path}: run(String.trim(path))
++    case P.Ran{_, error}:
++      do IO<Unit>:
++        removed : P.Ran <- P.Proc.run("rm", ["-rf", root], "/tmp")
++        IO.die(Unit, 1, "cannot resolve physical test directory: " ++ error)
++
 +def created(r: P.Ran) -> IO(Unit):
 +  match r:
-+    case P.Ran{0, root}: run(String.trim(root))
++    case P.Ran{0, root}:
++      +dir = String.trim(root)
++      # Exercise a real symlink even on Linux. Git returns physical roots;
++      # Darwin's /tmp also aliases /private/tmp. Keep every exact assertion.
++      IO.bind(P.Ran, Unit, P.Proc.run("sh", ["-c", "set -e\nln -s \"$1\" \"$1/fixture-root\"\ncd \"$1/fixture-root\"\npwd -P", "physical-root", dir], "/tmp"), physical(dir))
 +    case P.Ran{_, error}: IO.die(Unit, 1, "cannot create test directory: " ++ error)
 +
 +def main() -> IO(Unit):
@@ -28358,16 +28372,17 @@ index 0000000000000000000000000000000000000000..9321dc4a52ad20a037c8995909ec4cac
 +console.log('PASS recent transport: ordering, exact send capture, one history ack, handoff, generations, hub isolation, expiry');
 diff --git a/test/tools/ios_simulator_smoke.py b/test/tools/ios_simulator_smoke.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..9a7eb5eb9c06d1d7267e2da8c5bc25efc686f40b
+index 0000000000000000000000000000000000000000..36d23721692c97280277281192ef150fb2dc177e
 --- /dev/null
 +++ b/test/tools/ios_simulator_smoke.py
-@@ -0,0 +1,108 @@
+@@ -0,0 +1,127 @@
 +#!/usr/bin/env python3
 +"""Launch an app in one newly owned simulator, capture it, and delete only it."""
 +import argparse
 +from datetime import datetime, timezone
 +import hashlib
 +import json
++import os
 +from pathlib import Path
 +import platform
 +import plistlib
@@ -28384,8 +28399,11 @@ index 0000000000000000000000000000000000000000..9a7eb5eb9c06d1d7267e2da8c5bc25ef
 +    return tuple((parts+[0, 0, 0])[:3])
 +
 +
-+def target(runtimes, devices):
-+    available = [r for r in runtimes if r.get('isAvailable') is True and '.iOS-' in r.get('identifier', '')]
++def target(runtimes, devices, sdk):
++    # Hosted images can contain newer runtimes than their selected Xcode.
++    # Use the active SDK's major/minor instead of an unrelated newest runtime.
++    wanted = version(sdk)[:2]
++    available = [r for r in runtimes if r.get('isAvailable') is True and '.iOS-' in r.get('identifier', '') and version(r.get('version', ''))[:2] == wanted]
 +    phones = [d for d in devices if d.get('productFamily') == 'iPhone' or d.get('name', '').startswith('iPhone')]
 +    for runtime in sorted(available, key=lambda r: version(r.get('version', '')), reverse=True):
 +        v = version(runtime.get('version', ''))
@@ -28394,7 +28412,7 @@ index 0000000000000000000000000000000000000000..9a7eb5eb9c06d1d7267e2da8c5bc25ef
 +            if lo and v < version(lo): continue
 +            if hi and v > version(hi): continue
 +            return runtime, device
-+    raise ValueError('no available iOS runtime and compatible enumerated iPhone device type')
++    raise ValueError(f'no available iOS runtime matching active SDK {sdk} and compatible enumerated iPhone device type')
 +
 +
 +def main():
@@ -28402,37 +28420,52 @@ index 0000000000000000000000000000000000000000..9a7eb5eb9c06d1d7267e2da8c5bc25ef
 +    parser.add_argument('--app', type=Path, required=True)
 +    parser.add_argument('--out', type=Path, default=Path('build/ios-simulator-smoke'))
 +    parser.add_argument('--settle-seconds', type=float, default=3)
++    parser.add_argument('--install-timeout', type=int, default=180)
 +    args = parser.parse_args()
 +    if not 0 <= args.settle_seconds <= 10: parser.error('settle seconds must be 0..10')
++    if not 1 <= args.install_timeout <= 300: parser.error('install timeout must be 1..300 seconds')
 +    args.out.mkdir(parents=True, exist_ok=True)
 +    report = {'scope': 'isolated simulator launch smoke', 'host': platform.platform(),
-+              'started': datetime.now(timezone.utc).isoformat(), 'commands': [], 'result': 'running'}
++              'started': datetime.now(timezone.utc).isoformat(), 'sourceCommit': os.environ.get('GITHUB_SHA'),
++              'commands': [], 'result': 'running'}
 +    owned = None
 +    def interrupted(signum, _frame):
 +        raise KeyboardInterrupt(f'received signal {signum}')
 +    signal.signal(signal.SIGTERM, interrupted)
 +    signal.signal(signal.SIGINT, interrupted)
 +
-+    def run(*parts, timeout=60, required=True):
-+        command = ['xcrun', 'simctl', *map(str, parts)]
-+        result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
++    def execute(command, timeout=60, required=True):
++        try:
++            result = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
++        except subprocess.TimeoutExpired as error:
++            output = error.stdout or ''
++            if isinstance(output, bytes): output = output.decode(errors='replace')
++            report['commands'].append({'command': command, 'exitCode': None, 'timedOut': True,
++                                       'timeoutSeconds': timeout, 'output': output.strip()})
++            raise
 +        report['commands'].append({'command': command, 'exitCode': result.returncode, 'output': result.stdout.strip()})
 +        if required and result.returncode: raise RuntimeError(f'{command}: {result.stdout.strip()}')
 +        return result
++
++    def run(*parts, timeout=60, required=True):
++        return execute(['xcrun', 'simctl', *map(str, parts)], timeout, required)
 +
 +    try:
 +        app = args.app.resolve(strict=True)
 +        info = plistlib.loads((app/'Info.plist').read_bytes())
 +        bundle = info['CFBundleIdentifier']
++        report['bridgeSha256'] = hashlib.sha256((app/'bridge.js').read_bytes()).hexdigest()
++        sdk = execute(['xcrun', '--sdk', 'iphonesimulator', '--show-sdk-version']).stdout.strip()
++        report['sdkVersion'] = sdk
 +        runtime, device = target(json.loads(run('list', 'runtimes', '--json').stdout)['runtimes'],
-+                                 json.loads(run('list', 'devicetypes', '--json').stdout)['devicetypes'])
++                                 json.loads(run('list', 'devicetypes', '--json').stdout)['devicetypes'], sdk)
 +        report.update(bundleIdentifier=bundle, runtime=runtime, deviceType=device)
 +        created = run('create', 'Backplane acceptance '+str(uuid.uuid4()), device['identifier'], runtime['identifier']).stdout.strip()
 +        owned = str(uuid.UUID(created))
 +        report['ownedSimulator'] = owned
 +        run('boot', owned)
 +        run('bootstatus', owned, '-b', timeout=240)
-+        run('install', owned, app)
++        run('install', owned, app, timeout=args.install_timeout)
 +        launched = run('launch', owned, bundle).stdout.strip()
 +        pid = re.search(r':\s*(\d+)\s*$', launched)
 +        if not pid or int(pid.group(1)) <= 0: raise ValueError('simulator launch returned no process id')
@@ -28472,10 +28505,10 @@ index 0000000000000000000000000000000000000000..9a7eb5eb9c06d1d7267e2da8c5bc25ef
 +    sys.exit(main())
 diff --git a/test/tools/ios_simulator_smoke_test.py b/test/tools/ios_simulator_smoke_test.py
 new file mode 100644
-index 0000000000000000000000000000000000000000..00332c2b6f40d92e650da4a39b513c956c9b3345
+index 0000000000000000000000000000000000000000..319337b9e9027b3c1d2ea50a625c838a9b3173c4
 --- /dev/null
 +++ b/test/tools/ios_simulator_smoke_test.py
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,78 @@
 +#!/usr/bin/env python3
 +"""Synthetic xcrun controls only; never starts a real simulator or compiler."""
 +import json
@@ -28494,16 +28527,19 @@ index 0000000000000000000000000000000000000000..00332c2b6f40d92e650da4a39b513c95
 +    (app/'bridge.js').write_text('synthetic bridge')
 +    fake = tools/'xcrun'
 +    fake.write_text('''#!/usr/bin/env python3
-+import json,os,signal,sys
++import json,os,signal,sys,time
 +from pathlib import Path
 +a=sys.argv[1:];mode=os.environ['SIM_SMOKE_MODE']
 +with open(os.environ['SIM_SMOKE_LOG'],'a') as log:log.write(json.dumps(a)+'\\n')
++if a==['--sdk','iphonesimulator','--show-sdk-version']:
++ print('18.1' if mode=='no-sdk-runtime' else '18.0');sys.exit(0)
 +assert a[0]=='simctl';a=a[1:];op=a[0]
 +owned='bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 +if op=='list' and a[1]=='runtimes':
 + print(json.dumps({'runtimes':[] if mode=='no-runtime' else [
 + {'identifier':'com.apple.CoreSimulator.SimRuntime.iOS-99-0','version':'99.0','isAvailable':False},
 + {'identifier':'com.apple.CoreSimulator.SimRuntime.tvOS-99-0','version':'99.0','isAvailable':True},
++ {'identifier':'com.apple.CoreSimulator.SimRuntime.iOS-26-2','version':'26.2','isAvailable':True},
 + {'identifier':'com.apple.CoreSimulator.SimRuntime.iOS-18-0','version':'18.0','isAvailable':True}]}))
 +elif op=='list':
 + print(json.dumps({'devicetypes':[
@@ -28515,6 +28551,8 @@ index 0000000000000000000000000000000000000000..00332c2b6f40d92e650da4a39b513c95
 +else:
 + assert a[1]==owned,'operation aimed at an unowned simulator'
 + if op=='install' and mode=='install-fails':sys.exit(19)
++ if op=='install' and mode=='install-timeout':
++  print('install is still waiting',flush=True);time.sleep(5)
 + if op=='install' and mode=='signal':os.kill(os.getppid(),signal.SIGTERM)
 + if op=='launch':print('fixture.smoke: 1234')
 + if op=='spawn':print('- 0 other.service' if mode=='crash' else '1234 0 UIKitApplication:fixture.smoke')
@@ -28524,23 +28562,31 @@ index 0000000000000000000000000000000000000000..00332c2b6f40d92e650da4a39b513c95
 +    def run(mode):
 +        out=root/mode;log=root/(mode+'.jsonl')
 +        env=dict(os.environ,PATH=str(tools)+os.pathsep+os.environ['PATH'],SIM_SMOKE_MODE=mode,SIM_SMOKE_LOG=str(log))
-+        result=subprocess.run(['python3',str(smoke),'--app',str(app),'--out',str(out),'--settle-seconds','0'],env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=20)
++        command=['python3',str(smoke),'--app',str(app),'--out',str(out),'--settle-seconds','0']
++        if mode=='install-timeout':command+=['--install-timeout','1']
++        result=subprocess.run(command,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,timeout=20)
 +        report=json.loads((out/'result.json').read_text())
 +        calls=[json.loads(line)[1:] for line in log.read_text().splitlines()]
 +        return result,report,calls
 +    result,report,calls=run('healthy')
 +    assert result.returncode==0 and report['result']=='pass' and report['launchedPid']==1234
++    assert report['sdkVersion']=='18.0' and report['runtime']['version']=='18.0'
 +    assert calls[-2:]==[['shutdown',owned],['delete',owned]]
-+    print('ok enumerated runtime/device, owned launch/PID/screenshot and exact cleanup')
-+    for mode in ['install-fails','crash','signal']:
++    print('ok active SDK runtime selected despite newer available runtime; owned launch/PID/screenshot and exact cleanup')
++    for mode in ['install-fails','install-timeout','crash','signal']:
 +        result,report,calls=run(mode)
 +        assert result.returncode and report['result']=='fail'
 +        assert calls[-2:]==[['shutdown',owned],['delete',owned]]
 +        assert not any('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' in call for call in calls)
++        if mode=='install-timeout':
++            timed=next(c for c in report['commands'] if c.get('timedOut'))
++            assert timed['command'][2]=='install' and timed['timeoutSeconds']==1
++            assert timed['output']=='install is still waiting'
 +        print('ok '+mode+' cannot pass and cleans only its newly owned simulator')
-+    result,report,calls=run('no-runtime')
-+    assert result.returncode and report['result']=='fail' and not any(call[0] in ['create','shutdown','delete'] for call in calls)
-+    print('ok missing available iOS runtime fails before any simulator ownership change')
++    for mode in ['no-runtime','no-sdk-runtime']:
++        result,report,calls=run(mode)
++        assert result.returncode and report['result']=='fail' and not any(call[0] in ['create','shutdown','delete'] for call in calls)
++        print('ok '+mode+' fails before any simulator ownership change')
 diff --git a/test/tools/ios_test_cbor.ts b/test/tools/ios_test_cbor.ts
 new file mode 100644
 index 0000000000000000000000000000000000000000..7ef8bc7c17a02fc44380d688d20287f89d420c5a
