@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 env:
-  SOURCE_REV: 82aba1f555d38b7249e00499fd2d37977b5a703c
+  SOURCE_REV: dbfdc7ee51aea2d1e02daa0acd7523153515ea91
   BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
 
 jobs:
@@ -48,6 +48,13 @@ jobs:
           bend test/files_test.bend | tee "$RUNNER_TEMP/files-existing-fixed.log"
           ! grep -q '^FAIL ' "$RUNNER_TEMP/files-existing-fixed.log"
           test "$(grep -c '^ok ' "$RUNNER_TEMP/files-existing-fixed.log")" = 13
+      - name: Verify both native regression programs emit C
+        run: |
+          ulimit -s 1048576
+          bend test/files_state_test.bend -o "$RUNNER_TEMP/files-state.c"
+          test -s "$RUNNER_TEMP/files-state.c"
+          bend test/files_native_test.bend -o "$RUNNER_TEMP/files-native.c"
+          test -s "$RUNNER_TEMP/files-native.c"
       - name: Reproduce named failures on the previous client
         run: |
           set -o pipefail
