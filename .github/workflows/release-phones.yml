@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  SOURCE_REV: a6ede220fcfb6607378fb7318dac2f9b4e4d977a
+  SOURCE_REV: 830c421bbdd983bc86d777d27fa9ceba33d774da
 
 jobs:
   bridge:
