@@ -59,6 +59,7 @@ jobs:
           export PATH="$PWD/build/append-bin:$PATH"
           export BP_APPEND_BINARY="$PWD/build/append-dist/backplane"
           export HTTP_PROXY=http://127.0.0.1:1 HTTPS_PROXY=http://127.0.0.1:1 ALL_PROXY=http://127.0.0.1:1 NO_PROXY=127.0.0.1,localhost
+          unset GH_TOKEN GITHUB_TOKEN
           set -o pipefail
           bun test/tools/logfull_e2e.ts build/append-bin/backplane-test build/wire | tee logread-append.log
       - uses: actions/upload-artifact@v4
