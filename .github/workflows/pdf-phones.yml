@@ -1,0 +1,127 @@
+name: PDF cache phone validation
+
+# Fork-only validation: the application sources stay pinned to the PR head.
+on:
+  push:
+    branches: [ci/pdf-phones]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pdf-phones-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: ea8633b91a4355dab6975f7adf1cd25885479327
+
+jobs:
+  bridge:
+    name: Shared phone bridge
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BUN_JSC_maxPerThreadStackUsage: "536870912"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Build the shared bridge
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          ulimit -s 1048576
+          scripts/build-mobile.sh --js
+          test -s mobile/build/assets/bridge.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-phone-bridge
+          path: mobile/build/assets/bridge.js
+          if-no-files-found: error
+          retention-days: 1
+
+  android:
+    name: Android debug APK
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    needs: bridge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/download-artifact@v4
+        with:
+          name: pdf-phone-bridge
+          path: mobile/build/assets
+      - name: Build a debug APK
+        working-directory: mobile/android
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          test -d "$ANDROID_HOME/platforms/android-35"
+          ./gradlew --no-daemon --max-workers=2 --stacktrace :app:assembleDebug
+      - name: Verify the APK bundles this bridge
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          apk = Path("mobile/android/app/build/outputs/apk/debug/app-debug.apk")
+          with ZipFile(apk) as bundle:
+              assert bundle.read("assets/bridge.js") == Path("mobile/build/assets/bridge.js").read_bytes()
+          print(f"Verified {apk}")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-android-debug
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 1
+
+  ios:
+    name: Unsigned iOS simulator app
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    needs: bridge
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: pdf-phone-bridge
+          path: mobile/build/assets
+      - name: Build for the iOS simulator
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          cp mobile/build/assets/bridge.js mobile/ios/Backplane/bridge.js
+          xcodebuild -version
+          xcodebuild -project mobile/ios/Backplane.xcodeproj -scheme Backplane \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/ios-derived" -jobs 2 \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= build
+      - name: Verify and package the simulator app
+        run: |
+          app="$RUNNER_TEMP/ios-derived/Build/Products/Debug-iphonesimulator/Backplane.app"
+          test -d "$app"
+          cmp mobile/build/assets/bridge.js "$app/bridge.js"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$RUNNER_TEMP/Backplane-simulator.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pdf-ios-simulator
+          path: ${{ runner.temp }}/Backplane-simulator.zip
+          if-no-files-found: error
+          retention-days: 1
