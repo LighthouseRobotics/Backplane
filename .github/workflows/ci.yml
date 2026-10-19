@@ -245,6 +245,13 @@ jobs:
           build/checkpoint_ignored_test | tee build/checkpoint-ignored.log
           if grep -q '^FAIL ' build/checkpoint-ignored.log; then exit 1; fi
           test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 53
+      - name: Publish only successful model conversions
+        run: |
+          set -euo pipefail
+          scripts/build-app.sh test/native/model_cache_test.bend build/model_cache_test
+          build/model_cache_test | tee build/model-cache.log
+          if grep -q '^FAIL ' build/model-cache.log; then exit 1; fi
+          test "$(grep -c '^ok ' build/model-cache.log)" -eq 27
       - name: Object cache
         # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
         # unchanged unit is not compiled again. Never holds the Google client
@@ -313,6 +320,7 @@ jobs:
           bun test/tools/outbox_e2e.ts dist/backplane build/outbox-client
       - run: bun test/tools/release_exports_e2e.ts dist/backplane
       - run: bun test/tools/attachment_copy.ts dist/backplane --hub
+      - run: bun test/tools/model_cache_e2e.ts dist/backplane
       - uses: actions/upload-artifact@v4
         with:
           name: backplane-${{ matrix.target }}
