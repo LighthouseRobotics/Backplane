@@ -1,0 +1,103 @@
+name: Reconnect ordering regression validation
+
+# Fork-only preflight; the application tree remains pinned to the PR head.
+on:
+  push:
+    branches: [ci/outbox-validation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: outbox-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: ad60e7d210c2a367c339e8678a054ebbde212a82
+  BASELINE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+  BUN_JSC_forceRAMSize: "4294967296"
+  BUN_JSC_maxPerThreadStackUsage: "536870912"
+
+jobs:
+  regression:
+    name: ${{ matrix.client }} shared and native client regression
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        client: [fixed, baseline]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify the source and optionally restore the original client
+        env:
+          CLIENT: ${{ matrix.client }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          if [ "$CLIENT" = baseline ]; then
+            git fetch --no-tags --depth=1 origin "$BASELINE_REV"
+            git show "$BASELINE_REV:src/core/client.bend" > src/core/client.bend
+          fi
+          ulimit -s 1048576
+          mkdir -p build
+      - name: Run the actual shared and native client tests
+        env:
+          CLIENT: ${{ matrix.client }}
+        run: |
+          ulimit -s 1048576
+          bend test/outbox_test.bend | tee build/outbox.log
+          bend test/nui_recv_test.bend | tee build/nui.log
+          if [ "$CLIENT" = fixed ]; then
+            ! grep -q '^FAIL' build/outbox.log
+            ! grep -q '^FAIL' build/nui.log
+            test "$(grep -c '^ok ' build/outbox.log)" -eq 42
+            test "$(grep -c '^ok ' build/nui.log)" -eq 14
+          else
+            for label in \
+              'decimal transition 8 through 11 resends oldest first' \
+              'decimal transition 98 through 101 resends oldest first' \
+              'decimal transition pending is oldest first' \
+              'sparse U32 and Nat boundary IDs keep numeric order' \
+              'reply deletes its outbox entry' \
+              'unknown reply cannot grow the outbox'; do
+              grep -Fq "FAIL $label:" build/outbox.log
+            done
+            grep -Fq 'ok empty outbox has no commands' build/outbox.log
+            grep -Fq 'FAIL native reconnect resends 9 before 10:' build/nui.log
+            grep -Fq 'FAIL native adoption resends 9 before 10:' build/nui.log
+            test "$(grep -c '^ok ' build/nui.log)" -ge 5
+          fi
+      - name: Build and exercise the emitted shared client
+        env:
+          CLIENT: ${{ matrix.client }}
+        run: |
+          ulimit -s 1048576
+          bend test/fixtures/outbox/index.html -o build/outbox-client
+          set +e
+          bun test/tools/outbox_e2e.ts --client-only build/outbox-client > build/client.log 2>&1
+          status=$?
+          set -e
+          cat build/client.log
+          if [ "$CLIENT" = fixed ]; then
+            test "$status" -eq 0
+            grep -Fq '14 assertions, 0 failures' build/client.log
+          else
+            test "$status" -eq 1
+            grep -Fq 'ok shared 9: original request IDs cross a digit boundary' build/client.log
+            grep -Fq 'ok shared 99: original request IDs cross a digit boundary' build/client.log
+            grep -Fq 'FAIL shared 9: reconnect preserves exact request bytes and order:' build/client.log
+            grep -Fq 'FAIL shared 99: pending messages retain send order:' build/client.log
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: outbox-${{ matrix.client }}-results
+          path: build/*.log
+          if-no-files-found: warn
+          retention-days: 2
