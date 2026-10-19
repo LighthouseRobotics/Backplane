@@ -1,0 +1,70 @@
+name: Event log append regression
+
+# Fork-only check of the existing failed-append regression using the
+# successfully built application from the exact contribution revision.
+on:
+  push:
+    branches: [ci/logread-append]
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_REV: c38f92e44696fd7d2acce4976f4b237ab45d7272
+  SOURCE_RUN: "39204428027"
+
+jobs:
+  append:
+    name: Existing failed-append recovery
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify the exact successful application build
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" --jq .head_sha)" = "$SOURCE_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" --jq .conclusion)" = success
+          bend test/wire/index.html -o build/wire
+      - uses: actions/download-artifact@v4
+        with:
+          repository: ${{ github.repository }}
+          run-id: "39204428027"
+          github-token: ${{ github.token }}
+          name: backplane-linux-x64
+          path: build/append-dist
+      - name: Run the existing regression in an isolated foreground process
+        run: |
+          mkdir -p build/append-home build/append-bin
+          for name in claude codex grok muse agy tailscale curl wget ssh; do
+            printf '#!/bin/sh\nexit 1\n' > "build/append-bin/$name"
+            chmod +x "build/append-bin/$name"
+          done
+          cat > build/append-bin/backplane-test <<'SH'
+          #!/bin/sh
+          exec "$BP_APPEND_BINARY" "$@" --foreground --host 127.0.0.1
+          SH
+          chmod +x build/append-bin/backplane-test build/append-dist/backplane
+          export HOME="$PWD/build/append-home"
+          export BACKPLANE_AGENTS="$PWD/build/append-bin"
+          export PATH="$PWD/build/append-bin:$PATH"
+          export BP_APPEND_BINARY="$PWD/build/append-dist/backplane"
+          export HTTP_PROXY=http://127.0.0.1:1 HTTPS_PROXY=http://127.0.0.1:1 ALL_PROXY=http://127.0.0.1:1 NO_PROXY=127.0.0.1,localhost
+          set -o pipefail
+          bun test/tools/logfull_e2e.ts build/append-bin/backplane-test build/wire | tee logread-append.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logread-append-results
+          path: logread-append.log
+          if-no-files-found: warn
+          retention-days: 1
