@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {scope: kicad, minutes: 45}
+          - {scope: combined, minutes: 45}
     env:
       CHECK_JOBS: '1'
       CHECK_SHARDS: '4'

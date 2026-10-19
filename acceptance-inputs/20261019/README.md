@@ -17,8 +17,10 @@ desired untracked paths. A newly staged file modified again in the working tree
 is absent from both HEAD and the untracked list; its current bytes must still be
 included, even when deliberately tracked despite ignore rules. The fake-repo
 selftest covers this case and verifies that real staged bytes remain unchanged.
-The corrected followup matrix runs KiCad only, leaving the original seven
-accepted/ongoing scopes and native build untouched.
+The corrected KiCad revision ran only that scope. The next revision freezes the
+combined staged source and runs only its full check/proof before its first
+combined source commit. It performs no build. Earlier scope payloads and their
+accepted/ongoing checks and native build remain untouched.
 
 The temporary workflow runs only on this named branch in the contributor fork.
 Each isolated Ubuntu job saves the payload outside the checkout, detaches at the

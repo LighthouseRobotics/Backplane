@@ -74,4 +74,4 @@ with tempfile.TemporaryDirectory(prefix='bp-acceptance-selftest-') as temp:
     assert index.read_bytes()==index_before,'capture changed real index'
     result=run('git','-C',str(capture_repo),'show',':'+added.name)
     assert result.stdout==b'staged bytes\n','capture changed real staged contents'
-print('PASS: healthy exact-tree receipts; missing/killed proof, failed checks, source drift, missing build and corrupt payload rejected; native artifacts hashed; wrapper preserves status/bytes')
+print('PASS: healthy exact-tree receipts; missing/killed proof, failed checks, source drift, missing build and corrupt payload rejected; native artifacts hashed; wrapper preserves status/bytes; ignored AM addition captures working bytes and preserves real index')
