@@ -1,0 +1,151 @@
+name: Render failure supplemental validation
+
+# Fork-only checks. Application/test sources are pinned independently of
+# this validation-only branch and nothing is published or deployed.
+on:
+  push:
+    branches: [ci/render-validation]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: render-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: 6aed93384c569f8edd313d0acd0aa0e745ceb796
+  BASELINE_REV: 5d559c0f421d49bc51ac73e20dcdf12ca3bbbb4c
+  BASELINE_REFERENCE: 91f3cd8123b2de3c42021273f30b08580b9b744e
+  BASELINE_RUN: "39192749787"
+
+jobs:
+  emit-mac:
+    name: Emit the macOS server on Linux
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      BACKPLANE_SKIP_CHECK: "1"
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BUN_JSC_forceRAMSize: "4294967296"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Emit server C, web client, and test wire
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          scripts/build.sh emit
+          test -s build/cc/backplane-serve/all.c
+          test -f dist/web/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: render-darwin-emitted
+          path: |
+            build/cc/backplane-serve/all.c
+            dist/web
+            build/wire
+          if-no-files-found: error
+          retention-days: 1
+
+  mac-server:
+    name: macOS server render CLI and RPC
+    needs: emit-mac
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          name: render-darwin-emitted
+          path: .
+      - name: Compile the emitted C with native Apple clang
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          clang --version
+          python3 scripts/cc-split.py build/cc/backplane-serve/all.c build/render-mac-cc 16
+          for unit in build/render-mac-cc/u*.c; do
+            clang -std=c11 -O3 -w -c "$unit" -o "${unit%.c}.o"
+          done
+          clang -O3 build/render-mac-cc/u*.o -o dist/backplane -lpthread -lm
+          chmod +x dist/backplane
+      - name: Exercise both entry names, render failures, and RPC recovery
+        run: |
+          set -o pipefail
+          bun test/tools/mech_render_e2e.ts dist/backplane build/wire | tee render-macos.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: render-macos-results
+          path: render-macos.log
+          if-no-files-found: warn
+          retention-days: 1
+
+  baseline:
+    name: Existing Linux binary reproduces render failures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Build the unchanged test wire
+        run: bend test/wire/index.html -o build/wire
+      - name: Verify the successful baseline and unchanged render sources
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_RUN" --jq .head_sha)" = "$BASELINE_REV"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_RUN" --jq .conclusion)" = success
+          git fetch --no-tags --depth=1 origin "$BASELINE_REV" "$BASELINE_REFERENCE"
+          git diff --exit-code "$BASELINE_REFERENCE" "$BASELINE_REV" -- \
+            src/app/render.bend src/app/parts3.bend src/server/main.bend \
+            src/server/server.bend src/core/mech.bend src/core/client.bend \
+            src/core/glb.bend src/core/png.bend src/gfx/mesh.bend \
+            src/app/layout.bend src/web/view.bend src/mobile/view.bend \
+            mobile/ios/Backplane/PlotView.swift \
+            mobile/android/app/src/main/java/dev/backplane/mobile/Ui.kt \
+            test/wire
+      - uses: actions/download-artifact@v4
+        with:
+          repository: ${{ github.repository }}
+          run-id: "39192749787"
+          github-token: ${{ github.token }}
+          name: backplane-linux-x64
+          path: build/baseline-dist
+      - name: Require the original bugs to fail explicit assertions
+        run: |
+          chmod +x build/baseline-dist/backplane
+          set +e
+          bun test/tools/mech_render_e2e.ts build/baseline-dist/backplane build/wire > render-baseline.log 2>&1
+          status=$?
+          set -e
+          cat render-baseline.log
+          test "$status" -ne 0
+          grep -Fq 'FAIL backplane missing CLI fails:' render-baseline.log
+          grep -Fq 'FAIL backplane corrupt CLI fails:' render-baseline.log
+          grep -Fq 'FAIL backplane mixed CLI batch exits nonzero:' render-baseline.log
+          grep -Fq 'FAIL backplane missing RPC reports a render error:' render-baseline.log
+          grep -Fq 'FAIL backplane-serve dispatches render before starting a hub:' render-baseline.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: render-baseline-results
+          path: render-baseline.log
+          if-no-files-found: warn
+          retention-days: 1
