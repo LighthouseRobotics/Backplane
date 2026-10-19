@@ -224,7 +224,6 @@ jobs:
 
   build:
     needs: [focused, baseline]
-    needs: [focused, baseline]
     if: github.repository == 'LighthouseRobotics/Backplane'
     name: Build ${{ matrix.target }}
     # runs beside "laws" (which checks every file); nothing is published here
