@@ -1,0 +1,301 @@
+name: Ignored tracked checkpoint validation
+
+# Fork-only validation. Every application checkout is the same frozen source.
+on:
+  push:
+    branches: [ci/checkpoint-validation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checkpoint-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_REV: 29dd655835a0dd001af4678806827654829fc978
+  BASE_REV: 30884966ef59c383581bcd1b7653f8f739cf009e
+
+jobs:
+  focused:
+    name: Native checkpoint regression (${{ matrix.target }})
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64, os: ubuntu-24.04 }
+          - { target: linux-arm64, os: ubuntu-24.04-arm }
+          - { target: darwin-arm64, os: macos-15 }
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BACKPLANE_CPUS: ""
+      BACKPLANE_JOBS: "2"
+      BACKPLANE_CFLAGS: "-O2"
+      BACKPLANE_EMIT_CACHE: "0"
+      BACKPLANE_OBJ_CACHE: "0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Build native regression on Linux
+        if: runner.os == 'Linux'
+        run: scripts/build-app.sh test/native/checkpoint_ignored_test.bend build/checkpoint_ignored_test
+      - name: Build native regression on macOS
+        if: runner.os == 'macOS'
+        env:
+          DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+        run: |
+          set -euo pipefail
+          mkdir -p build/mac-checkpoint
+          bend test/native/checkpoint_ignored_test.bend -o build/mac-checkpoint/all.c
+          python3 scripts/cc-split.py build/mac-checkpoint/all.c build/mac-checkpoint 8
+          for unit in build/mac-checkpoint/u*.c; do
+            clang -std=c11 -O2 -w -c "$unit" -o "${unit%.c}.o"
+          done
+          clang build/mac-checkpoint/u*.o -o build/checkpoint_ignored_test -lpthread -lm
+      - name: Run the actual native checkpoint paths
+        run: |
+          set -euo pipefail
+          build/checkpoint_ignored_test | tee build/checkpoint-ignored.log
+          ! grep -q '^FAIL ' build/checkpoint-ignored.log
+          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 46
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkpoint-native-${{ matrix.target }}
+          path: |
+            build/checkpoint-ignored.log
+            build/checkpoint_ignored_test
+          if-no-files-found: warn
+          retention-days: 1
+
+  baseline:
+    name: Reproduce ignored tracked checkpoint failures in previous code
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      BUN_JSC_forceRAMSize: "4294967296"
+      BACKPLANE_GOOGLE_BAKE: "0"
+      BACKPLANE_CPUS: ""
+      BACKPLANE_JOBS: "2"
+      BACKPLANE_CFLAGS: "-O2"
+      BACKPLANE_EMIT_CACHE: "0"
+      BACKPLANE_OBJ_CACHE: "0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify and restore only the previous Git implementation
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+          git show "$BASE_REV:src/server/git.bend" > src/server/git.bend
+          test "$(git diff --name-only)" = src/server/git.bend
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Install clang 19
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Build the same native test against previous code
+        run: scripts/build-app.sh test/native/checkpoint_ignored_test.bend build/checkpoint_ignored_test
+      - name: Require named behavior failures and healthy controls
+        run: |
+          set -euo pipefail
+          set +e
+          build/checkpoint_ignored_test > build/checkpoint-ignored-baseline.log 2>&1
+          baseline_status=$?
+          set -e
+          cat build/checkpoint-ignored-baseline.log
+          test "$baseline_status" -eq 1
+          python3 - <<'CHECK'
+          from pathlib import Path
+          lines = Path('build/checkpoint-ignored-baseline.log').read_text().splitlines()
+          expected = [
+              'tracked ignored working contents captured',
+              'reused private index learns current tracking',
+              'working diff contains newly tracked ignored path',
+              'fresh-index revert restores ignored tracked contents',
+              'revert removes tracked ignored path absent at checkpoint',
+              'unborn later tracking uses current working contents',
+              'revival recovers v2 instead of silently reverting to v1',
+          ]
+          for label in expected:
+              assert any(line.startswith('FAIL ' + label + ': ') for line in lines), label
+          for label in [
+              'host effect linkage frame',
+              'capture fixture initializes',
+              'nonignored working changes captured',
+              'ignored untracked file excluded',
+              'capture preserves real index bytes',
+              'snapshot leaves real flags and index bytes unchanged',
+          ]:
+              assert 'ok ' + label in lines, label
+          assert sum(line.startswith(('ok ', 'FAIL ')) for line in lines) == 46
+          assert not any(line.startswith('Error:') for line in lines)
+          print('Confirmed ignored tracked checkpoint loss with healthy setup and real-index controls.')
+          CHECK
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: checkpoint-baseline
+          path: build/checkpoint-ignored-baseline.log
+          if-no-files-found: warn
+          retention-days: 1
+
+  check:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Type-check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: CHECK_JOBS=$(nproc) scripts/check.sh check
+
+  proof:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Prove laws
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - run: scripts/check.sh proof
+
+  # Kept as the single gate other jobs depend on; it passes when both
+  # halves above pass, so the check and the proof run in parallel on
+  # separate runners instead of one after the other in one job.
+  laws:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Check and prove
+    needs: [check, proof]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "type-check and proof both passed"
+
+  test:
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Tests ${{ matrix.shard }}/4
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    env:
+      TEST_SHARD: ${{ matrix.shard }}
+      TEST_SHARD_COUNT: "4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - run: TEST_JOBS=$(nproc) scripts/test.sh
+
+  build:
+    needs: [focused, baseline]
+    needs: [focused, baseline]
+    if: github.repository == 'LighthouseRobotics/Backplane'
+    name: Build ${{ matrix.target }}
+    # runs beside "laws" (which checks every file); nothing is published here
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64,    os: ubuntu-24.04 }
+          - { target: linux-arm64,  os: ubuntu-24.04-arm }
+          # macOS is on hold; scripts/build.sh builds it as hub + web server
+          # - { target: darwin-arm64, os: macos-15 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_REV }}
+          persist-credentials: false
+      - name: Verify application source
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REV"
+      - uses: ./.github/actions/setup-bend
+      - uses: oven-sh/setup-bun@v2
+      - name: Swap for the compile
+        # bend's emit of the app takes 16-22 GB; the Linux runners have 16, so
+        # without swap it can be killed. (The clang compiles no longer need
+        # it: scripts/build-app.sh cuts the C into 16 units of about 2.5 GB.)
+        if: runner.os == 'Linux'
+        # the swap file goes on /mnt when the runner has it, and never takes
+        # more than the free space less 8 GB (a full disk kills the runner)
+        run: |
+          dir=/; [ -d /mnt ] && dir=/mnt
+          df -h / /mnt || true
+          free_gb=$(df -BG --output=avail "$dir" | tail -1 | tr -dc 0-9)
+          size=$(( free_gb - 8 )); [ "$size" -gt 16 ] && size=16
+          if [ "$size" -ge 2 ]; then
+            sudo fallocate -l "${size}G" "$dir/swap-build"
+            sudo chmod 600 "$dir/swap-build"
+            sudo mkswap "$dir/swap-build"
+            sudo swapon "$dir/swap-build"
+          else
+            echo "only ${free_gb} GB free on $dir: no swap"
+          fi
+          free -h
+      - name: Install clang 19
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-19 libx11-dev
+          sudo ln -sf /usr/bin/clang-19 /usr/local/bin/clang
+      - name: Preserve ignored tracked files in checkpoints
+        run: |
+          set -euo pipefail
+          scripts/build-app.sh test/native/checkpoint_ignored_test.bend build/checkpoint_ignored_test
+          build/checkpoint_ignored_test | tee build/checkpoint-ignored.log
+          ! grep -q '^FAIL ' build/checkpoint-ignored.log
+          test "$(grep -c '^ok ' build/checkpoint-ignored.log)" -eq 46
+      - name: Object cache
+        # the compiled C units, by hash of their text (scripts/cc-unit.sh): an
+        # unchanged unit is not compiled again. Never holds the Google client
+        # (a unit that includes it is not cached).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/backplane-bend/obj
+          key: objs-${{ matrix.target }}-${{ env.SOURCE_REV }}
+          restore-keys: objs-${{ matrix.target }}-
+      - run: clang --version
+      - run: scripts/build.sh
+        env:
+          BACKPLANE_SKIP_CHECK: "1" # the laws job checks every file
+      - run: scripts/smoke.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: backplane-${{ matrix.target }}
+          path: dist/
+          retention-days: 7
