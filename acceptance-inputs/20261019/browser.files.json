@@ -3551,9 +3551,9 @@
   {
     "path": "test/bots_test.bend",
     "mode": "100644",
-    "git_blob": "ede61a5190c5ecd5de93fbe7ec9e68af75e14ebf",
-    "bytes": 52275,
-    "sha256": "81a64406e8283680f6cd42de5370f65cb7b03c0b64176784475d3a61fa4c49c5"
+    "git_blob": "8894dff84ef9e8eb589d5cfc6315e16c2c6b0df5",
+    "bytes": 53242,
+    "sha256": "c491029f1289808f490e110220a68ba20ae6c4aac30c9b96220384adf275e1ee"
   },
   {
     "path": "test/browser_test.bend",

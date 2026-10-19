@@ -9,9 +9,9 @@
   {
     "path": ".github/workflows/browser-input.yml",
     "mode": "100644",
-    "git_blob": "8767ac6476f4dff50c575f717e8b7862695b3d6e",
-    "bytes": 796,
-    "sha256": "98e13b7bbe2837bacec76663bd838d90d6e1631e744c4868aef6ab56d5e6ba3a"
+    "git_blob": "e48b548abe92dd0411fb2c6b383f1f35942b92a6",
+    "bytes": 831,
+    "sha256": "af99dd64ebddfeae33a64e5b0e7e04d367d58cba0f909e74144a574d7c8be861"
   },
   {
     "path": ".github/workflows/ci.yml",
@@ -3698,9 +3698,9 @@
   {
     "path": "test/bots_test.bend",
     "mode": "100644",
-    "git_blob": "ede61a5190c5ecd5de93fbe7ec9e68af75e14ebf",
-    "bytes": 52275,
-    "sha256": "81a64406e8283680f6cd42de5370f65cb7b03c0b64176784475d3a61fa4c49c5"
+    "git_blob": "8894dff84ef9e8eb589d5cfc6315e16c2c6b0df5",
+    "bytes": 53242,
+    "sha256": "c491029f1289808f490e110220a68ba20ae6c4aac30c9b96220384adf275e1ee"
   },
   {
     "path": "test/browser_test.bend",
@@ -6587,18 +6587,25 @@
     "sha256": "bbc007daa4cbae55b00492a923b6aba6eae189ec22c1f85029049c98ca481287"
   },
   {
+    "path": "test/tools/release_cli_probe_test.py",
+    "mode": "100644",
+    "git_blob": "caac787769511181389d51b2573214e68acbbb08",
+    "bytes": 4788,
+    "sha256": "d473313ed82231248700be33739bc7eed17b4f1530df1a72800558fbe1679ca0"
+  },
+  {
     "path": "test/tools/release_exports_e2e.ts",
     "mode": "100644",
-    "git_blob": "56b16218f496790a199992e856c8584ecf71643f",
-    "bytes": 5855,
-    "sha256": "6e88bf49edb1bf7897378b09fe91b7b0be66365587fe61acde2ed532be474d8e"
+    "git_blob": "c05c6abfbee029c35a1d998a439392726309bf01",
+    "bytes": 6019,
+    "sha256": "a5868ff79178746feeea9aee291209d9d4e09b678ce7c658acd70070bba6b10e"
   },
   {
     "path": "test/tools/release_transaction_e2e.ts",
     "mode": "100644",
-    "git_blob": "1e3cc19c1c18bb31e10ae9f8c3926002211b9736",
-    "bytes": 16236,
-    "sha256": "78e1ac049f8686aa52c45c949c24d399e7f9412e517d87c76414cbaa057d2d77"
+    "git_blob": "fc9b7e3bfe0a4a5cd7107753cb8dd0861ff7ce95",
+    "bytes": 16308,
+    "sha256": "30b22e52552b95418a6b91e1ac41399686ed793d246ee6e7be1f9f08341e0b67"
   },
   {
     "path": "test/tools/remote_view_e2e.ts",

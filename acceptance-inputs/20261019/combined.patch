@@ -1,13 +1,13 @@
 diff --git a/.github/workflows/browser-input.yml b/.github/workflows/browser-input.yml
 new file mode 100644
-index 0000000000000000000000000000000000000000..8767ac6476f4dff50c575f717e8b7862695b3d6e
+index 0000000000000000000000000000000000000000..e48b548abe92dd0411fb2c6b383f1f35942b92a6
 --- /dev/null
 +++ b/.github/workflows/browser-input.yml
 @@ -0,0 +1,29 @@
 +name: Browser input compatibility
 +on:
 +  push:
-+    branches: [main]
++    branches: [main, validation/contributions-20261019]
 +    paths:
 +      - 'src/web/**'
 +      - 'tools/browser/**'
@@ -24610,16 +24610,43 @@ index b179cd0dc7d6f962a8819927c812aee8e016e50e..9f045e33cee9537cf7ffec9ac0285259
  # the page in the device's language, looked up once here and passed down
  def View.page(+u: U.Ui) -> D.Node:
 diff --git a/test/bots_test.bend b/test/bots_test.bend
-index feca4a87d1e12db5af29dcacd56562a986f8c8ce..ede61a5190c5ecd5de93fbe7ec9e68af75e14ebf 100644
+index feca4a87d1e12db5af29dcacd56562a986f8c8ce..8894dff84ef9e8eb589d5cfc6315e16c2c6b0df5 100644
 --- a/test/bots_test.bend
 +++ b/test/bots_test.bend
-@@ -396,6 +396,9 @@ def main() -> IO(Unit):
+@@ -159,6 +159,21 @@ def st.body(st: B.Step) -> String:
+     case B.Step{_, os}:
+       fx.body(os)
+ 
++# Error replies are Send outputs; BotFx bodies contain task/provider payloads.
++def fx.reply(os: List<&2, B.Out>) -> String:
++  match os:
++    case Nil{}:
++      ""
++    case B.Send{_, text} <> _:
++      text
++    case _ <> t:
++      fx.reply(t)
++
++def st.reply(st: B.Step) -> String:
++  match st:
++    case B.Step{_, os}:
++      fx.reply(os)
++
+ def json(+t: String) -> J.Json:
+   Maybe.default(&2, J.Json, J.Json.parse(t), J.Null{})
+ 
+@@ -396,6 +411,14 @@ def main() -> IO(Unit):
      C.Check.str("task run request", st.tags(ask(tk, 1307n, "bots.task", "{\"bot\":\"" ++ id.of(tk, "Miso") ++ "\",\"op\":\"run\",\"slug\":\"order-status\",\"params\":{\"order\":\"W1\"}}")), "BotWoke MessagePosted MessageFrom TurnChanged | send:reply out out out out ")
      C.Check.str("task run missing", st.tags(ask(tk, 1307n, "bots.task", "{\"bot\":\"" ++ id.of(tk, "Miso") ++ "\",\"op\":\"run\",\"slug\":\"nope\"}")), "| send:reply ")
      C.Check.str("task delete request", st.tags(ask(tk, 1308n, "bots.task", "{\"bot\":\"" ++ id.of(tk, "Miso") ++ "\",\"op\":\"delete\",\"slug\":\"order-status\"}")), "TaskDeleted | send:reply fx:task-gone ")
 +    +browserThread : M.State = M.State.replay([M.ThreadCreated{"ordinary", "", "Thread", M.Local{}, "", "", "claude", "", 100n}], M.State.empty())
 +    C.Check.str("ordinary thread browser request", st.tags(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"ordinary\",\"op\":\"takeover\"}")), "| out ")
-+    C.Check.str("missing browser owner rejected", yes(String.contains(st.body(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}")), "no such bot")), "yes")
++    +missingBrowser : B.Step = ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}")
++    C.Check.str("missing browser owner has no events or action", st.tags(missingBrowser), "| send:reply ")
++    +missingReply : J.Json = json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}")))
++    C.Check.str("missing browser owner rejected", J.Json.get_str(missingReply, "error", ""), "no such bot")
++    C.Check.str("missing browser owner reply is failure", J.Json.show(J.Json.get(json(st.reply(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"missing\",\"op\":\"takeover\"}"))), "ok")), "false")
++    C.Check.str("empty browser owner has no action", st.tags(ask(browserThread, 1309n, "bots.browser", "{\"bot\":\"\",\"op\":\"takeover\"}")), "| send:reply ")
      C.Check.str("browser request", st.tags(ask(s, 1309n, "bots.browser", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"click\"}")), "| out ")
      C.Check.str("teach request", st.tags(ask(s, 1309n, "bots.teach", "{\"bot\":\"" ++ id.of(s, "Miso") ++ "\",\"op\":\"start\"}")), "| out ")
      C.Check.str("teach unknown bot", st.tags(ask(s, 1309n, "bots.teach", "{\"bot\":\"nobody\",\"op\":\"start\"}")), "| send:reply ")
@@ -30258,12 +30285,94 @@ index 0000000000000000000000000000000000000000..7cafb5f5cbd48199b2d9398dfce35a6d
 +  }
 +  XFreeGC(d,gc);XDestroyWindow(d,w);XCloseDisplay(d);return 0;
 +}
+diff --git a/test/tools/release_cli_probe_test.py b/test/tools/release_cli_probe_test.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..caac787769511181389d51b2573214e68acbbb08
+--- /dev/null
++++ b/test/tools/release_cli_probe_test.py
+@@ -0,0 +1,76 @@
++#!/usr/bin/env python3
++"""Exercise the exact generated synthetic CLI without a compiler or CAD tool."""
++import argparse
++import json
++import os
++from pathlib import Path
++import re
++import subprocess
++import tempfile
++
++parser = argparse.ArgumentParser(description=__doc__)
++parser.add_argument('--source-root', type=Path, default=Path(__file__).resolve().parents[2])
++args = parser.parse_args()
++source = (args.source_root/'test/tools/release_exports_e2e.ts').read_text()
++match = re.search(r'writeFileSync\(join\(fake, "kicad-cli"\), (`.*?`)\);', source, re.S)
++assert match, 'the production fixture generator must be present'
++# Let JavaScript evaluate the literal exactly as the TypeScript fixture does,
++# including its shell parameter and newline escapes.
++result = subprocess.run(['node', '-e', 'let s="";process.stdin.on("data",b=>s+=b);process.stdin.on("end",()=>process.stdout.write(Function("return "+s)()));'],
++                        input=match[1], text=True, capture_output=True, check=True, timeout=10)
++assert result.stdout.startswith('#!/bin/sh\n')
++with tempfile.TemporaryDirectory(prefix='bp-release-cli-control-') as directory:
++    root = Path(directory)
++    cli = root/'kicad-cli'; cli.write_text(result.stdout); cli.chmod(0o755)
++    for fail_at in (1, 4, 7, 0):
++        calls = root/f'calls-{fail_at}'
++        env = dict(os.environ, RELEASE_CALLS=str(calls), RELEASE_FAIL_AT=str(fail_at))
++        count = lambda: len(calls.read_text().splitlines()) if calls.exists() else 0
++        def invoke(*parts):
++            return subprocess.run([str(cli), *map(str, parts)], env=env, text=True,
++                                  capture_output=True, timeout=10)
++        def probe():
++            before = count()
++            for spelling in ('version', '--version'):
++                r = invoke(spelling)
++                assert r.returncode == 0 and r.stdout.strip() == '10.0.6', (spelling, r)
++            r = invoke('api-server', '--describe')
++            assert r.returncode == 2 and not r.stdout, r
++            assert count() == before, 'resolver probes must not count as exports'
++        probe()
++        for number in range(1, 8):
++            probe()
++            out = root/f'output-{fail_at}-{number}.out'
++            r = invoke('pcb', 'export', 'bom', '-o', out, 'synthetic.kicad_pcb')
++            assert count() == number, 'exactly one counter record per export'
++            if number == fail_at:
++                assert r.returncode == 23 and not out.exists()
++                assert f'synthetic export failure at {number}' in r.stderr
++                break
++            assert r.returncode == 0 and out.read_text().strip() == f'synthetic output {number}'
++        assert count() == (fail_at or 7)
++        probe()
++        print(f'ok metadata probes preserve export counter and failAt={fail_at}')
++# The transaction fixture has an actual generated Node shebang and must obey
++# the same resolver metadata protocol without creating its invocation log.
++source = (args.source_root/'test/tools/release_transaction_e2e.ts').read_text()
++match = re.search(r'writeFileSync\(join\(fake, "kicad-cli"\), (`.*?`)\);', source, re.S)
++assert match
++result = subprocess.run(['node', '-e', 'let s="";process.stdin.on("data",b=>s+=b);process.stdin.on("end",()=>process.stdout.write(Function("node","return "+s)(process.execPath)));'],
++                        input=match[1], text=True, capture_output=True, check=True, timeout=10)
++with tempfile.TemporaryDirectory(prefix='bp-release-transaction-cli-control-') as directory:
++    root = Path(directory); cli = root/'kicad-cli'; cli.write_text(result.stdout); cli.chmod(0o755)
++    calls = root/'calls'; env = dict(os.environ, RELEASE_CALLS=str(calls), RELEASE_MODE='ok')
++    for parts, code in [(('version',), 0), (('--version',), 0), (('api-server', '--describe'), 2)]:
++        r = subprocess.run([str(cli), *parts], env=env, text=True, capture_output=True, timeout=10)
++        assert r.returncode == code and (r.stdout.strip() == '10.0.6' if code == 0 else not r.stdout)
++        assert not calls.exists(), 'transaction metadata probes must not create an export/check log'
++    design = root/'input.kicad_pcb'; design.write_text('synthetic committed board')
++    out = root/'output.out'
++    r = subprocess.run([str(cli), 'pcb', 'export', 'bom', '-o', str(out), str(design)],
++                       env=env, text=True, capture_output=True, timeout=10)
++    assert r.returncode == 0 and out.read_text() == design.read_text()
++    invoked = [json.loads(line) for line in calls.read_text().splitlines()]
++    assert len(invoked) == 1 and invoked[0]['checking'] is False
++print('ok transaction metadata probes create no check/export log; actual export remains intact')
++print('PASS exact generated release CLIs: metadata is separate, export counts and failures remain exact')
 diff --git a/test/tools/release_exports_e2e.ts b/test/tools/release_exports_e2e.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..56b16218f496790a199992e856c8584ecf71643f
+index 0000000000000000000000000000000000000000..c05c6abfbee029c35a1d998a439392726309bf01
 --- /dev/null
 +++ b/test/tools/release_exports_e2e.ts
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,100 @@
 +import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 +import { tmpdir } from "node:os";
 +import { join, resolve } from "node:path";
@@ -30300,6 +30409,11 @@ index 0000000000000000000000000000000000000000..56b16218f496790a199992e856c8584e
 +  writeFileSync(join(fake, "gh"), '#!/bin/sh\necho gh >> "$RELEASE_PUBLICATION_LOG"\nexit 91\n');
 +  writeFileSync(join(fake, "kicad-cli"), `#!/bin/sh
 +set -eu
++# Metadata probes are resolver traffic, not release export steps.
++case "\${1:-}" in
++  version|--version) printf '10.0.6\\n'; exit 0 ;;
++  api-server) exit 2 ;;
++esac
 +printf '%s\\n' "$*" >> "$RELEASE_CALLS"
 +n=$(wc -l < "$RELEASE_CALLS" | tr -d ' ')
 +if [ "$n" = "$RELEASE_FAIL_AT" ]; then
@@ -30361,10 +30475,10 @@ index 0000000000000000000000000000000000000000..56b16218f496790a199992e856c8584e
 +}
 diff --git a/test/tools/release_transaction_e2e.ts b/test/tools/release_transaction_e2e.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..1e3cc19c1c18bb31e10ae9f8c3926002211b9736
+index 0000000000000000000000000000000000000000..fc9b7e3bfe0a4a5cd7107753cb8dd0861ff7ce95
 --- /dev/null
 +++ b/test/tools/release_transaction_e2e.ts
-@@ -0,0 +1,191 @@
+@@ -0,0 +1,192 @@
 +import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 +import { tmpdir } from "node:os";
 +import { join, resolve } from "node:path";
@@ -30417,7 +30531,8 @@ index 0000000000000000000000000000000000000000..1e3cc19c1c18bb31e10ae9f8c3926002
 +  writeFileSync(join(fake, "kicad-cli"), `#!${node}
 +const fs = require('fs'), cp = require('child_process'), path = require('path');
 +const args = process.argv.slice(2), mode = process.env.RELEASE_MODE;
-+if (args.includes('--version')) { console.log('10.0.6'); process.exit(0); }
++if (args[0] === 'version' || args.includes('--version')) { console.log('10.0.6'); process.exit(0); }
++if (args[0] === 'api-server') process.exit(2);
 +const out = args[args.indexOf('-o')+1], input = args.at(-1);
 +const data = fs.readFileSync(input, 'utf8');
 +const checking = args[1] === 'erc' || args[1] === 'drc';

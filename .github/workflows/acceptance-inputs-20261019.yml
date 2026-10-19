@@ -21,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - {scope: browser, minutes: 45}
           - {scope: combined, minutes: 45}
     env:
       CHECK_JOBS: '1'
@@ -105,6 +106,16 @@ jobs:
           python3 "$RUNNER_TEMP/acceptance-inputs/support/accept.py" verify \
             --scope "$ACCEPTANCE_SCOPE" --workspace "$GITHUB_WORKSPACE" --evidence "$ACCEPTANCE_EVIDENCE" || exit 1
           [ "$code" = 0 ] && [ "$verdict" = 0 ]
+      - name: Check browser owner reply and side effects
+        shell: bash
+        run: |
+          set -euo pipefail
+          code=0
+          bend test/bots_test.bend > "$ACCEPTANCE_EVIDENCE/bots-test.log" 2>&1 || code=$?
+          cat "$ACCEPTANCE_EVIDENCE/bots-test.log"
+          test "$code" -eq 0
+          grep -q '^ok ' "$ACCEPTANCE_EVIDENCE/bots-test.log"
+          ! grep -q -E '^(FAIL|Error:)' "$ACCEPTANCE_EVIDENCE/bots-test.log"
       - name: Native candidate build dependencies
         if: matrix.scope == 'native'
         shell: bash
