@@ -47,7 +47,7 @@ jobs:
             git merge-base --is-ancestor "$source" HEAD
           done
           mkdir -p build/batch-results
-          for spec in outbox:42 nui_recv:14 files_state:38 files_native:14 files:13; do
+          for spec in outbox:42 nui_recv:14 files_state:38 files_native:14 files:13 pathrecords:9 file_paths_client:10 file_bytes:6 release:30; do
             name=${spec%:*}; count=${spec#*:}
             bend "test/${name}_test.bend" | tee "build/batch-results/$name.log"
             test "$(grep -c '^ok ' "build/batch-results/$name.log")" -eq "$count"
@@ -62,8 +62,10 @@ jobs:
           bend test/wire/index.html -o build/wire
           bun test/tools/outbox_e2e.ts --client-only build/outbox-client mobile/build/assets/bridge.js | tee build/batch-results/outbox-phone.log
           bun test/tools/files_phone.ts mobile/build/assets/bridge.js build/wire | tee build/batch-results/files-phone.log
+          BUN_JSC_maxPerThreadStackUsage=4194304 bun test/tools/file_paths_phone.ts mobile/build/assets/bridge.js build/wire | tee build/batch-results/file-paths-phone.log
           grep -Fq '18 assertions, 0 failures' build/batch-results/outbox-phone.log
           grep -Fq '20 assertions, 0 failures' build/batch-results/files-phone.log
+          grep -Fq '15 assertions, 0 failures' build/batch-results/file-paths-phone.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
