@@ -123,9 +123,9 @@ def Prompt.board() -> String:
 # the text every agent gets, before its per-thread blocks
 def Prompt.runtime(harness: String) -> String:
   "<runtime_info>In case you're asked: you are running in Backplane through the " ++ harness
-  ++ " harness. Use wake_on to subscribe to thread, work, PR or file events, then end your turn; the matching message wakes you. No need to mention this otherwise. You can embed images and videos in your response using Markdown with absolute file paths.</runtime_info>\n\n"
+  ++ " harness. Use wake_on to subscribe to thread, work, PR or file events, then end your turn; the matching message wakes you. No need to mention this otherwise.</runtime_info>\n\n"
   ++ "<backplane_images>To show the user an image (a board render, plot, screenshot or photo), save it as PNG or JPEG and write its absolute path in your reply, e.g. /tmp/board-top.png (no spaces in the path). Backplane draws every such image under your message.</backplane_images>\n\n"
-  ++ "<backplane_browser>Backplane hosts a web browser for you: the backplane MCP server's preview_* tools (preview_open, preview_navigate, preview_snapshot, preview_click, preview_type, preview_press, preview_scroll, preview_evaluate, preview_wait_for). The user watches it live in the app's Browser tab. Use it for datasheets, distributor and part pages, documentation and web UIs; take a preview_snapshot before acting and target elements by its refs.</backplane_browser>\n\n"
+  ++ "<backplane_browser>Backplane hosts a web browser for you: the backplane MCP server's preview_* tools. The user watches it live in the app's Browser tab. Use it for datasheets, distributor and part pages, documentation and web UIs; take a preview_snapshot before acting and target elements by its refs.</backplane_browser>\n\n"
   ++ Prompt.board()
 
 # FreeCAD's GUI program, beside its console one (macOS keeps it in the
@@ -246,7 +246,7 @@ def Prompt.orchestration(may: Bool, +models: String) -> String:
 
 # how to wait for work that runs on (laws prompt_background_work*)
 def Prompt.background() -> String:
-  "<background_work>Backplane wakes you itself when an Agent, background shell or monitor task ends. End your turn instead of polling, sleeping or checking in a loop. After a restart you are told what was lost. Start long or detached work with the backplane MCP tool `work_run`, or register what you already started with `work_watch`, then end your turn: Backplane wakes you with the outcome. Heavy jobs that must not run at once (builds, long test runs) share a named lock: start them with `work_run` and `lock: \"<name>\"`, or take it with `lock_acquire` and end your turn (a message tells you when it is yours; `lock_release` after), instead of a bare flock. Never poll or sleep-wait. Keep builds lean: a job that runs the machine out of memory is killed, and if Backplane itself restarts you are picked back up and told what was lost. To use another model, prefer `delegate_task`.</background_work>"
+  "<background_work>Backplane wakes you itself when an Agent, background shell or monitor task ends. Never poll, sleep-wait or check in a loop; end your turn instead. Start long or detached work with the backplane MCP tool `work_run`, or register what you already started with `work_watch`, then end your turn: Backplane wakes you with the outcome. Heavy jobs that must not run at once (builds, long test runs) share a named lock: start them with `work_run` and `lock: \"<name>\"`, or take it with `lock_acquire` and end your turn (a message tells you when it is yours; `lock_release` after), instead of a bare flock. Keep builds lean: a job that runs the machine out of memory is killed. If Backplane itself restarts, you are picked back up and told what was lost. To use another model, prefer `delegate_task`.</background_work>"
 
 # Claude Code arguments
 # ---------------------

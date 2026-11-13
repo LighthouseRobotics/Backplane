@@ -14,7 +14,7 @@ When using Bend:
 
 ## Focused references
 
-- For ownership and subsystem constraints, search `docs/agent-layout.md` by task terms or source path and read the matching paragraphs before editing that area. This is the original complete layout catalog; its rules still apply.
+- For ownership and subsystem constraints, search `docs/agent-layout.md` by task terms or source path and read the matching paragraphs before editing that area. It is the complete layout catalog, and its rules apply.
 - For build, dev, packaging, benchmarks or headless checks, read the relevant section of `docs/agent-commands.md`. Native builds must use scripts/build-app.sh, never bare bend compilation on an in-use machine.
 - For Bend edits or compiler/runtime failures, search `docs/agent-bend-traps.md` for the relevant construct/error and read the matching notes. Read the guide once if unfamiliar; avoid repeating it on routine continuations.
 - Keep detailed discoveries in these reference files instead of growing startup instructions. Do not load all references for an unrelated or documentation-only edit.
